@@ -24,6 +24,10 @@ __pycache__/
 # Edge model weights (downloaded/exported at provisioning time)
 ml/models/
 
+# Datasets and experiment runs
+data/external/multilingual_medical_symptom_triage.csv
+runs/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

@@ -1,0 +1,288 @@
+# SwaraSetu Dataset Registry
+# Canonical record of known datasets, their licenses/access terms, and usage policy.
+# RULES:
+#  - Training is ONLY permitted on entries with training_allowed: true.
+#  - Restricted/credentialed datasets must NEVER be auto-downloaded (download_policy: manual).
+#  - license_verification: pending => do not flip flags until license confirmed at source.
+#  - source_label stays verbatim; mapping to SwaraSetu LOW/MEDIUM/HIGH happens only in
+#    data/metadata/label_mapping.yaml reviewed by a clinician before benchmark use.
+
+version: 1
+updated: "2026-08-22"
+triage_label_space: {LOW: 1, MEDIUM: 2, HIGH: 3}   # mirrors backend RiskScore
+
+datasets:
+
+  # ------------------------------------------------------------------ internal
+  - name: swarasetu_triage_protocols_2251
+    source: internal (repo root, provenance undocumented upstream)
+    url: file://triage_protocols_structured.json
+    license: unspecified (provenance undocumented in repo)
+    license_verification: pending
+    access_requirements: none (already in repo)
+    languages: [en]
+    domain: emergency-triage vignettes (India rural focus)
+    size: 2251 cases
+    label_type: triage_level enum {RED, YELLOW, GREEN, BLACK}
+    intended_purpose: primary benchmark / regression gate
+    training_allowed: false          # reserved exclusively as the held-out benchmark
+    testing_allowed: true
+    external_test_allowed: false     # internal benchmark, not an external corpus
+    download_policy: local
+    notes: BLACK currently maps to LOW via legacy map_ground_truth; needs clinical review.
+
+  # ------------------------------------------------------------ triage corpora
+  - name: tulsiandhare_multilingual_medical_symptom_triage
+    source: Hugging Face (Tulsiandhare) - synthetic, author states "designed for training
+      multilingual triage classification models"; HackIndia/AutoScientist submission
+    url: https://huggingface.co/datasets/Tulsiandhare/Multilingual_medical_symptom_triage
+    license: unspecified on HF card (synthetic data; no real patients)
+    license_verification: pending
+    access_requirements: none (public download)
+    languages: [en, hi, hi-en (code-mixed)]   # tags unreliable: some 'hi-en' rows are Marathi script
+    domain: symptom -> triage (urgency Low/Medium/High)
+    size: 13923 rows observed in local copy
+    label_type: urgency enum {Low, Medium, High} + severity + recommended_action free-text
+    intended_purpose: training multilingual triage classifiers
+    training_allowed: true           # synthetic; author-intended for training
+    testing_allowed: true            # validation slices only, never the primary benchmark
+    external_test_allowed: false     # CONSUMED by experiment_improved training - no longer unseen
+    download_policy: auto_ok
+    local_copy: data/external/multilingual_medical_symptom_triage.csv
+    caveats: synthetic; language_tag quality uneven; verify script-vs-tag before language claims.
+
+  - name: physionet_mietic
+    source: PhysioNet (MIMIC-IV-Ext Triage Instruction Corpus v1.0.0)
+    url: https://physionet.org/content/mietic/1.0.0/
+    license: PhysioNet credentialed health data license (DUA)
+    license_verification: verified
+    access_requirements: PhysioNet account + CITI training + signed DUA
+    languages: [en]
+    domain: ED triage instructions (ESI-aligned)
+    size: 9629 cases
+    label_type: ESI 1-5
+    intended_purpose: LLM/model triage training & evaluation
+    training_allowed: true           # permitted under DUA for research
+    testing_allowed: true
+    external_test_allowed: true      # pending credentialed download
+    download_policy: manual          # credentialed - never auto-download
+
+  - name: mimic_iv_ed
+    source: MIT-LCP via PhysioNet
+    url: https://physionet.org/content/mimic-iv-ed/2.2/
+    license: PhysioNet credentialed health data license (DUA)
+    license_verification: verified
+    access_requirements: PhysioNet credentialing + DUA
+    languages: [en]
+    domain: US emergency department records (Beth Israel)
+    size: "~425k ED stays (v2.2)"
+    label_type: acuity (ESI), disposition
+    intended_purpose: external validation / pretraining research
+    training_allowed: true
+    testing_allowed: true
+    external_test_allowed: true      # pending credentialed download
+    download_policy: manual
+
+  - name: yale_ed_triage_hong2018
+    source: Yale EMMLC - de-identified Yale New Haven ED visits (Hong et al., PLoS ONE 2018)
+    url: https://github.com/yaleemmlc/admissionprediction
+    license: no explicit OSS license; citation of Hong WS et al. 2018 required
+    license_verification: pending
+    access_requirements: agree to cite paper; R/RData format (560,486 x 972)
+    languages: [en]
+    domain: US adult ED triage (Epic EHR)
+    size: 560486 visits
+    label_type: ESI level; admission outcome
+    intended_purpose: external testing of triage models
+    training_allowed: false          # hold out; license ambiguity + US-domain shift
+    testing_allowed: true
+    external_test_allowed: true      # pending manual review of citation terms
+    download_policy: manual_review
+
+  - name: nhamcs_ed
+    source: CDC/NCHS National Hospital Ambulatory Medical Care Survey (ED public-use files)
+    url: https://www.cdc.gov/nchs/nhamcs/
+    license: public-use; statistical reporting/analysis only (PHS Act sec 308(d), CIPSEA)
+    license_verification: verified
+    access_requirements: none for public files (implicit agreement to terms of use)
+    languages: [en]
+    domain: US national ED visit survey
+    size: "~20k ED visits/yr; 1992-2022 (final year 2022)"
+    label_type: immediacy/wait-time categories + RFV reason-for-visit codes
+    intended_purpose: external testing; survey-weighted calibration
+    training_allowed: false          # conservative: terms say statistical analysis; not model-training redistribution
+    testing_allowed: true
+    external_test_allowed: true      # pending download + documented immediacy mapping review
+    download_policy: auto_ok         # public FTP, but respect statistical-use-only terms
+    caveats: immediacy != ESI != IMCI; mapping requires clinical review before scoring.
+
+  - name: ihqid_webmd_1mg
+    source: EACL Findings 2023 (arXiv:2302.09685) Indian Healthcare Query Intent Dataset
+    url: https://arxiv.org/abs/2302.09685
+    license: academic release; explicit license not stated in paper
+    license_verification: pending
+    access_requirements: contact authors / repo in paper
+    languages: [en, hi, bn, ta, te, gu, mr]
+    domain: healthcare query intent classification + entity (drug/disease/treatment) NER
+    size: WebMD + 1mg FAQ queries + real Indian hospital queries
+    label_type: intent labels + BIO entity spans (NOT triage levels)
+    intended_purpose: NER/intent training for symptom normalization lexicons
+    training_allowed: false          # blocked until license clarified
+    testing_allowed: false
+    download_policy: manual_review
+
+  - name: indicmeddialog
+    source: BioNLP ACL 2026 / arXiv:2605.13292 (extends MDDial)
+    url: https://aclanthology.org/2026.bionlp-1.84/
+    license: not stated on landing page
+    license_verification: pending
+    access_requirements: authors' release channel TBD
+    languages: [en, as, bn, gu, hi, mr, pa, ta, te, ur]
+    domain: parallel multi-turn medical consultations
+    size: 2980 dialogues x 10 languages = 29800 instances
+    label_type: disease category (12 classes) - NOT triage levels
+    intended_purpose: symptom-elicitation dialogue modeling
+    training_allowed: false          # blocked until license clarified
+    testing_allowed: false
+    download_policy: manual_review
+
+  - name: himed_freedomintelligence
+    source: FreedomIntelligence GitHub/HF
+    url: https://github.com/FreedomIntelligence/HiMed
+    license: not stated in README at audit time
+    license_verification: pending
+    access_requirements: none observed (public clone)
+    languages: [hi]
+    domain: Hindi medical QA/reasoning (Western + Indian systems of medicine)
+    size: corpus 403,516 + bench 7,794 + exam 470
+    label_type: MCQ/QA answers - NOT triage
+    intended_purpose: Hindi medical reasoning eval (optional)
+    training_allowed: false          # blocked until license stated
+    testing_allowed: false
+    download_policy: manual_review
+
+  - name: coild_health_v2
+    source: Hugging Face (coild-aikosh)
+    url: https://huggingface.co/datasets/coild-aikosh/Health_v2
+    license: not stated on card at audit time
+    license_verification: pending
+    access_requirements: none
+    languages: [hi + "19 Indic targets"]
+    domain: health-domain parallel sentences (awareness/symptoms/prevention)
+    size: unknown (not downloaded)
+    label_type: none (parallel translation pairs)
+    intended_purpose: MT training/eval for health advisories
+    training_allowed: false          # blocked until license clarified
+    testing_allowed: false
+    download_policy: manual_review
+
+  - name: ekacare_bodhi_s
+    source: Eka Care
+    url: https://huggingface.co/datasets/ekacare/BODHI-S
+    license: CC BY-NC 4.0
+    license_verification: verified
+    access_requirements: attribution + non-commercial
+    languages: [en]
+    domain: SNOMED-linked symptom->condition graph w/ triage levels
+    size: 779 conditions / 4037 symptom nodes / 13204 relations
+    label_type: triage_level enum {emergency, worrisome, opd_managed}
+    intended_purpose: grounding/validation of IMCI ladders; NER vocabulary
+    training_allowed: true           # non-commercial research OK
+    testing_allowed: true
+    download_policy: auto_ok
+
+  - name: ekacare_indicmteb
+    source: Eka Care
+    url: https://huggingface.co/datasets/ekacare/Eka-IndicMTEB
+    license: CC BY-SA 4.0 (per Eka release blog)
+    license_verification: verified
+    access_requirements: share-alike attribution
+    languages: [en, hi, bn, ta, te, kn, mr, ml]
+    domain: multilingual medical term retrieval (SNOMED CT aligned)
+    size: 2532 doctor-verified queries + qrels + corpus
+    label_type: relevance pairs (qrels) - NOT triage
+    intended_purpose: embedding/retrieval eval for symptom normalization
+    training_allowed: true           # share-alike respected internally
+    testing_allowed: true
+    download_policy: auto_ok
+
+  - name: displace_m
+    source: DISPLACE 2026 Challenge (BHASHINI/MeitY funded; IIIT-hosted challenge)
+    url: https://displace2026.github.io/
+    license: challenge dataset terms; HF-hosted for registered participants
+    license_verification: pending
+    access_requirements: challenge registration; HF gated access
+    languages: [hi, en (code-mixed Hinglish), dialects haryanvi/bhojpuri/magahi]
+    domain: real ASHA<->patient primary-care conversations (rural Haryana/Bihar)
+    size: "~35h dev+eval audio; 260 speakers; diarization/ASR/topic/summarization tracks"
+    label_type: transcripts, diarization, topics, summaries - NOT per-case triage
+    intended_purpose: voice-pipeline (ASR/diarization/NER) benchmark + adaptation
+    training_allowed: true           # dev set, per challenge rules; blind eval NEVER for training
+    testing_allowed: true            # blind eval set = external test only
+    external_test_allowed: true      # pending challenge registration
+    download_policy: manual          # registration required
+
+  - name: ai_triage_benchmark_78vignettes
+    source: sreerammarimuthu/AI-triage-benchmark (GitHub); vignettes from Ramaswamy et al.,
+      Nature Medicine 2026 supplementary (ChatGPT Health study), 3-physician adjudicated
+    url: https://github.com/sreerammarimuthu/AI-triage-benchmark
+    license: no explicit OSS license observed in repo; cite Ramaswamy et al. 2026 + repo
+    license_verification: pending
+    access_requirements: none (public raw CSV)
+    languages: [en]
+    domain: physician-labeled triage vignettes, 22 medical domains (39 symptoms-only + 39 full clinical)
+    size: 78 cases (44 consensus + 34 split labels)
+    label_type: triage scale A-D (split labels like "C/D" accept adjacent levels)
+    intended_purpose: external testing incl. under-/over-triage rate definitions
+    training_allowed: false          # external test only - never fit on
+    testing_allowed: true
+    external_test_allowed: true
+    download_policy: auto_ok
+    local_copy: data/external/ai_triage_benchmark/vignettes.csv
+    local_sha256: dd0d6aec1b7314592a4f32a32168b1e36044215ab482e52667c16d0cf15e029c
+
+  - name: ai4bharat_indicvoices
+    source: AI4Bharat
+    url: https://huggingface.co/datasets/ai4bharat/IndicVoices
+    license: CC BY 4.0 (AI4Bharat standard; confirm on HF page)
+    license_verification: pending
+    access_requirements: none
+    languages: [22 scheduled Indic languages]
+    domain: spontaneous/read/conversational speech
+    size: "23.7k hrs raw / 11.2k transcribed / 51k speakers"
+    label_type: verbatim transcriptions (ASR pairs)
+    intended_purpose: ASR WER benchmarking + edge STT tuning
+    training_allowed: true
+    testing_allowed: true
+    download_policy: auto_ok
+
+  - name: ai4bharat_kathbath
+    source: AI4Bharat
+    url: https://huggingface.co/datasets/ai4bharat/Kathbath
+    license: CC BY 4.0 (AI4Bharat standard; confirm on HF page)
+    license_verification: pending
+    access_requirements: none
+    languages: [12 Indic languages]
+    domain: read/crowdsourced speech
+    size: 1684 hrs, 1218 speakers, 203 districts
+    label_type: verbatim transcriptions
+    intended_purpose: ASR WER yardstick (Vistaar leaderboard baseline)
+    training_allowed: true
+    testing_allowed: true
+    download_policy: auto_ok
+
+  - name: local_bengali_banglish_triage
+    source: UNKNOWN - appeared in data/external without documented provenance
+    url: unknown
+    license: UNKNOWN
+    license_verification: failed_provenance
+    access_requirements: n/a
+    languages: [bn (script), banglish (romanized)]
+    domain: contrastive diagnosis dialogues with urgency_level field
+    size: 2724 dialogues
+    label_type: urgency_level enum (values need verification)
+    intended_purpose: quarantined until provenance/license documented
+    training_allowed: false          # QUARANTINE: undocumented provenance
+    testing_allowed: false
+    download_policy: manual_review
+    local_copy: data/external/bengali_triage/full_dataset.jsonl

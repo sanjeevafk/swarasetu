@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>SwaraSetu Multilingual Clinical Triage Benchmark Report</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #1e293b; max-width: 1000px; margin: 0 auto; padding: 20px; background-color: #f8fafc; }
+        header { background: linear-gradient(135deg, #1e3a8a, #3b82f6); color: white; padding: 30px; border-radius: 12px; margin-bottom: 30px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
+        h1 { margin: 0 0 10px 0; font-size: 28px; }
+        .subtitle { font-size: 16px; opacity: 0.9; margin: 0; }
+        .card { background: white; padding: 25px; border-radius: 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); margin-bottom: 25px; }
+        h2 { color: #1e40af; border-bottom: 2px solid #e2e8f0; padding-bottom: 8px; margin-top: 0; }
+        table { width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 15px; }
+        th, td { padding: 12px 15px; text-align: left; border-bottom: 1px solid #e2e8f0; }
+        th { background-color: #1e40af; color: white; font-weight: 600; }
+        tr:nth-child(even) { background-color: #f1f5f9; }
+        .badge-success { background-color: #dcfce7; color: #15803d; padding: 4px 8px; border-radius: 4px; font-weight: 600; }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .metric-box { background: #eff6ff; padding: 15px; border-radius: 8px; text-align: center; border: 1px solid #bfdbfe; }
+        .metric-value { font-size: 24px; font-weight: bold; color: #1d4ed8; }
+        .metric-label { font-size: 13px; color: #475569; }
+        .img-container { text-align: center; margin: 20px 0; }
+        .img-container img { max-width: 100%; height: auto; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>🏥 SwaraSetu Clinical Triage Benchmark Report</h1>
+        <p class="subtitle">Comprehensive Multilingual Evaluation & Clinical Diagnosis Across 16,647 Patient Cases</p>
+    </header>
+
+    <div class="card">
+        <h2>Executive Summary & Plain Terms Explanation</h2>
+        <p>This report documents the benchmark results for <strong>SwaraSetu's WHO IMCI Triage Engine</strong> (<a href="https://github.com/kendallcore/swarasetu" target="_blank">swarasetu-repo</a>) across 16,647 patient cases from two HuggingFace datasets:</p>
+        <ul>
+            <li><strong>Tulsiandhare/Multilingual_medical_symptom_triage</strong> (13,923 cases across Hindi, Hinglish, and English)</li>
+            <li><strong>Irtisum/bengali-medical-triage-conversations</strong> (2,724 cases across Bengali script, Banglish, and English)</li>
+        </ul>
+        <div class="grid">
+            <div class="metric-box">
+                <div class="metric-value">71.9% / 66.0%</div>
+                <div class="metric-label">Clinical Safety Concordance (DS1 / DS2)</div>
+            </div>
+            <div class="metric-box">
+                <div class="metric-value">0.056 ms</div>
+                <div class="metric-label">Sub-Millisecond Latency per Patient</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>1. High-Level Benchmark Comparison Table</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Metric</th>
+                    <th>Dataset 1: Multilingual Triage</th>
+                    <th>Dataset 2: Bengali Conversations</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr><td>Total Cases Evaluated</td><td><strong>13,923</strong></td><td><strong>2,724</strong></td></tr>
+                <tr><td>Languages Supported</td><td>Hindi, Hinglish, English</td><td>Bengali Script, Banglish, English</td></tr>
+                <tr><td>Exact Match Accuracy</td><td>36.31%</td><td>43.58%</td></tr>
+                <tr><td>Clinical Safety Concordance</td><td><span class="badge-success">71.85%</span></td><td><span class="badge-success">65.97%</span></td></tr>
+                <tr><td>Critical Under-Triage Rate</td><td>28.15%</td><td>34.03%</td></tr>
+                <tr><td>Macro F1 / Weighted F1</td><td>0.3637 / 0.3625</td><td>0.4032 / 0.4268</td></tr>
+                <tr><td>Inference Latency</td><td>0.322 ms / case</td><td>0.056 ms / case</td></tr>
+                <tr><td>Throughput</td><td>3,109 evals / sec</td><td>17,898 evals / sec</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="card">
+        <h2>2. Visual Diagnostic Charts</h2>
+        <div class="grid">
+            <div class="img-container">
+                <h3>Dataset 1 Confusion Matrix</h3>
+                <img src="multilingual_triage_confusion_matrix_ds1.png" alt="Dataset 1 Confusion Matrix">
+            </div>
+            <div class="img-container">
+                <h3>Dataset 2 Confusion Matrix</h3>
+                <img src="bengali_triage_confusion_matrix_ds2.png" alt="Dataset 2 Confusion Matrix">
+            </div>
+        </div>
+        <div class="img-container">
+            <h3>Language Safety Breakdown</h3>
+            <img src="multilingual_language_breakdown.png" alt="Language Breakdown">
+        </div>
+    </div>
+</body>
+</html>

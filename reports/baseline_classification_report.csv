@@ -1,0 +1,10 @@
+class,precision,recall,f1_score,support
+HIGH,0.616279,0.064713,0.117127,819
+MEDIUM,0.593023,0.036903,0.069482,1382
+LOW,0.023088,0.96,0.045092,50
+macro_avg,0.410797,0.353872,0.077234,2251
+weighted_avg,,,0.086275,2251
+accuracy,,,0.067526,2251
+high_risk_recall,,,0.064713,819
+high_to_low_errors,,,732,819
+high_to_medium_errors,,,34,819

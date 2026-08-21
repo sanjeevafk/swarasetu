@@ -1,0 +1,82 @@
+{
+  "metadata": {
+    "dataset": "triage_protocols_structured.json",
+    "num_cases": 2251,
+    "model": "deterministic WHO IMCI engine (backend/app/triage/engine.py @ 68bf3b1)",
+    "adapter": "benchmark_protocols.parse_vitals_and_symptoms + map_ground_truth (unmodified)",
+    "label_mapping": {
+      "engine_risk_1": "LOW",
+      "engine_risk_2": "MEDIUM",
+      "engine_risk_3": "HIGH",
+      "ground_truth_RED": "HIGH",
+      "ground_truth_YELLOW": "MEDIUM",
+      "ground_truth_GREEN": "LOW"
+    },
+    "notes": [
+      "BLACK->LOW (existing map_ground_truth behaviour)"
+    ],
+    "evaluation_latency_seconds": 0.141,
+    "generated_by": "backend/scripts/eval_baseline.py"
+  },
+  "accuracy": 0.067526,
+  "macro_precision": 0.410797,
+  "macro_recall": 0.353872,
+  "macro_f1": 0.077234,
+  "weighted_f1": 0.086275,
+  "per_class": {
+    "HIGH": {
+      "precision": 0.616279,
+      "recall": 0.064713,
+      "f1_score": 0.117127,
+      "support": 819,
+      "tp": 53,
+      "fp": 33,
+      "fn": 766
+    },
+    "MEDIUM": {
+      "precision": 0.593023,
+      "recall": 0.036903,
+      "f1_score": 0.069482,
+      "support": 1382,
+      "tp": 51,
+      "fp": 35,
+      "fn": 1331
+    },
+    "LOW": {
+      "precision": 0.023088,
+      "recall": 0.96,
+      "f1_score": 0.045092,
+      "support": 50,
+      "tp": 48,
+      "fp": 2031,
+      "fn": 2
+    }
+  },
+  "high_risk_recall": 0.064713,
+  "high_to_low_errors": 732,
+  "high_to_medium_errors": 34,
+  "confusion_matrix": {
+    "order_rows_true_cols_pred": [
+      "HIGH",
+      "MEDIUM",
+      "LOW"
+    ],
+    "matrix": {
+      "HIGH": {
+        "HIGH": 53,
+        "MEDIUM": 34,
+        "LOW": 732
+      },
+      "MEDIUM": {
+        "HIGH": 32,
+        "MEDIUM": 51,
+        "LOW": 1299
+      },
+      "LOW": {
+        "HIGH": 1,
+        "MEDIUM": 1,
+        "LOW": 48
+      }
+    }
+  }
+}

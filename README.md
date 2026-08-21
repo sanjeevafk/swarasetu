@@ -93,6 +93,59 @@ Comprehensive technical and architecture guides are available in the [`docs/`](.
 - 🗺️ **[Geospatial Facility Routing & ABDM Registry Guide](./docs/SWARASETU_GEOSPATIAL_FACILITY_ROUTING_GUIDE.md)**: Hardware satellite GPS offline routing, Haversine math, ABDM Health Facility Registry data models, and regional customization (Tamil Nadu, Kerala, Jharkhand).
 - 🏗️ **[System Architecture & 3-Tier Deployment](./docs/SWARASETU_PRODUCT_ARCHITECTURE_SIH2026.md)**: Technical breakdown of Cloud Sarvam, on-device quantized Indic-Seamless, and 2GB tablet fallback tiers.
 - 🏆 **[SIH 2026 Comprehensive Evaluation Guide](./docs/SWARASETU_SIH_COMPREHENSIVE_GUIDE.md)**: Hackathon problem statement alignment, clinical safety defense, judge Q&A responses, and competitive moats.
-- 📊 **[Clinical Evaluation & Benchmarks](./docs/EVALUATION.md)**: Benchmark results, offline latency, and 0% under-triage safety validation across 2,251 rural emergency cases.
+- 📊 **[Clinical Evaluation & Benchmarks](./docs/EVALUATION.md)**: Agent feasibility assessment (the historical "0% under-triage" claim is NOT reproducible — see measured numbers below).
+
+---
+
+## 6. Benchmarks & Reproducibility
+
+> ⚠️ **Research prototype — NOT clinically validated.** All metrics below are engineering
+> benchmarks on a synthetic/internal English case set plus one public physician-labeled vignette
+> corpus. Nothing here demonstrates clinical safety or effectiveness.
+
+Measured on the held-out internal benchmark (`triage_protocols_structured.json`, 2,251 cases, English):
+
+| Metric | Baseline (deterministic IMCI) | Improved (TF-IDF+LogReg v1) |
+|---|---|---|
+| Accuracy | 6.75 % | 29.41 % |
+| Macro F1 | 0.077 | 0.237 |
+| HIGH-risk recall | 6.5 % | 15.0 % |
+| HIGH→LOW errors | 732 | 386 |
+
+Full details: [`reports/SwaraSetu_Benchmark_Report.pdf`](reports/SwaraSetu_Benchmark_Report.pdf),
+[`reports/repository_audit.md`](reports/repository_audit.md), dataset policies in
+[`data/dataset_registry.yaml`](data/dataset_registry.yaml).
+
+Reproduce everything from a clean clone:
+
+```bash
+# 0) deps (backend API tests need more; the benchmark scripts need:)
+python3 -m pip install --user pyyaml pandas scikit-learn sqlalchemy httpx "pydantic>=2" reportlab pypdf
+
+# 1) original quick benchmark + full baseline metrics -> reports/baseline_*
+python3 backend/scripts/benchmark_protocols.py
+python3 backend/scripts/eval_baseline.py
+
+# 2) improved experiment (policy-gated: trains ONLY on registry-approved datasets)
+python3 backend/scripts/train_improved.py          # -> runs/experiment_improved_v1/
+python3 backend/scripts/eval_improved.py           # -> reports/improved_metrics.json
+
+# 3) comparison, language breakdown, external validation
+python3 backend/scripts/compare_before_after.py    # -> reports/before_after.csv/.png
+python3 backend/scripts/eval_multilingual.py       # -> reports/language_benchmark.csv
+python3 backend/scripts/run_external_validation.py # -> reports/external_validation.csv
+
+# 4) final PDF report
+python3 backend/scripts/build_report_pdf.py        # -> reports/SwaraSetu_Benchmark_Report.pdf
+
+# backend unit/API tests
+cd backend && python3 -m pytest tests -q
+```
+
+Data provenance labels used throughout reports: `INTERNAL-BENCHMARK` (in-repo, provenance undocumented),
+`SYNTHETIC-PUBLIC` (machine-generated), `PUBLIC-CREDENTIALED` (registration/DUA required), `EXTERNAL-TEST`
+(physician-labeled public corpus), `QUARANTINED` (provenance unknown — never used). WHO IMCI guidelines are
+clinical reference material for engine logic only and confer no validation.
+
 
 

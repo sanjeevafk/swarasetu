@@ -1,0 +1,16 @@
+language_subset,dataset,evaluation_type,model,n_cases,accuracy,macro_f1,high_recall,high_support,high_to_low_errors,inference_errors,latency_seconds,notes
+english,swarasetu_triage_protocols_2251,held_out,baseline_imci_engine,2251,0.067526,0.077234,0.064713,819,732,0,0.141,primary benchmark; GT via legacy map_ground_truth (BLACK->LOW)
+english,swarasetu_triage_protocols_2251,held_out,improved_tfidf_logreg,2251,0.294092,0.236885,0.150183,819,386,0,2.847,same held-out set as baseline
+english,tulsiandhare_multilingual_medical_symptom_triage,in_sample,improved_tfidf_logreg,4570,0.512691,0.511502,0.725376,1198,185,0,0.36,SYNTHETIC public dataset; IN-SAMPLE for improved model (trained on full CSV)
+english,tulsiandhare_multilingual_medical_symptom_triage,unseen_for_imci,baseline_imci_engine_via_rule_ner,4570,0.370678,0.214105,0.0,1198,1099,0,2.42,SYNTHETIC public dataset; engine sees text via production rule-NER fallback
+hindi,tulsiandhare_multilingual_medical_symptom_triage,in_sample,improved_tfidf_logreg,4532,0.518094,0.513932,0.775943,1272,162,0,0.27,SYNTHETIC public dataset; IN-SAMPLE for improved model (trained on full CSV)
+hindi,tulsiandhare_multilingual_medical_symptom_triage,unseen_for_imci,baseline_imci_engine_via_rule_ner,4532,0.358782,0.208215,0.0,1272,1145,0,2.21,SYNTHETIC public dataset; engine sees text via production rule-NER fallback
+code_mixed,tulsiandhare_multilingual_medical_symptom_triage,in_sample,improved_tfidf_logreg,4821,0.517735,0.516564,0.732016,1265,161,0,0.4,SYNTHETIC public dataset; IN-SAMPLE for improved model (trained on full CSV)
+code_mixed,tulsiandhare_multilingual_medical_symptom_triage,unseen_for_imci,baseline_imci_engine_via_rule_ner,4821,0.36341,0.209223,0.0,1265,1157,0,2.29,SYNTHETIC public dataset; engine sees text via production rule-NER fallback
+tamil,,,,0,N/A,N/A,N/A,0,N/A,,,"no labelled triage data in repo (engine output localization exists, no test corpus)"
+telugu,,,,0,N/A,N/A,N/A,0,N/A,,,no labelled triage data in repo
+kannada,,,,0,N/A,N/A,N/A,0,N/A,,,no labelled triage data in repo
+malayalam,,,,0,N/A,N/A,N/A,0,N/A,,,no labelled triage data in repo
+marathi,,,,0,N/A,N/A,N/A,0,N/A,,,Marathi-script rows exist inside Tulsiandhare 'hi-en' tag but are NOT reliably labelled as marathi -> excluded pending re-tagging
+bengali,,,,0,N/A,N/A,N/A,0,N/A,,,"only quarantined banglish file (provenance undocumented, training/testing disallowed by registry)"
+transliteration,,,,0,N/A,N/A,N/A,0,N/A,,,banglish transliteration data quarantined (registry: local_bengali_banglish_triage)

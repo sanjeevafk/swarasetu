@@ -1,0 +1,86 @@
+{
+  "metadata": {
+    "dataset": "triage_protocols_structured.json",
+    "num_cases": 2251,
+    "model": "experiment_improved_v1 (tfidf_logreg seed=42) \u2014 NOT the IMCI engine",
+    "evaluation_pipeline": "identical to baseline (eval_baseline.prf + benchmark_protocols.map_ground_truth)",
+    "label_mapping": {
+      "ground_truth_RED": "HIGH",
+      "ground_truth_YELLOW": "MEDIUM",
+      "ground_truth_GREEN_or_BLACK": "LOW"
+    },
+    "training_config": {
+      "name": "experiment_improved",
+      "version": "v1",
+      "seed": 42,
+      "description": "TF-IDF + logistic regression triage classifier trained ONLY on datasets marked training_allowed: true in data/dataset_registry.yaml. The deterministic IMCI engine is not modified. External test sets are never used during fitting.\n"
+    },
+    "training_datasets_sha256": {
+      "tulsiandhare_multilingual_medical_symptom_triage": "32e22899fb99d0eb6ec006e5d039c5967b42ba35d7bcf928c1cbdb169ceeab0f"
+    },
+    "internal_holdout_accuracy": 0.342426,
+    "evaluation_latency_seconds": 2.847,
+    "generated_by": "backend/scripts/eval_improved.py"
+  },
+  "accuracy": 0.294092,
+  "macro_precision": 0.32916,
+  "macro_recall": 0.295724,
+  "macro_f1": 0.236885,
+  "weighted_f1": 0.36405,
+  "per_class": {
+    "HIGH": {
+      "precision": 0.359649,
+      "recall": 0.150183,
+      "f1_score": 0.211886,
+      "support": 819,
+      "tp": 123,
+      "fp": 219,
+      "fn": 696
+    },
+    "MEDIUM": {
+      "precision": 0.610785,
+      "recall": 0.37699,
+      "f1_score": 0.466219,
+      "support": 1382,
+      "tp": 521,
+      "fp": 332,
+      "fn": 861
+    },
+    "LOW": {
+      "precision": 0.017045,
+      "recall": 0.36,
+      "f1_score": 0.03255,
+      "support": 50,
+      "tp": 18,
+      "fp": 1038,
+      "fn": 32
+    }
+  },
+  "high_risk_recall": 0.150183,
+  "high_to_low_errors": 386,
+  "high_to_medium_errors": 310,
+  "confusion_matrix": {
+    "order_rows_true_cols_pred": [
+      "HIGH",
+      "MEDIUM",
+      "LOW"
+    ],
+    "matrix": {
+      "HIGH": {
+        "HIGH": 123,
+        "MEDIUM": 310,
+        "LOW": 386
+      },
+      "MEDIUM": {
+        "HIGH": 209,
+        "MEDIUM": 521,
+        "LOW": 652
+      },
+      "LOW": {
+        "HIGH": 10,
+        "MEDIUM": 22,
+        "LOW": 18
+      }
+    }
+  }
+}

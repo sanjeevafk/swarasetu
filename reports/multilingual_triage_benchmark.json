@@ -1,0 +1,477 @@
+{
+  "metadata": {
+    "evaluation_timestamp": "2026-08-22T02:29:42Z",
+    "model": "SwaraSetu Deterministic WHO IMCI Engine (backend/app/triage/engine.py)",
+    "total_cases_evaluated": 16647
+  },
+  "dataset_1_multilingual": {
+    "name": "Tulsiandhare/Multilingual_medical_symptom_triage",
+    "metrics": {
+      "accuracy": 0.3631,
+      "safe_concordance": 0.7185,
+      "under_triage_rate": 0.2815,
+      "over_triage_rate": 0.3553,
+      "macro_precision": 0.3699,
+      "macro_recall": 0.3652,
+      "macro_f1": 0.3637,
+      "weighted_f1": 0.3625,
+      "per_class": {
+        "HIGH": {
+          "precision": 0.3549,
+          "recall": 0.4207,
+          "f1_score": 0.385,
+          "support": 4191,
+          "tp": 1763,
+          "fp": 3205,
+          "fn": 2428
+        },
+        "MEDIUM": {
+          "precision": 0.3341,
+          "recall": 0.3632,
+          "f1_score": 0.348,
+          "support": 5036,
+          "tp": 1829,
+          "fp": 3646,
+          "fn": 3207
+        },
+        "LOW": {
+          "precision": 0.4207,
+          "recall": 0.3118,
+          "f1_score": 0.3581,
+          "support": 4696,
+          "tp": 1464,
+          "fp": 2016,
+          "fn": 3232
+        }
+      },
+      "confusion_matrix": {
+        "HIGH": {
+          "HIGH": 1763,
+          "MEDIUM": 1904,
+          "LOW": 524
+        },
+        "MEDIUM": {
+          "HIGH": 1715,
+          "MEDIUM": 1829,
+          "LOW": 1492
+        },
+        "LOW": {
+          "HIGH": 1490,
+          "MEDIUM": 1742,
+          "LOW": 1464
+        }
+      },
+      "total_cases": 13923,
+      "latency_ms_per_case": 0.322,
+      "throughput_evals_per_sec": 3109
+    },
+    "languages": {
+      "english": {
+        "accuracy": 0.3591,
+        "safe_concordance": 0.7092,
+        "under_triage_rate": 0.2908,
+        "over_triage_rate": 0.3501,
+        "macro_precision": 0.3665,
+        "macro_recall": 0.3609,
+        "macro_f1": 0.36,
+        "weighted_f1": 0.3596,
+        "per_class": {
+          "HIGH": {
+            "precision": 0.3378,
+            "recall": 0.3957,
+            "f1_score": 0.3645,
+            "support": 1337,
+            "tp": 529,
+            "fp": 1037,
+            "fn": 808
+          },
+          "MEDIUM": {
+            "precision": 0.3304,
+            "recall": 0.3653,
+            "f1_score": 0.347,
+            "support": 1645,
+            "tp": 601,
+            "fp": 1218,
+            "fn": 1044
+          },
+          "LOW": {
+            "precision": 0.4312,
+            "recall": 0.3218,
+            "f1_score": 0.3686,
+            "support": 1588,
+            "tp": 511,
+            "fp": 674,
+            "fn": 1077
+          }
+        },
+        "confusion_matrix": {
+          "HIGH": {
+            "HIGH": 529,
+            "MEDIUM": 655,
+            "LOW": 153
+          },
+          "MEDIUM": {
+            "HIGH": 523,
+            "MEDIUM": 601,
+            "LOW": 521
+          },
+          "LOW": {
+            "HIGH": 514,
+            "MEDIUM": 563,
+            "LOW": 511
+          }
+        },
+        "total_cases": 4570
+      },
+      "hindi": {
+        "accuracy": 0.3689,
+        "safe_concordance": 0.707,
+        "under_triage_rate": 0.293,
+        "over_triage_rate": 0.338,
+        "macro_precision": 0.3759,
+        "macro_recall": 0.3697,
+        "macro_f1": 0.3703,
+        "weighted_f1": 0.3693,
+        "per_class": {
+          "HIGH": {
+            "precision": 0.3771,
+            "recall": 0.4055,
+            "f1_score": 0.3908,
+            "support": 1408,
+            "tp": 571,
+            "fp": 943,
+            "fn": 837
+          },
+          "MEDIUM": {
+            "precision": 0.327,
+            "recall": 0.3708,
+            "f1_score": 0.3475,
+            "support": 1618,
+            "tp": 600,
+            "fp": 1235,
+            "fn": 1018
+          },
+          "LOW": {
+            "precision": 0.4235,
+            "recall": 0.3327,
+            "f1_score": 0.3726,
+            "support": 1506,
+            "tp": 501,
+            "fp": 682,
+            "fn": 1005
+          }
+        },
+        "confusion_matrix": {
+          "HIGH": {
+            "HIGH": 571,
+            "MEDIUM": 646,
+            "LOW": 191
+          },
+          "MEDIUM": {
+            "HIGH": 527,
+            "MEDIUM": 600,
+            "LOW": 491
+          },
+          "LOW": {
+            "HIGH": 416,
+            "MEDIUM": 589,
+            "LOW": 501
+          }
+        },
+        "total_cases": 4532
+      },
+      "hinglish": {
+        "accuracy": 0.3615,
+        "safe_concordance": 0.738,
+        "under_triage_rate": 0.262,
+        "over_triage_rate": 0.3765,
+        "macro_precision": 0.3675,
+        "macro_recall": 0.3649,
+        "macro_f1": 0.3601,
+        "weighted_f1": 0.3585,
+        "per_class": {
+          "HIGH": {
+            "precision": 0.3512,
+            "recall": 0.4585,
+            "f1_score": 0.3977,
+            "support": 1446,
+            "tp": 663,
+            "fp": 1225,
+            "fn": 783
+          },
+          "MEDIUM": {
+            "precision": 0.3449,
+            "recall": 0.3542,
+            "f1_score": 0.3495,
+            "support": 1773,
+            "tp": 628,
+            "fp": 1193,
+            "fn": 1145
+          },
+          "LOW": {
+            "precision": 0.4065,
+            "recall": 0.2821,
+            "f1_score": 0.3331,
+            "support": 1602,
+            "tp": 452,
+            "fp": 660,
+            "fn": 1150
+          }
+        },
+        "confusion_matrix": {
+          "HIGH": {
+            "HIGH": 663,
+            "MEDIUM": 603,
+            "LOW": 180
+          },
+          "MEDIUM": {
+            "HIGH": 665,
+            "MEDIUM": 628,
+            "LOW": 480
+          },
+          "LOW": {
+            "HIGH": 560,
+            "MEDIUM": 590,
+            "LOW": 452
+          }
+        },
+        "total_cases": 4821
+      }
+    }
+  },
+  "dataset_2_bengali": {
+    "name": "Irtisum/bengali-medical-triage-conversations",
+    "metrics": {
+      "accuracy": 0.4358,
+      "safe_concordance": 0.6597,
+      "under_triage_rate": 0.3403,
+      "over_triage_rate": 0.2239,
+      "macro_precision": 0.4212,
+      "macro_recall": 0.399,
+      "macro_f1": 0.4032,
+      "weighted_f1": 0.4268,
+      "per_class": {
+        "HIGH": {
+          "precision": 0.3838,
+          "recall": 0.2962,
+          "f1_score": 0.3344,
+          "support": 368,
+          "tp": 109,
+          "fp": 175,
+          "fn": 259
+        },
+        "MEDIUM": {
+          "precision": 0.4338,
+          "recall": 0.3279,
+          "f1_score": 0.3735,
+          "support": 1110,
+          "tp": 364,
+          "fp": 475,
+          "fn": 746
+        },
+        "LOW": {
+          "precision": 0.446,
+          "recall": 0.573,
+          "f1_score": 0.5016,
+          "support": 1246,
+          "tp": 714,
+          "fp": 887,
+          "fn": 532
+        }
+      },
+      "confusion_matrix": {
+        "HIGH": {
+          "HIGH": 109,
+          "MEDIUM": 40,
+          "LOW": 219
+        },
+        "MEDIUM": {
+          "HIGH": 78,
+          "MEDIUM": 364,
+          "LOW": 668
+        },
+        "LOW": {
+          "HIGH": 97,
+          "MEDIUM": 435,
+          "LOW": 714
+        }
+      },
+      "total_cases": 2724,
+      "latency_ms_per_case": 0.056,
+      "throughput_evals_per_sec": 17898
+    },
+    "languages": {
+      "banglish": {
+        "accuracy": 0.4312,
+        "safe_concordance": 0.595,
+        "under_triage_rate": 0.405,
+        "over_triage_rate": 0.1638,
+        "macro_precision": 0.3346,
+        "macro_recall": 0.3299,
+        "macro_f1": 0.3096,
+        "weighted_f1": 0.3909,
+        "per_class": {
+          "HIGH": {
+            "precision": 0.1346,
+            "recall": 0.0569,
+            "f1_score": 0.08,
+            "support": 123,
+            "tp": 7,
+            "fp": 45,
+            "fn": 116
+          },
+          "MEDIUM": {
+            "precision": 0.411,
+            "recall": 0.2282,
+            "f1_score": 0.2935,
+            "support": 425,
+            "tp": 97,
+            "fp": 139,
+            "fn": 328
+          },
+          "LOW": {
+            "precision": 0.4583,
+            "recall": 0.7045,
+            "f1_score": 0.5554,
+            "support": 484,
+            "tp": 341,
+            "fp": 403,
+            "fn": 143
+          }
+        },
+        "confusion_matrix": {
+          "HIGH": {
+            "HIGH": 7,
+            "MEDIUM": 15,
+            "LOW": 101
+          },
+          "MEDIUM": {
+            "HIGH": 26,
+            "MEDIUM": 97,
+            "LOW": 302
+          },
+          "LOW": {
+            "HIGH": 19,
+            "MEDIUM": 124,
+            "LOW": 341
+          }
+        },
+        "total_cases": 1032
+      },
+      "bengali": {
+        "accuracy": 0.4164,
+        "safe_concordance": 0.6638,
+        "under_triage_rate": 0.3362,
+        "over_triage_rate": 0.2474,
+        "macro_precision": 0.3914,
+        "macro_recall": 0.3862,
+        "macro_f1": 0.3854,
+        "weighted_f1": 0.4116,
+        "per_class": {
+          "HIGH": {
+            "precision": 0.313,
+            "recall": 0.3037,
+            "f1_score": 0.3083,
+            "support": 135,
+            "tp": 41,
+            "fp": 90,
+            "fn": 94
+          },
+          "MEDIUM": {
+            "precision": 0.4281,
+            "recall": 0.3333,
+            "f1_score": 0.3748,
+            "support": 429,
+            "tp": 143,
+            "fp": 191,
+            "fn": 286
+          },
+          "LOW": {
+            "precision": 0.433,
+            "recall": 0.5217,
+            "f1_score": 0.4732,
+            "support": 483,
+            "tp": 252,
+            "fp": 330,
+            "fn": 231
+          }
+        },
+        "confusion_matrix": {
+          "HIGH": {
+            "HIGH": 41,
+            "MEDIUM": 22,
+            "LOW": 72
+          },
+          "MEDIUM": {
+            "HIGH": 28,
+            "MEDIUM": 143,
+            "LOW": 258
+          },
+          "LOW": {
+            "HIGH": 62,
+            "MEDIUM": 169,
+            "LOW": 252
+          }
+        },
+        "total_cases": 1047
+      },
+      "english": {
+        "accuracy": 0.4744,
+        "safe_concordance": 0.7566,
+        "under_triage_rate": 0.2434,
+        "over_triage_rate": 0.2822,
+        "macro_precision": 0.5017,
+        "macro_recall": 0.4909,
+        "macro_f1": 0.4958,
+        "weighted_f1": 0.475,
+        "per_class": {
+          "HIGH": {
+            "precision": 0.604,
+            "recall": 0.5545,
+            "f1_score": 0.5782,
+            "support": 110,
+            "tp": 61,
+            "fp": 40,
+            "fn": 49
+          },
+          "MEDIUM": {
+            "precision": 0.461,
+            "recall": 0.4844,
+            "f1_score": 0.4724,
+            "support": 256,
+            "tp": 124,
+            "fp": 145,
+            "fn": 132
+          },
+          "LOW": {
+            "precision": 0.44,
+            "recall": 0.4337,
+            "f1_score": 0.4368,
+            "support": 279,
+            "tp": 121,
+            "fp": 154,
+            "fn": 158
+          }
+        },
+        "confusion_matrix": {
+          "HIGH": {
+            "HIGH": 61,
+            "MEDIUM": 3,
+            "LOW": 46
+          },
+          "MEDIUM": {
+            "HIGH": 24,
+            "MEDIUM": 124,
+            "LOW": 108
+          },
+          "LOW": {
+            "HIGH": 16,
+            "MEDIUM": 142,
+            "LOW": 121
+          }
+        },
+        "total_cases": 645
+      }
+    }
+  }
+}

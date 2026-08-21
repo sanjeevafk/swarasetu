@@ -1,0 +1,8 @@
+metric,baseline,improved,delta_improved_minus_baseline,verdict,note
+Accuracy,0.067526,0.294092,0.226566,improved,
+Macro F1,0.077234,0.236885,0.159651,improved,
+HIGH Precision,0.616279,0.359649,-0.25663,regressed,
+HIGH Recall,0.064713,0.150183,0.08547,improved,
+HIGH F1,0.117127,0.211886,0.094759,improved,
+HIGH -> LOW errors,732,386,-346,improved,error counts: lower is better
+HIGH -> MEDIUM errors,34,310,276,regressed,error counts: lower is better

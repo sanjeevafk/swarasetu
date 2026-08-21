@@ -1,0 +1,69 @@
+# Improved training experiment - SwaraSetu
+# Baseline (deterministic IMCI engine, reports/baseline_metrics.json) remains untouched.
+# This experiment trains a learned triage classifier as a COMPLEMENTARY model and
+# evaluates it with the SAME evaluation pipeline / same held-out benchmark used for the baseline.
+
+experiment:
+  name: experiment_improved
+  version: v1
+  seed: 42                      # fixed for all splits/init/shuffling
+  description: >
+    TF-IDF + logistic regression triage classifier trained ONLY on datasets marked
+    training_allowed: true in data/dataset_registry.yaml. The deterministic IMCI
+    engine is not modified. External test sets are never used during fitting.
+
+model:
+  type: tfidf_logreg
+  features:
+    word_ngrams: [1, 2]
+    char_wb_ngrams: [3, 5]
+    min_df: 2
+    max_features: 200000
+    sublinear_tf: true
+  classifier:
+    estimator: LogisticRegression
+    C: 4.0
+    max_iter: 2000
+    class_weight: balanced
+    solver: lbfgs            # deterministic multinomial; fixed seed controls shuffling
+    random_state: 42
+
+labels:
+  classes: [LOW, MEDIUM, HIGH]
+  source_label_field: urgency          # verbatim source label kept alongside prediction
+  source_to_swara:
+    Low: LOW
+    Medium: MEDIUM
+    High: HIGH
+
+training_data:                          # ALL must have training_allowed: true in registry
+  - dataset: tulsiandhare_multilingual_medical_symptom_triage
+    path: data/external/multilingual_medical_symptom_triage.csv
+    text_field: patient_query
+    label_field: urgency
+    format: csv                         # large file -> stream with usecols
+
+forbidden_at_training_time:             # never loaded by trainer (enforced + logged)
+  - swarasetu_triage_protocols_2251     # held-out benchmark
+  - physionet_mietic
+  - mimic_iv_ed
+  - yale_ed_triage_hong2018
+  - nhamcs_ed
+  - local_bengali_banglish_triage       # quarantined provenance
+
+validation:
+  internal_holdout_fraction: 0.1       # stratified, seed=42; sanity only, not reported as benchmark
+
+evaluation:
+  pipeline: baseline                   # identical metrics/GT mapping to backend/scripts/eval_baseline.py
+  benchmark_dataset: triage_protocols_structured.json   # 2251 cases, English vignettes
+  text_field: input.formatted_input
+  gt_mapping: map_ground_truth         # imported from backend/scripts/benchmark_protocols.py
+
+outputs:
+  run_dir: runs/experiment_improved_v1
+  checkpoint: runs/experiment_improved_v1/checkpoint.pkl
+  training_config: runs/experiment_improved_v1/training_config.json
+  dataset_hashes: runs/experiment_improved_v1/dataset_hashes.json
+  preprocessing: runs/experiment_improved_v1/preprocessing.json
+  report: reports/improved_metrics.json
