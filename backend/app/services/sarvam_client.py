@@ -261,11 +261,14 @@ class SarvamClient:
         # Maternal
         if kwargs.get("pregnant"):
             if _matches_word(["headache", "sar dard", "thalai vali", "सिर दर्द", "தலைவலி"], raw):
-                kwargs["headache_severe"] = True
+                kwargs["severe_headache"] = True
+            if _matches_word(["blurred vision", "dhundhla", "paarvai mangal", "धुंधला", "பார்வை மங்கல்", "மங்கலாக"], raw):
+                kwargs["blurred_vision"] = True
             if _matches_word(["bleeding", "khoon", "raktham", "रक्तस्राव", "இரத்தப்போக்கு"], raw):
                 kwargs["vaginal_bleeding"] = True
 
         return SymptomPayload(**kwargs)
+
 
 
 
