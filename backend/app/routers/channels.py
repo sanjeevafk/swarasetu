@@ -430,6 +430,7 @@ async def handle_telegram_webhook(
         except Exception as err:
             logger.error("Error downloading/transcribing Telegram voice note: %s", err)
 
+    asr_res: dict = {}
     if not incoming_text:
         reply_msg = "👋 Hello! I am SwaraSetu Gaon Doctor. Please send me a voice note or type symptoms (e.g., 'Child has fever for 2 days')."
         async with httpx.AsyncClient(timeout=30.0) as client:
@@ -440,7 +441,24 @@ async def handle_telegram_webhook(
         return {"status": "prompted"}
 
     # Extract symptoms and run WHO IMCI triage
-    payload = sarvam_client.extract_symptoms_rule_fallback(incoming_text, language="hi")
+    detected_lang = "hi"
+    if asr_res and asr_res.get("language_code"):
+        lang_str = str(asr_res.get("language_code")).split("-")[0].lower()
+        if lang_str in ["hi", "ta", "bn", "te", "mr", "gu", "kn", "ml", "pa", "en"]:
+            detected_lang = lang_str
+    else:
+        # Detect script from text
+        import re
+        if re.search(r"[\u0900-\u097F]", incoming_text):
+            detected_lang = "hi"
+        elif re.search(r"[\u0B80-\u0BFF]", incoming_text):
+            detected_lang = "ta"
+        elif re.search(r"[\u0980-\u09FF]", incoming_text):
+            detected_lang = "bn"
+        elif re.search(r"[\u0C00-\u0C7F]", incoming_text):
+            detected_lang = "te"
+
+    payload = sarvam_client.extract_symptoms_rule_fallback(incoming_text, language=detected_lang)
     triage_req = TriageEvaluateRequest(
         payload=SymptomPayloadIn(**asdict(payload)),
         client_uuid=f"tg-{uuid.uuid4().hex[:12]}",
@@ -449,25 +467,36 @@ async def handle_telegram_webhook(
     directive = res["directive"]
     outcome = res["outcome"]
 
-    # Build triage reply with detected text
-    score_badge = "🔴 RED EMERGENCY" if outcome.risk_score == 3 else "🟡 ASHA DISPATCH" if outcome.risk_score == 2 else "🟢 SELF CARE"
-    reply_text = f"🩺 *SwaraSetu Clinical Triage ({score_badge})*\n\n🗣️ *Detected:* \"{incoming_text}\"\n\n📋 *Guidance:* {directive.message_en}\n\n*Clinical Rationale:* {outcome.rationale_en}"
+    # Translate clinical directive into native Indic dialect for speech synthesis & text
+    speech_lang = detected_lang if detected_lang != "en" else "hi"
+    native_advice = await sarvam_client.translate_text(
+        text=directive.message_en,
+        source_language="en",
+        target_language=speech_lang,
+    )
 
+    # Build triage reply with detected text and native language advice
+    score_badge = "🔴 RED EMERGENCY" if outcome.risk_score == 3 else "🟡 ASHA DISPATCH" if outcome.risk_score == 2 else "🟢 SELF CARE"
+    reply_text = (
+        f"🩺 *SwaraSetu Clinical Triage ({score_badge})*\n\n"
+        f"🗣️ *Detected ({detected_lang.upper()}):* \"{incoming_text}\"\n\n"
+        f"💬 *सलाह / Advice:* {native_advice}\n\n"
+        f"📋 *Clinical Rationale:* {outcome.rationale_en}"
+    )
 
     if outcome.risk_score == 3 and res.get("nearest_phc"):
         phc = res["nearest_phc"]
         reply_text += f"\n\n📍 *Nearest PHC:* {phc['name']}\n📞 *Doctor Contact:* {phc['phone']}\n*Distance:* ~{phc['distance_km']:.1f} km (Open 24/7)"
 
     async with httpx.AsyncClient(timeout=30.0) as client:
-
         # Send text message
         await client.post(
             f"https://api.telegram.org/bot{token}/sendMessage",
             json={"chat_id": chat_id, "text": reply_text, "parse_mode": "Markdown"},
         )
 
-        # Synthesize Sarvam TTS audio voice reply
-        audio_b64 = await sarvam_client.synthesize_speech(text=directive.message_en, target_language="hi")
+        # Synthesize Sarvam TTS audio voice reply in native dialect
+        audio_b64 = await sarvam_client.synthesize_speech(text=native_advice, target_language=speech_lang)
         if audio_b64:
             import base64 as b64_lib
             audio_bytes = b64_lib.b64decode(audio_b64)
@@ -477,4 +506,5 @@ async def handle_telegram_webhook(
                 files={"voice": ("response.wav", audio_bytes, "audio/wav")},
             )
 
-    return {"status": "processed", "risk_score": outcome.risk_score}
+    return {"status": "processed", "risk_score": outcome.risk_score, "language": detected_lang}
+
