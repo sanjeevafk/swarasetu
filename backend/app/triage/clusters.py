@@ -43,6 +43,8 @@ def evaluate_general_danger_signs(p: SymptomPayload) -> ClusterFinding:
         (p.vomiting_everything, "vomiting_everything", "Vomiting everything"),
         (p.chest_pain_severe, "severe_chest_pain", "Severe chest pain"),
         (p.vomiting_blood, "vomiting_blood", "Vomiting blood (haematemesis)"),
+        (p.acute_poisoning_or_bite, "snake_bite_emergency", "Snake bite / acute poisoning"),
+        (p.severe_trauma, "severe_trauma_burn", "Severe trauma / burn / deep injury"),
     ]
 
     codes: list[str] = []
@@ -56,6 +58,11 @@ def evaluate_general_danger_signs(p: SymptomPayload) -> ClusterFinding:
     keys = ["general_danger_sign"]
     if "severe_chest_pain" in codes or "vomiting_blood" in codes:
         keys.append("severe_chest_pain")
+    if "snake_bite_emergency" in codes:
+        keys.append("snake_bite_emergency")
+    if "severe_trauma_burn" in codes:
+        keys.append("severe_trauma_burn")
+
 
     return ClusterFinding(
         cluster="general",

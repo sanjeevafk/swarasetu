@@ -203,10 +203,27 @@ class SarvamClient:
             kwargs["convulsions"] = True
         if _matches_word(["unconscious", "behosh", "mayakkam", "ogyan", "बेहोश", "மயக்கம்", "অজ্ঞান"], raw):
             kwargs["unconscious"] = True
-        if _matches_word(["chest pain", "seene me dard", "marbu vali", "buke betha", "सीने में दर्द", "छाती में दर्द", "बुके ব্যথা"], raw):
+        if _matches_word(["chest pain", "seene me dard", "marbu vali", "buke betha", "सीने में दर्द", "छाती में दर्द", "বুকে ব্যথা"], raw):
             kwargs["chest_pain_severe"] = True
-        if _matches_word(["vomit blood", "vomiting blood", "khoon ki ulti", "rakthavanthi", "rokto bomi", "खून की उल्टी", "रक्तবমি"], raw):
+        if _matches_word(["vomit blood", "vomiting blood", "khoon ki ulti", "rakthavanthi", "rokto bomi", "खून की उल्टी", "রক্তবমি"], raw):
             kwargs["vomiting_blood"] = True
+        if _matches_word([
+            "snake", "snake bite", "snakebite", "bitten by snake", "scorpion", "poison", "poisoning", "toxin",
+            "dog bite", "rabies", "insect bite",
+            "பாம்பு", "பாம்பு கடி", "பாம்பு கிடைச்சிருச்சு", "பாம்பு கடிச்சிருச்சு", "விஷம்", "விஷக்கடி", "தேள்", "தேள் கடி", "நாய் கடி",
+            "सांप", "साँप", "सांप काट", "सांप ने काटा", "जहर", "बिच्छू", "विष", "कुत्ते ने काटा", "कुत्ता काटा",
+            "সাপ", "সাপের কামড়", "সাপে কেটেছে", "বিষ", "বিছে", "কুকুর কামড়",
+            "పాము", "పాము కాటు", "విషం", "తేలు", "కుక్క కాటు"
+        ], raw):
+            kwargs["acute_poisoning_or_bite"] = True
+        if _matches_word([
+            "burn", "burns", "burned", "fracture", "accident", "head injury", "deep cut", "electric shock",
+            "தீக்காயம்", "விபத்து", "அடிபட்டு", "எலும்பு முறிவு", "மின்சாரம்",
+            "जल गया", "जलना", "दुर्घटना", "एक्सीडेंट", "गंभीर चोट", "हड्डी टूटी", "करंट",
+            "পুড়ে গেছে", "দুর্ঘটনা", "ভাঙা", "কারেন্ট",
+            "కాలిపోయింది", "ప్రమాదం", "ఎముక విరిగింది"
+        ], raw):
+            kwargs["severe_trauma"] = True
 
         # Fever
         if _matches_word(["fever", "bukhar", "kaichal", "jwor", "gorom", "thand", "chills", "बुखार", "காய்ச்சல்", "জ্বর"], raw):
