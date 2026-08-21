@@ -423,7 +423,7 @@ async def handle_telegram_webhook(
                             asr_res = await sarvam_client.transcribe_audio(
                                 audio_bytes=download_res.content,
                                 filename="voice.ogg",
-                                language_code="hi",
+                                language_code="unknown",
                             )
                             incoming_text = asr_res.get("transcript", "")
                             logger.info("Telegram voice transcribed: %s", incoming_text)
@@ -439,7 +439,6 @@ async def handle_telegram_webhook(
             )
         return {"status": "prompted"}
 
-
     # Extract symptoms and run WHO IMCI triage
     payload = sarvam_client.extract_symptoms_rule_fallback(incoming_text, language="hi")
     triage_req = TriageEvaluateRequest(
@@ -450,9 +449,10 @@ async def handle_telegram_webhook(
     directive = res["directive"]
     outcome = res["outcome"]
 
-    # Build triage reply
+    # Build triage reply with detected text
     score_badge = "🔴 RED EMERGENCY" if outcome.risk_score == 3 else "🟡 ASHA DISPATCH" if outcome.risk_score == 2 else "🟢 SELF CARE"
-    reply_text = f"🩺 *SwaraSetu Clinical Triage ({score_badge})*\n\n{directive.message_en}\n\n*Clinical Rationale:* {outcome.rationale_en}"
+    reply_text = f"🩺 *SwaraSetu Clinical Triage ({score_badge})*\n\n🗣️ *Detected:* \"{incoming_text}\"\n\n📋 *Guidance:* {directive.message_en}\n\n*Clinical Rationale:* {outcome.rationale_en}"
+
 
     if outcome.risk_score == 3 and res.get("nearest_phc"):
         phc = res["nearest_phc"]
