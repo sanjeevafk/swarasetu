@@ -35,20 +35,51 @@ Rural and semi-urban patients sitting at home with basic mobile connectivity.
 ### The Problem it Solves:
 800 million rural Indians cannot read English health apps and will never download an 80MB Android application from the Play Store. However, **nearly all of them already know how to send voice notes on WhatsApp**.
 
-### How it Works:
-1. **Dedicated Number:** The health department provisions a verified WhatsApp Business number (e.g. `+91-XXXXX-XXXXX` or Twilio Sandbox `+1 415 523 8886`).
-2. **Voice Intake:** The patient opens a regular 1-on-1 chat, taps the microphone icon, and speaks in their native language (Hindi, Tamil, Bengali, Telugu, etc.):
+### 2.1 Technical Webhook Lifecycle & Architecture
+
+WhatsApp does **not** run code on the patient's phone; it acts purely as the conversational interface, forwarding voice notes and messages to the SwaraSetu backend via secure Webhooks:
+
+```
+[ Patient Phone (WhatsApp) ]
+           │ 
+           │ 1. Patient sends Voice Note (.ogg audio) or Text
+           ▼
+[ WhatsApp Business API / Twilio Gateway ]
+           │ 
+           │ 2. HTTP POST Webhook (MediaUrl0, From, Signature)
+           ▼
+[ SwaraSetu FastAPI Backend (/channels/whatsapp) ]
+           │
+           ├──▶ 3. Signature & Auth Validation: Verifies X-Twilio-Signature (HMAC-SHA1)
+           │
+           ├──▶ 4. Audio Download: Authenticated fetch of voice note from Twilio Media URL
+           │
+           ├──▶ 5. Speech-to-Text (STT): Sarvam Indic ASR transcribes dialect into text (<800ms)
+           │
+           ├──▶ 6. Clinical NER: Normalizes symptoms into standardized medical entities (JSON)
+           │
+           ├──▶ 7. WHO IMCI Rule Engine: Evaluates symptoms deterministically (Score 1, 2, or 3)
+           │
+           ├──▶ 8. Action & Dispatch Logic:
+           │         • If Score 2 (Moderate): Queries AshaAssignment DB -> Fires SMS Ping to ASHA mobile
+           │         • If Score 3 (Emergency): Runs Haversine distance math -> Finds nearest PHC & doctor phone
+           │
+           ├──▶ 9. Voice Synthesis (TTS): Sarvam Bulbul converts triage directive to spoken voice note
+           │
+           ▼ 10. Returns TwiML XML Response (<Response><Message><Body>...</Body></Message></Response>)
+[ Patient receives WhatsApp Reply Text + Spoken Audio Voice Note + Doctor Contact ]
+```
+
+### 2.2 Step-by-Step Execution Breakdown:
+1. **Dedicated Verified Number:** The health department provisions a verified WhatsApp Business number (e.g. `+91-XXXXX-XXXXX` or Twilio Sandbox `+1 415 523 8886`).
+2. **Patient Voice Intake:** The patient opens a regular 1-on-1 chat, taps the microphone icon, and speaks in their native language (Hindi, Tamil, Bengali, Telugu, etc.):
    > *"बच्चे को दो दिन से तेज बुखार है और सांस लेने में तकलीफ हो रही है।"*
-3. **Cloud Processing Pipeline:**
-   - **Sarvam Indic ASR:** Transcribes rural accents and code-mixed dialects in real time.
-   - **Clinical NER:** Converts unstructured speech into a structured clinical JSON payload.
-   - **Deterministic WHO IMCI Engine:** Computes risk score (1 = Self-Care, 2 = ASHA Dispatch, 3 = Immediate Emergency).
-   - **Sarvam TTS:** Synthesizes the clinical advice into a spoken voice note and returns it directly inside WhatsApp.
-4. **Automated ASHA Worker Dispatch (Score 2 / Yellow):**
-   - The backend queries the `AshaAssignment` database table and immediately fires an **automated SMS alert** to the local village ASHA worker's phone:
-   > *"🚨 ASHA ALERT: Moderate fever and cough reported in Belsand village. Home visit required within 24 hours."*
-5. **Nearest PHC Emergency Routing (Score 3 / Red):**
-   - For critical emergencies, the engine calculates the closest Primary Health Centre using the **Haversine spatial algorithm** and sends the patient the facility name, distance, 24/7 hours, and doctor contact number.
+3. **Webhook Trigger:** Twilio/Meta sends an HTTP POST request containing `From`, `Body`, and `MediaUrl0` to `/channels/whatsapp`.
+4. **Cloud Speech & NER:** The backend passes the audio to **Sarvam AI Indic ASR**, transcribing colloquial dialects and extracting structured clinical indicators.
+5. **Deterministic IMCI Triage:** The Python clinical engine (`backend/app/triage/engine.py`) processes the symptoms across 4 WHO syndromic clusters with zero hallucination.
+6. **Automated ASHA Alert (Score 2):** Queries `AshaAssignment` in the database and fires an automated SMS alert ping to the village health worker's mobile phone.
+7. **Emergency Facility Routing (Score 3):** Computes spatial Haversine distance to the closest open clinic and attaches the facility name, distance, and doctor emergency contact directly into the WhatsApp reply.
+
 
 ---
 
