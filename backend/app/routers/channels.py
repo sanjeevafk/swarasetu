@@ -15,13 +15,13 @@ from typing import Annotated
 from xml.sax.saxutils import escape as xml_escape
 
 import httpx
-from fastapi import APIRouter, Depends, File, Form, Header, HTTPException, Query, Request, Response, UploadFile, status
+from fastapi import APIRouter, BackgroundTasks, Depends, File, Form, Header, HTTPException, Query, Request, Response, UploadFile, status
 from fastapi.responses import JSONResponse, PlainTextResponse
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.config import settings
-from app.database import get_db
+from app.database import SessionLocal, get_db
 from app.models.phc import AshaAssignment, PHC
 from app.schemas.triage import SymptomPayloadIn, TriageEvaluateRequest
 from app.services.phc_service import nearest_phcs
@@ -422,31 +422,20 @@ async def handle_meta_whatsapp_webhook(
     return {"status": "ok"}
 
 
-@router.post("/telegram")
-async def handle_telegram_webhook(
-    request: Request,
-    db: Session = Depends(get_db),
-    x_telegram_bot_api_secret_token: Annotated[str | None, Header(alias="X-Telegram-Bot-Api-Secret-Token")] = None,
-) -> dict:
-    """Telegram Bot incoming webhook listener with secret token authentication and location resolution."""
-    # Verify Telegram secret token header
-    if settings.telegram_webhook_secret and os.getenv("TESTING") != "1":
-        if not x_telegram_bot_api_secret_token or not hmac.compare_digest(x_telegram_bot_api_secret_token, settings.telegram_webhook_secret):
-            logger.warning("Rejected Telegram webhook: missing or invalid X-Telegram-Bot-Api-Secret-Token header.")
-            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Invalid or missing Telegram secret token.")
-
-    body = await request.json()
-    logger.debug("Received Telegram Webhook event update_id=%s", body.get("update_id"))
-
+async def _process_telegram_update(body: dict) -> None:
+    """Async background worker for processing Telegram message/voice notes and dispatching triage response."""
     message = body.get("message", {})
     if not message:
-        return {"status": "ignored"}
+        return
 
     chat_id = message.get("chat", {}).get("id")
     if not chat_id:
-        return {"status": "no_chat_id"}
+        return
 
-    token = settings.telegram_bot_token or "TELEGRAM_BOT_TOKEN_PLACEHOLDER"
+    token = settings.telegram_bot_token
+    if not token:
+        logger.warning("TELEGRAM_BOT_TOKEN not configured; skipping telegram reply dispatch.")
+        return {"status": "unconfigured"}
     incoming_text = message.get("text", "").strip()
     voice = message.get("voice") or message.get("audio")
 
@@ -477,17 +466,28 @@ async def handle_telegram_webhook(
                                 filename="voice.ogg",
                             )
                             incoming_text = asr_res.get("transcript", "")
+                            logger.info("Transcribed Telegram voice note (len=%d bytes): '%s' (lang=%s)", len(download_res.content), incoming_text, asr_res.get("language_code"))
         except Exception as err:
             logger.error("Error downloading/transcribing Telegram voice note: %s", err)
 
-    if not incoming_text:
-        reply_msg = "👋 Hello! I am SwaraSetu Gaon Doctor. Please send me a voice note or type symptoms (e.g., 'Child has fever for 2 days')."
-        async with httpx.AsyncClient(timeout=30.0) as client:
-            await client.post(
-                f"https://api.telegram.org/bot{token}/sendMessage",
-                json={"chat_id": chat_id, "text": reply_msg},
-            )
-        return {"status": "prompted"}
+    lower_text = incoming_text.lower().strip()
+    if not incoming_text or lower_text in ("/start", "/help", "hi", "hello", "namaste", "vanakkam", "nomoshkar", "hey", "start"):
+        welcome_msg = (
+            "🩺 *Namaste! I am SwaraSetu Gaon Doctor (स्वर सेतु).*\n\n"
+            "I provide instant, voice-enabled clinical triage and emergency guidance for rural health.\n\n"
+            "🎙️ *Send a Voice Note:* Speak naturally in Hindi, Tamil, Bengali, Telugu, Marathi, etc.\n"
+            "✍️ *Or Type Symptoms:* e.g. _'बच्चे को 2 दिन से तेज बुखार है'_ or _'chest pain and breathlessness'_\n\n"
+            "📍 *Location:* Send your GPS location to instantly locate the nearest 24/7 PHC."
+        )
+        try:
+            async with httpx.AsyncClient(timeout=30.0) as client:
+                await client.post(
+                    f"https://api.telegram.org/bot{token}/sendMessage",
+                    json={"chat_id": chat_id, "text": welcome_msg, "parse_mode": "Markdown"},
+                )
+        except Exception as err:
+            logger.error("Failed to send welcome prompt: %s", err)
+        return
 
     # Resolve language code
     detected_lang = "hi"
@@ -505,24 +505,26 @@ async def handle_telegram_webhook(
         latitude=latitude,
         longitude=longitude,
     )
-    res = evaluate_and_log(db=db, request=triage_req)
-    directive = res["directive"]
-    outcome = res["outcome"]
+    
+    with SessionLocal() as db:
+        res = evaluate_and_log(db=db, request=triage_req)
+        directive = res["directive"]
+        outcome = res["outcome"]
 
-    # Populate nearest PHC
-    if latitude is not None and longitude is not None:
-        phc_list = nearest_phcs(db=db, lat=latitude, lon=longitude, limit=1)
-        res["nearest_phc"] = phc_list[0].__dict__ if phc_list else None
-    elif outcome.risk_score == 3:
-        phc_list = db.execute(select(PHC).limit(1)).scalars().all()
-        if phc_list:
-            res["nearest_phc"] = {
-                "name": phc_list[0].name,
-                "phone": phc_list[0].phone,
-                "distance_km": 4.2,
-                "latitude": phc_list[0].latitude,
-                "longitude": phc_list[0].longitude,
-            }
+        # Populate nearest PHC
+        if latitude is not None and longitude is not None:
+            phc_list = nearest_phcs(db=db, lat=latitude, lon=longitude, limit=1)
+            res["nearest_phc"] = phc_list[0].__dict__ if phc_list else None
+        elif outcome.risk_score == 3:
+            phc_list = db.execute(select(PHC).limit(1)).scalars().all()
+            if phc_list:
+                res["nearest_phc"] = {
+                    "name": phc_list[0].name,
+                    "phone": phc_list[0].phone,
+                    "distance_km": 4.2,
+                    "latitude": phc_list[0].latitude,
+                    "longitude": phc_list[0].longitude,
+                }
 
     # Translate clinical directive into native Indic dialect for speech synthesis & text
     speech_lang = detected_lang if detected_lang != "en" else "hi"
@@ -562,22 +564,53 @@ async def handle_telegram_webhook(
             f"🗺️ *Route:* ~{phc['distance_km']:.1f} km ([Open Navigation Map](https://www.google.com/maps/search/?api=1&query={phc['latitude']},{phc['longitude']}))"
         )
 
-    async with httpx.AsyncClient(timeout=30.0) as client:
-        # Send text message
-        await client.post(
-            f"https://api.telegram.org/bot{token}/sendMessage",
-            json={"chat_id": chat_id, "text": reply_text, "parse_mode": "Markdown"},
-        )
-
-        # Synthesize Sarvam TTS audio voice reply in native dialect
-        audio_b64 = await sarvam_client.synthesize_speech(text=native_advice, target_language=speech_lang)
-        if audio_b64:
-            import base64 as b64_lib
-            audio_bytes = b64_lib.b64decode(audio_b64)
-            await client.post(
-                f"https://api.telegram.org/bot{token}/sendVoice",
-                data={"chat_id": chat_id},
-                files={"voice": ("response.wav", audio_bytes, "audio/wav")},
+    try:
+        async with httpx.AsyncClient(timeout=30.0) as client:
+            # Send text message with Markdown, falling back to plain text if Markdown parsing fails
+            send_res = await client.post(
+                f"https://api.telegram.org/bot{token}/sendMessage",
+                json={"chat_id": chat_id, "text": reply_text, "parse_mode": "Markdown"},
             )
+            if send_res.status_code != 200:
+                logger.warning("Telegram Markdown send failed (%s: %s), falling back to plain text.", send_res.status_code, send_res.text)
+                await client.post(
+                    f"https://api.telegram.org/bot{token}/sendMessage",
+                    json={"chat_id": chat_id, "text": reply_text},
+                )
 
-    return {"status": "processed", "risk_score": outcome.risk_score, "language": detected_lang}
+            # Synthesize Sarvam TTS audio voice reply in native dialect
+            audio_b64 = await sarvam_client.synthesize_speech(text=native_advice, target_language=speech_lang)
+            if audio_b64:
+                import base64 as b64_lib
+                audio_bytes = b64_lib.b64decode(audio_b64)
+                await client.post(
+                    f"https://api.telegram.org/bot{token}/sendVoice",
+                    data={"chat_id": chat_id},
+                    files={"voice": ("response.wav", audio_bytes, "audio/wav")},
+                )
+    except Exception as err:
+        logger.error("Error dispatching Telegram message response: %s", err)
+
+
+@router.post("/telegram")
+async def handle_telegram_webhook(
+    request: Request,
+    background_tasks: BackgroundTasks,
+    x_telegram_bot_api_secret_token: Annotated[str | None, Header(alias="X-Telegram-Bot-Api-Secret-Token")] = None,
+) -> dict:
+    """Telegram Bot incoming webhook listener with secret token authentication and async background dispatch."""
+    # Verify Telegram secret token header
+    if settings.telegram_webhook_secret and os.getenv("TESTING") != "1":
+        if not x_telegram_bot_api_secret_token or not hmac.compare_digest(x_telegram_bot_api_secret_token, settings.telegram_webhook_secret):
+            logger.warning("Rejected Telegram webhook: missing or invalid X-Telegram-Bot-Api-Secret-Token header.")
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Invalid or missing Telegram secret token.")
+
+    body = await request.json()
+    logger.debug("Received Telegram Webhook event update_id=%s", body.get("update_id"))
+
+    if not body.get("message"):
+        return {"status": "ignored"}
+
+    # Dispatch to background task so Telegram receives immediate 200 OK without timeout
+    background_tasks.add_task(_process_telegram_update, body=body)
+    return {"status": "accepted"}
