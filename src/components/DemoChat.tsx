@@ -1,8 +1,12 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Mic, Send, MoreVertical, Paperclip, ChevronLeft, CloudOff } from 'lucide-react';
-import { useAppStore, type AppLanguage } from '@/store/useAppStore';
+import { Mic, Send, MoreVertical, Paperclip, ChevronLeft, CloudOff, Sparkles } from 'lucide-react';
+import { useAppStore, type AppLanguage, type ActiveEvaluation } from '@/store/useAppStore';
 import { TriageResultCard } from './TriageResultCard';
+import { normalizeTranscript } from '@/lib/edge/sttRunner';
+import { evaluateLocal } from '@/lib/triageLocal';
+import { api } from '@/lib/api';
+import type { LanguageCode } from '@/types/api';
 
 export function DemoChat({ onShowMap }: { onShowMap: () => void }) {
   const {
@@ -13,27 +17,37 @@ export function DemoChat({ onShowMap }: { onShowMap: () => void }) {
     setDemoProgress,
     isEvaluating,
     activeEvaluation,
+    isOfflineMode,
     evaluateCurrentScenario,
   } = useAppStore();
   
-  // Progress states: 0=init, 1=recording, 2=stt, 3=ner, 4=imci, 5=result
   const [messages, setMessages] = useState<any[]>([]);
+  const [inputText, setInputText] = useState('');
+  const [customResult, setCustomResult] = useState<ActiveEvaluation | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
-  }, [messages, demoProgress]);
+  }, [messages, demoProgress, customResult]);
 
   // Reset chat when language changes
   useEffect(() => {
-    setMessages([{ type: 'bot', text: 'Namaste! Please tell me how your patient is feeling today using a voice note.' }]);
+    const greeting = activeLanguage === 'Tamil'
+      ? 'வணக்கம்! உங்கள் நோயாளிக்கு என்ன பிரச்சனை என்று வாய்ஸ் நோட் மூலம் அல்லது டைப் செய்து சொல்லுங்கள்.'
+      : activeLanguage === 'Bengali'
+      ? 'নমস্কার! আপনার রোগীর কী সমস্যা হচ্ছে তা ভয়েস নোট বা লিখে জানান।'
+      : 'नमस्ते! कृपया बताएं कि आपके मरीज को क्या तकलीफ है — बोलकर या लिखकर संदेश भेजें।';
+
+    setMessages([{ type: 'bot', text: greeting }]);
     setDemoProgress(0);
+    setCustomResult(null);
   }, [activeLanguage, setDemoProgress]);
 
   const handleMicClick = async () => {
     if (demoProgress > 0) return;
+    setCustomResult(null);
     setDemoProgress(1); // Recording
 
     setTimeout(() => {
@@ -45,7 +59,7 @@ export function DemoChat({ onShowMap }: { onShowMap: () => void }) {
         setDemoProgress(3); // NER
 
         setTimeout(() => {
-          setDemoProgress(4); // IMCI engine running — real evaluation starts here
+          setDemoProgress(4); // IMCI engine running
           void evaluateCurrentScenario().then(() => {
             setTimeout(() => {
               setDemoProgress(5); // Result
@@ -55,6 +69,74 @@ export function DemoChat({ onShowMap }: { onShowMap: () => void }) {
       }, 1500);
     }, 1500);
   };
+
+  const handleSendCustomText = async (textToSend?: string) => {
+    const text = (textToSend || inputText).trim();
+    if (!text) return;
+
+    // Append user message
+    setMessages(prev => [...prev, { type: 'user_text', text }]);
+    setInputText('');
+    setCustomResult(null);
+    setDemoProgress(3); // Analyzing
+
+    const langCode: LanguageCode = activeLanguage === 'Tamil' ? 'ta' : activeLanguage === 'Bengali' ? 'bn' : 'hi';
+    const payload = normalizeTranscript(text, langCode);
+
+    try {
+      setDemoProgress(4); // IMCI running
+      let result: ActiveEvaluation;
+
+      if (!isOfflineMode) {
+        try {
+          const apiRes = await api.evaluateTriage({
+            payload,
+            client_uuid: `txt-${Date.now()}`,
+            district: 'Sitamarhi',
+          });
+          result = {
+            outcome: apiRes.outcome,
+            directive: apiRes.directive,
+            nearest_phc: apiRes.nearest_phc,
+            evaluatedOffline: false,
+          };
+        } catch {
+          const outcome = evaluateLocal(payload);
+          result = {
+            outcome,
+            directive: {
+              type: outcome.risk_score === 3 ? 'phc_referral' : outcome.risk_score === 2 ? 'asha_dispatch' : 'self_care',
+              message_en: outcome.rationale_en,
+            },
+            nearest_phc: null,
+            evaluatedOffline: true,
+          };
+        }
+      } else {
+        const outcome = evaluateLocal(payload);
+        result = {
+          outcome,
+          directive: {
+            type: outcome.risk_score === 3 ? 'phc_referral' : outcome.risk_score === 2 ? 'asha_dispatch' : 'self_care',
+            message_en: outcome.rationale_en,
+          },
+          nearest_phc: null,
+          evaluatedOffline: true,
+        };
+      }
+
+
+      setTimeout(() => {
+        setCustomResult(result);
+        setDemoProgress(5);
+      }, 800);
+    } catch (err) {
+      console.error('Triage failed:', err);
+      setDemoProgress(0);
+    }
+  };
+
+  const activeRes = customResult || activeEvaluation;
 
   return (
     <div className="flex flex-col h-full bg-[#efeae2] dark:bg-[#0b141a] relative font-sans">
@@ -67,7 +149,9 @@ export function DemoChat({ onShowMap }: { onShowMap: () => void }) {
           </div>
           <div>
             <h2 className="font-semibold text-base leading-tight">SwaraSetu Triage</h2>
-            <p className="text-xs text-white/80 font-medium tracking-wide">Sarvam AI Triage Engine</p>
+            <p className="text-xs text-white/80 font-medium tracking-wide">
+              {isOfflineMode ? 'On-Device Edge Engine (Offline)' : 'Sarvam AI Clinical Engine'}
+            </p>
           </div>
         </div>
         <div className="flex gap-4">
@@ -99,6 +183,7 @@ export function DemoChat({ onShowMap }: { onShowMap: () => void }) {
                   : 'bg-[#d9fdd3] dark:bg-[#005c4b] text-slate-900 dark:text-[#e9edef] rounded-tr-none'
               }`}>
                 {m.type === 'bot' && <p>{m.text}</p>}
+                {m.type === 'user_text' && <p className="font-medium">{m.text}</p>}
                 
                 {m.type === 'audio' && (
                   <div className="flex items-center gap-3 w-48">
@@ -137,56 +222,33 @@ export function DemoChat({ onShowMap }: { onShowMap: () => void }) {
             </motion.div>
           )}
 
-          {demoProgress >= 3 && (
-            <motion.div initial={{ opacity:0, y: 10 }} animate={{opacity:1, y: 0}} className="flex justify-start w-full my-4">
-              <div className="bg-white dark:bg-[#202c33] rounded-lg p-3 w-full border-l-4 border-blue-500 shadow-sm">
-                <div className="text-xs font-bold text-slate-500 dark:text-slate-400 mb-2 uppercase tracking-widest">Sarvam Extraction JSON</div>
-                <div className="grid grid-cols-2 gap-2 text-sm">
-                  {Object.entries(currentScenario.nerExtraction).map(([k,v]) => {
-                     if(!v || (Array.isArray(v) && v.length===0)) return null;
-                     return (
-                       <div key={k} className="bg-slate-50 dark:bg-slate-800 p-2 rounded border border-slate-100 dark:border-slate-700">
-                          <div className="text-[10px] text-slate-400 uppercase tracking-wider font-semibold">{k}</div>
-                          <div className="font-semibold text-slate-800 dark:text-slate-200 text-[13px] mt-0.5">
-                            {Array.isArray(v) ? v.join(', ') : String(v)}
-                          </div>
-                       </div>
-                     )
-                  })}
-                </div>
-              </div>
-            </motion.div>
-          )}
-
           {demoProgress >= 4 && (
             <motion.div initial={{ opacity:0, scale:0.95 }} animate={{opacity:1, scale:1}} className="flex justify-start w-full my-4">
                <div className="w-full bg-[#1e1e1e] text-slate-300 rounded-lg p-3 font-mono text-[11px] shadow-lg border border-slate-800">
-                  <div className="text-emerald-400 mb-1 font-bold"># IMCI Engine Running...</div>
-                  <div className="opacity-80">&gt; evaluating symptoms against WHO guidelines...</div>
+                  <div className="text-emerald-400 mb-1 font-bold"># IMCI Clinical Engine Running...</div>
+                  <div className="opacity-80">&gt; evaluating symptoms against WHO triage protocols...</div>
                   {demoProgress === 4 || isEvaluating ? (
-                    <div className="animate-pulse text-amber-400 font-bold">&gt; calculating risk...</div>
-                  ) : activeEvaluation ? (
+                    <div className="animate-pulse text-amber-400 font-bold">&gt; calculating clinical risk score...</div>
+                  ) : activeRes ? (
                     <>
-                      <div className="text-emerald-400 font-bold">&gt; decision: risk score {activeEvaluation.outcome.risk_score} ({activeEvaluation.outcome.primary_cluster})</div>
-                      {activeEvaluation.evaluatedOffline && (
+                      <div className="text-emerald-400 font-bold">&gt; decision: risk score {activeRes.outcome.risk_score} ({activeRes.outcome.primary_cluster})</div>
+                      {activeRes.evaluatedOffline && (
                         <div className="mt-1 flex items-center gap-1 text-amber-400">
                           <CloudOff className="w-3 h-3" /> on-device IMCI engine (offline)
                         </div>
                       )}
                     </>
-                  ) : (
-                    <div className="text-emerald-400 font-bold">&gt; decision: {currentScenario.imciDecision}</div>
-                  )}
+                  ) : null}
                </div>
             </motion.div>
           )}
 
-          {demoProgress === 5 && activeEvaluation && (
+          {demoProgress === 5 && activeRes && (
             <motion.div initial={{ opacity:0, y:20 }} animate={{opacity:1, y:0}} className="w-full mt-2 mb-4">
               <TriageResultCard
-                outcome={activeEvaluation.outcome}
-                evaluatedOffline={activeEvaluation.evaluatedOffline}
-                message={activeEvaluation.directive?.message_en ?? currentScenario.responseMessageEnglish}
+                outcome={activeRes.outcome}
+                evaluatedOffline={activeRes.evaluatedOffline}
+                message={activeRes.directive?.message_en ?? currentScenario.responseMessageEnglish}
                 onShowMap={onShowMap}
               />
             </motion.div>
@@ -194,24 +256,62 @@ export function DemoChat({ onShowMap }: { onShowMap: () => void }) {
         </AnimatePresence>
       </div>
 
+      {/* Quick Suggestion Symptom Chips */}
+      <div className="px-3 py-1.5 bg-[#f0f2f5]/90 dark:bg-[#1a2329]/90 border-t border-slate-200 dark:border-slate-800 flex gap-2 overflow-x-auto no-scrollbar">
+        <button
+          onClick={() => handleSendCustomText('बच्चे को एक दिन से हल्का बुखार है')}
+          className="text-xs bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 px-2.5 py-1 rounded-full border border-emerald-200 dark:border-emerald-800 flex-shrink-0 flex items-center gap-1 transition-colors"
+        >
+          <Sparkles className="w-3 h-3" /> Mild Fever (Score 1)
+        </button>
+        <button
+          onClick={() => handleSendCustomText('बच्चे को खांसी है और सांस लेने में तकलीफ हो रही है')}
+          className="text-xs bg-amber-50 hover:bg-amber-100 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 px-2.5 py-1 rounded-full border border-amber-200 dark:border-amber-800 flex-shrink-0 flex items-center gap-1 transition-colors"
+        >
+          <Sparkles className="w-3 h-3" /> Cough & Breathing (Score 2)
+        </button>
+        <button
+          onClick={() => handleSendCustomText('सीने में बहुत तेज दर्द है और खून की उल्टी हो रही है')}
+          className="text-xs bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 px-2.5 py-1 rounded-full border border-rose-200 dark:border-rose-800 flex-shrink-0 flex items-center gap-1 transition-colors"
+        >
+          <Sparkles className="w-3 h-3" /> Chest Pain & Blood (Score 3)
+        </button>
+      </div>
+
       {/* Input Area */}
-      <div className="bg-[#f0f2f5] dark:bg-[#202c33] p-2 md:p-3 flex items-center gap-2 z-10 border-t border-slate-200 dark:border-slate-800 border-opacity-50">
+      <div className="bg-[#f0f2f5] dark:bg-[#202c33] p-2 md:p-3 flex items-center gap-2 z-10 border-t border-slate-200 dark:border-slate-800">
         <button className="p-2 text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-full transition-colors">
-          <Paperclip className="w-6 h-6" />
+          <Paperclip className="w-5 h-5" />
         </button>
         <div className="flex-1 bg-white dark:bg-[#2a3942] rounded-full h-11 px-4 flex items-center shadow-sm">
-          <span className="text-slate-400 text-[15px]">Message</span>
+          <input
+            type="text"
+            value={inputText}
+            onChange={(e) => setInputText(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                handleSendCustomText();
+              }
+            }}
+            placeholder="Type symptoms in English, Hindi, Tamil..."
+            className="w-full bg-transparent text-slate-900 dark:text-slate-100 placeholder:text-slate-400 text-sm focus:outline-none"
+          />
         </div>
-        {demoProgress === 0 ? (
+        
+        {inputText.trim() ? (
           <button 
-            onClick={handleMicClick}
-            className="w-12 h-12 bg-[#00a884] rounded-full flex items-center text-white justify-center shadow-md hover:scale-105 transition-transform"
+            onClick={() => handleSendCustomText()}
+            className="w-11 h-11 bg-[#00a884] rounded-full flex items-center text-white justify-center shadow-md hover:scale-105 transition-transform"
           >
-            <Mic className="w-6 h-6" />
+            <Send className="w-5 h-5 ml-0.5" />
           </button>
         ) : (
-          <button className="w-12 h-12 bg-slate-300 dark:bg-slate-700 rounded-full flex items-center text-slate-500 dark:text-slate-400 justify-center">
-            <Send className="w-5 h-5 ml-1" />
+          <button 
+            onClick={handleMicClick}
+            title="Click to simulate voice note input"
+            className="w-11 h-11 bg-[#00a884] rounded-full flex items-center text-white justify-center shadow-md hover:scale-105 transition-transform"
+          >
+            <Mic className="w-5 h-5" />
           </button>
         )}
       </div>
