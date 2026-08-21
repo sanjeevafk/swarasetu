@@ -347,10 +347,10 @@
           </p>
         </div>
 
-        <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-4 pt-2">
+        <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-4 pt-2 items-stretch">
           
           <!-- Problem 1: Doctor Deserts -->
-          <div class="glass-card p-5 rounded-2xl border-teal-950 hover:border-teal-500/40 transition-all flex flex-col justify-between group">
+          <div class="glass-card p-5 rounded-2xl border-teal-950 hover:border-teal-500/40 transition-all flex flex-col justify-between h-full group">
             <div class="space-y-3">
               <div class="h-10 w-10 rounded-xl bg-teal-950 border border-teal-800 flex items-center justify-center text-teal-400">
                 <i data-lucide="user-x" class="w-5 h-5"></i>
@@ -366,7 +366,7 @@
           </div>
 
           <!-- Problem 2: Language & Literacy Barrier -->
-          <div class="glass-card p-5 rounded-2xl border-teal-950 hover:border-teal-500/40 transition-all flex flex-col justify-between group">
+          <div class="glass-card p-5 rounded-2xl border-teal-950 hover:border-teal-500/40 transition-all flex flex-col justify-between h-full group">
             <div class="space-y-3">
               <div class="h-10 w-10 rounded-xl bg-teal-950 border border-teal-800 flex items-center justify-center text-teal-400">
                 <i data-lucide="languages" class="w-5 h-5"></i>
@@ -382,7 +382,7 @@
           </div>
 
           <!-- Problem 3: Digital & Bandwidth Void -->
-          <div class="glass-card p-5 rounded-2xl border-teal-950 hover:border-teal-500/40 transition-all flex flex-col justify-between group">
+          <div class="glass-card p-5 rounded-2xl border-teal-950 hover:border-teal-500/40 transition-all flex flex-col justify-between h-full group">
             <div class="space-y-3">
               <div class="h-10 w-10 rounded-xl bg-teal-950 border border-teal-800 flex items-center justify-center text-teal-400">
                 <i data-lucide="wifi-off" class="w-5 h-5"></i>
@@ -398,7 +398,7 @@
           </div>
 
           <!-- Problem 4: Financial Toxicity -->
-          <div class="glass-card p-5 rounded-2xl border-teal-950 hover:border-teal-500/40 transition-all flex flex-col justify-between group">
+          <div class="glass-card p-5 rounded-2xl border-teal-950 hover:border-teal-500/40 transition-all flex flex-col justify-between h-full group">
             <div class="space-y-3">
               <div class="h-10 w-10 rounded-xl bg-teal-950 border border-teal-800 flex items-center justify-center text-teal-400">
                 <i data-lucide="indian-rupee" class="w-5 h-5"></i>
@@ -530,76 +530,76 @@
         </div>
 
         <!-- Workflow Diagram Cards -->
-        <div class="grid sm:grid-cols-2 lg:grid-cols-5 gap-3">
+        <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 items-stretch">
           
           <!-- Step 1 -->
-          <div class="glass-card p-5 rounded-2xl border-teal-950 relative">
+          <div class="glass-card p-5 rounded-2xl border-teal-950 relative flex flex-col justify-between h-full group">
             <div class="absolute -top-3 left-4 px-2.5 py-0.5 rounded-full bg-teal-600 text-obsidian-pure font-mono font-bold text-xs">STEP 01</div>
             <div class="space-y-3 pt-2">
               <div class="h-10 w-10 rounded-xl bg-teal-500/10 flex items-center justify-center text-teal-400">
                 <i data-lucide="phone-call" class="w-5 h-5"></i>
               </div>
-              <h3 class="font-display font-bold text-base text-white">Frictionless Entry</h3>
+              <h3 class="font-display font-bold text-base text-white group-hover:text-teal-400 transition-colors">Frictionless Entry</h3>
               <p class="text-obsidian-300 text-xs leading-relaxed">
-                Patient sends a WhatsApp voice note, dials toll-free IVRS (1800-XXX), punches USSD *99#, or speaks to an ASHA worker's tablet.
+                Patient sends a voice note to Telegram bot (@swarasetubot), Meta WhatsApp Cloud API, or speaks to an ASHA worker's tablet.
               </p>
-              <div class="bg-obsidian-950 p-2.5 rounded-xl border border-teal-950 text-[11px] font-mono text-teal-400">
-                • No Login / No Password<br/>
-                • Auto Language ID (22+)
-              </div>
+            </div>
+            <div class="bg-obsidian-950 p-2.5 rounded-xl border border-teal-950 text-[11px] font-mono text-teal-400 mt-4 min-h-[54px] flex flex-col justify-center">
+              <div>• No Login / No Password</div>
+              <div>• Auto Language ID (22+)</div>
             </div>
           </div>
 
           <!-- Step 2 -->
-          <div class="glass-card p-5 rounded-2xl border-teal-950 relative">
+          <div class="glass-card p-5 rounded-2xl border-teal-950 relative flex flex-col justify-between h-full group">
             <div class="absolute -top-3 left-4 px-2.5 py-0.5 rounded-full bg-teal-600 text-obsidian-pure font-mono font-bold text-xs">STEP 02</div>
             <div class="space-y-3 pt-2">
               <div class="h-10 w-10 rounded-xl bg-teal-500/10 flex items-center justify-center text-teal-400">
                 <i data-lucide="cpu" class="w-5 h-5"></i>
               </div>
-              <h3 class="font-display font-bold text-base text-white">Sarvam AI Pipeline</h3>
+              <h3 class="font-display font-bold text-base text-white group-hover:text-teal-400 transition-colors">Sarvam AI Pipeline</h3>
               <p class="text-obsidian-300 text-xs leading-relaxed">
                 Sarvam Indic ASR transcribes voice to text. Medical NER extracts canonical clinical variables into structured JSON schema.
               </p>
-              <div class="bg-obsidian-950 p-2.5 rounded-xl border border-teal-950 text-[11px] font-mono text-obsidian-300">
-                { symptom: "cough", duration: "3d", chest_indrawing: true }
-              </div>
+            </div>
+            <div class="bg-obsidian-950 p-2.5 rounded-xl border border-teal-950 text-[11px] font-mono text-obsidian-300 mt-4 min-h-[54px] flex flex-col justify-center">
+              <div>{ symptom: "cough", duration: "3d", chest_indrawing: true }</div>
             </div>
           </div>
 
           <!-- Step 3 -->
-          <div class="glass-card p-5 rounded-2xl border-teal-950 relative">
+          <div class="glass-card p-5 rounded-2xl border-teal-950 relative flex flex-col justify-between h-full group">
             <div class="absolute -top-3 left-4 px-2.5 py-0.5 rounded-full bg-teal-600 text-obsidian-pure font-mono font-bold text-xs">STEP 03</div>
             <div class="space-y-3 pt-2">
               <div class="h-10 w-10 rounded-xl bg-teal-500/10 flex items-center justify-center text-teal-400">
                 <i data-lucide="git-branch" class="w-5 h-5"></i>
               </div>
-              <h3 class="font-display font-bold text-base text-white">WHO IMCI Decision</h3>
+              <h3 class="font-display font-bold text-base text-white group-hover:text-teal-400 transition-colors">WHO IMCI Decision</h3>
               <p class="text-obsidian-300 text-xs leading-relaxed">
-                Internal deterministic Python/JS engine executes clinical rules against 4 acute clusters (Fever, Respiratory, Diarrhoea, Maternal).
+                Internal deterministic Python/JS engine executes clinical rules against 5 acute clusters + envenomation/trauma.
               </p>
-              <div class="bg-obsidian-950 p-2.5 rounded-xl border border-teal-950 text-[11px] font-mono text-teal-300">
-                Risk Score 1, 2, or 3<br/>
-                Deterministic • Auditable
-              </div>
+            </div>
+            <div class="bg-obsidian-950 p-2.5 rounded-xl border border-teal-950 text-[11px] font-mono text-teal-300 mt-4 min-h-[54px] flex flex-col justify-center">
+              <div>Risk Score 1, 2, or 3</div>
+              <div>Deterministic • Auditable</div>
             </div>
           </div>
 
           <!-- Step 4 -->
-          <div class="glass-card p-5 rounded-2xl border-teal-950 relative">
+          <div class="glass-card p-5 rounded-2xl border-teal-950 relative flex flex-col justify-between h-full group">
             <div class="absolute -top-3 left-4 px-2.5 py-0.5 rounded-full bg-teal-600 text-obsidian-pure font-mono font-bold text-xs">STEP 04</div>
             <div class="space-y-3 pt-2">
               <div class="h-10 w-10 rounded-xl bg-teal-500/10 flex items-center justify-center text-teal-400">
                 <i data-lucide="volume-2" class="w-5 h-5"></i>
               </div>
-              <h3 class="font-display font-bold text-base text-white">4-Pillar Response</h3>
+              <h3 class="font-display font-bold text-base text-white group-hover:text-teal-400 transition-colors">4-Pillar Response</h3>
               <p class="text-obsidian-300 text-xs leading-relaxed">
                 108 CAD incident ticket auto-generated + duty doctor pre-alerted with ASV/ECG readiness + localized spoken first-aid + live GPS map route.
               </p>
-              <div class="bg-obsidian-950 p-2.5 rounded-xl border border-teal-950 text-[11px] font-mono text-teal-400">
-                • #108-EMRI CAD Ticket<br/>
-                • Hospital &amp; First-Aid Prep
-              </div>
+            </div>
+            <div class="bg-obsidian-950 p-2.5 rounded-xl border border-teal-950 text-[11px] font-mono text-teal-400 mt-4 min-h-[54px] flex flex-col justify-center">
+              <div>• #108-EMRI CAD Ticket</div>
+              <div>• Hospital &amp; First-Aid Prep</div>
             </div>
           </div>
 
@@ -728,60 +728,68 @@
           </p>
         </div>
 
-        <div class="grid sm:grid-cols-2 lg:grid-cols-5 gap-3">
+        <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 items-stretch">
           
           <!-- Module 1: Indic ASR -->
-          <div class="glass-card p-5 rounded-2xl border-teal-950 space-y-3">
-            <div class="h-10 w-10 rounded-xl bg-teal-500/10 flex items-center justify-center text-teal-400">
-              <i data-lucide="mic" class="w-5 h-5"></i>
+          <div class="glass-card p-5 rounded-2xl border-teal-950 flex flex-col justify-between h-full group">
+            <div class="space-y-3">
+              <div class="h-10 w-10 rounded-xl bg-teal-500/10 flex items-center justify-center text-teal-400">
+                <i data-lucide="mic" class="w-5 h-5"></i>
+              </div>
+              <h3 class="font-display font-bold text-base text-white group-hover:text-teal-400 transition-colors">Indic ASR (STT)</h3>
+              <p class="text-obsidian-300 text-xs leading-relaxed">
+                Trained on extensive Indian conversational datasets. Handles accented rural speech, heavy background noise, and dialect variants.
+              </p>
             </div>
-            <h3 class="font-display font-bold text-base text-white">Indic ASR (STT)</h3>
-            <p class="text-obsidian-300 text-xs leading-relaxed">
-              Trained on extensive Indian conversational datasets. Handles accented rural speech, heavy background noise, and dialect variants (Bhojpuri, Maithili, Kongu Tamil).
-            </p>
-            <div class="text-[11px] font-mono text-teal-400 pt-2 border-t border-teal-950">
+            <div class="text-[11px] font-mono text-teal-400 pt-3 mt-4 border-t border-teal-950">
               Latency: &lt;450ms • WER &lt;8.2%
             </div>
           </div>
 
           <!-- Module 2: Medical NER -->
-          <div class="glass-card p-5 rounded-2xl border-teal-950 space-y-3">
-            <div class="h-10 w-10 rounded-xl bg-teal-500/10 flex items-center justify-center text-teal-400">
-              <i data-lucide="tag" class="w-5 h-5"></i>
+          <div class="glass-card p-5 rounded-2xl border-teal-950 flex flex-col justify-between h-full group">
+            <div class="space-y-3">
+              <div class="h-10 w-10 rounded-xl bg-teal-500/10 flex items-center justify-center text-teal-400">
+                <i data-lucide="tag" class="w-5 h-5"></i>
+              </div>
+              <h3 class="font-display font-bold text-base text-white group-hover:text-teal-400 transition-colors">Clinical Entity NER</h3>
+              <p class="text-obsidian-300 text-xs leading-relaxed">
+                Extracts canonical clinical entities (symptom, duration, severity, red flags) from unstructured spoken phrases.
+              </p>
             </div>
-            <h3 class="font-display font-bold text-base text-white">Clinical Entity NER</h3>
-            <p class="text-obsidian-300 text-xs leading-relaxed">
-              Extracts canonical clinical entities (`symptom`, `duration`, `severity`, `red_flags`) from unstructured spoken phrases like "chest is sinking in" or "difficulty breathing".
-            </p>
-            <div class="text-[11px] font-mono text-teal-400 pt-2 border-t border-teal-950">
+            <div class="text-[11px] font-mono text-teal-400 pt-3 mt-4 border-t border-teal-950">
               Schema: Canonical JSON
             </div>
           </div>
 
           <!-- Module 3: Indic TTS -->
-          <div class="glass-card p-5 rounded-2xl border-teal-950 space-y-3">
-            <div class="h-10 w-10 rounded-xl bg-teal-500/10 flex items-center justify-center text-teal-400">
-              <i data-lucide="volume-2" class="w-5 h-5"></i>
+          <div class="glass-card p-5 rounded-2xl border-teal-950 flex flex-col justify-between h-full group">
+            <div class="space-y-3">
+              <div class="h-10 w-10 rounded-xl bg-teal-500/10 flex items-center justify-center text-teal-400">
+                <i data-lucide="volume-2" class="w-5 h-5"></i>
+              </div>
+              <h3 class="font-display font-bold text-base text-white group-hover:text-teal-400 transition-colors">Empathetic TTS</h3>
+              <p class="text-obsidian-300 text-xs leading-relaxed">
+                Generates natural, clear, empathetic regional voice notes at an accessible cadence for elderly and rural mothers.
+              </p>
             </div>
-            <h3 class="font-display font-bold text-base text-white">Empathetic TTS</h3>
-            <p class="text-obsidian-300 text-xs leading-relaxed">
-              Generates natural, clear, empathetic regional voice notes at an accessible cadence for elderly and rural mothers who cannot read SMS text.
-            </p>
-            <div class="text-[11px] font-mono text-teal-400 pt-2 border-t border-teal-950">
-              Zero English Literacy Required
+            <div class="text-[11px] font-mono text-teal-400 pt-3 mt-4 border-t border-teal-950">
+              Zero Literacy Required
             </div>
           </div>
 
           <!-- Module 4: Sarvam-2B Bulbul Fallback -->
-          <div class="glass-card p-5 rounded-2xl border-teal-950 space-y-3">
-            <div class="h-10 w-10 rounded-xl bg-teal-500/10 flex items-center justify-center text-teal-400">
-              <i data-lucide="shield-alert" class="w-5 h-5"></i>
+          <div class="glass-card p-5 rounded-2xl border-teal-950 flex flex-col justify-between h-full group">
+            <div class="space-y-3">
+              <div class="h-10 w-10 rounded-xl bg-teal-500/10 flex items-center justify-center text-teal-400">
+                <i data-lucide="shield-alert" class="w-5 h-5"></i>
+              </div>
+              <h3 class="font-display font-bold text-base text-white group-hover:text-teal-400 transition-colors">Bulbul 2B Fallback</h3>
+              <p class="text-obsidian-300 text-xs leading-relaxed">
+                When NER extraction confidence drops below 0.6, triggers dialect-aware clarification prompts or routes to ASHA worker review.
+              </p>
             </div>
-            <h3 class="font-display font-bold text-base text-white">Bulbul 2B Intent Fallback</h3>
-            <p class="text-obsidian-300 text-xs leading-relaxed">
-              When NER extraction confidence drops below 0.6, Sarvam-2B triggers dialect-aware clarification prompts or routes to ASHA human-in-the-loop review.
-            </p>
-            <div class="text-[11px] font-mono text-teal-400 pt-2 border-t border-teal-950">
+            <div class="text-[11px] font-mono text-teal-400 pt-3 mt-4 border-t border-teal-950">
               Fail-safe Guardrail Engine
             </div>
           </div>
@@ -821,91 +829,103 @@
           </p>
         </div>
 
-        <div class="grid sm:grid-cols-2 lg:grid-cols-5 gap-3">
+        <div class="grid sm:grid-cols-2 lg:grid-cols-5 gap-3 items-stretch">
           
           <!-- Cluster 1: Fever -->
-          <div class="glass-card p-5 rounded-2xl border-teal-950 space-y-3">
-            <div class="flex items-center justify-between">
-              <span class="h-8 w-8 rounded-lg bg-teal-500/20 text-teal-400 flex items-center justify-center font-bold text-sm">01</span>
-              <span class="text-[10px] font-mono text-obsidian-400 uppercase">Cluster</span>
+          <div class="glass-card p-5 rounded-2xl border-teal-950 flex flex-col justify-between h-full group">
+            <div class="space-y-3">
+              <div class="flex items-center justify-between">
+                <span class="h-8 w-8 rounded-lg bg-teal-500/20 text-teal-400 flex items-center justify-center font-bold text-sm">01</span>
+                <span class="text-[10px] font-mono text-obsidian-400 uppercase">Cluster</span>
+              </div>
+              <h3 class="font-display font-bold text-base text-white group-hover:text-teal-400 transition-colors">Fever &amp; Malaria</h3>
+              <p class="text-obsidian-300 text-xs leading-relaxed">
+                Tracks fever duration, temperature spikes, stiff neck, rash, convulsions, and malaria endemic zones.
+              </p>
             </div>
-            <h3 class="font-display font-bold text-base text-white">Fever & Malaria</h3>
-            <p class="text-obsidian-300 text-xs leading-relaxed">
-              Tracks fever duration, temperature spikes, stiff neck, rash, convulsions, and malaria endemic zones.
-            </p>
-            <div class="space-y-1.5 pt-2 border-t border-teal-950 text-[11px]">
+            <div class="space-y-1.5 pt-3 mt-3 border-t border-teal-950 text-[11px]">
               <div class="text-teal-300">• Score 1: Mild (&lt;3d, no stiff neck)</div>
               <div class="text-alert-amber">• Score 2: Moderate (&gt;3d or vomiting)</div>
-              <div class="text-alert-red">• Score 3: Meningitis / Convulsion</div>
+              <div class="text-alert-red font-bold">• Score 3: Meningitis / Convulsion</div>
             </div>
           </div>
 
           <!-- Cluster 2: Respiratory -->
-          <div class="glass-card p-5 rounded-2xl border-teal-950 space-y-3">
-            <div class="flex items-center justify-between">
-              <span class="h-8 w-8 rounded-lg bg-teal-500/20 text-teal-400 flex items-center justify-center font-bold text-sm">02</span>
-              <span class="text-[10px] font-mono text-obsidian-400 uppercase">Cluster</span>
+          <div class="glass-card p-5 rounded-2xl border-teal-950 flex flex-col justify-between h-full group">
+            <div class="space-y-3">
+              <div class="flex items-center justify-between">
+                <span class="h-8 w-8 rounded-lg bg-teal-500/20 text-teal-400 flex items-center justify-center font-bold text-sm">02</span>
+                <span class="text-[10px] font-mono text-obsidian-400 uppercase">Cluster</span>
+              </div>
+              <h3 class="font-display font-bold text-base text-white group-hover:text-teal-400 transition-colors">Respiratory Distress</h3>
+              <p class="text-obsidian-300 text-xs leading-relaxed">
+                Evaluates cough duration, chest indrawing (ribcage sinking), stridor in calm child, and respiratory rate.
+              </p>
             </div>
-            <h3 class="font-display font-bold text-base text-white">Respiratory Distress</h3>
-            <p class="text-obsidian-300 text-xs leading-relaxed">
-              Evaluates cough duration, chest indrawing (ribcage sinking), stridor in calm child, and respiratory rate.
-            </p>
-            <div class="space-y-1.5 pt-2 border-t border-teal-950 text-[11px]">
+            <div class="space-y-1.5 pt-3 mt-3 border-t border-teal-950 text-[11px]">
               <div class="text-teal-300">• Score 1: Simple Cold / Cough</div>
               <div class="text-alert-amber">• Score 2: Fast Breathing (Pneumonia)</div>
-              <div class="text-alert-red">• Score 3: Severe Chest Indrawing</div>
+              <div class="text-alert-red font-bold">• Score 3: Severe Chest Indrawing</div>
             </div>
           </div>
 
           <!-- Cluster 3: Diarrhoea -->
-          <div class="glass-card p-5 rounded-2xl border-teal-950 space-y-3">
-            <div class="flex items-center justify-between">
-              <span class="h-8 w-8 rounded-lg bg-teal-500/20 text-teal-400 flex items-center justify-center font-bold text-sm">03</span>
-              <span class="text-[10px] font-mono text-obsidian-400 uppercase">Cluster</span>
+          <div class="glass-card p-5 rounded-2xl border-teal-950 flex flex-col justify-between h-full group">
+            <div class="space-y-3">
+              <div class="flex items-center justify-between">
+                <span class="h-8 w-8 rounded-lg bg-teal-500/20 text-teal-400 flex items-center justify-center font-bold text-sm">03</span>
+                <span class="text-[10px] font-mono text-obsidian-400 uppercase">Cluster</span>
+              </div>
+              <h3 class="font-display font-bold text-base text-white group-hover:text-teal-400 transition-colors">Diarrhoea &amp; Shock</h3>
+              <p class="text-obsidian-300 text-xs leading-relaxed">
+                Analyzes stool frequency, blood in stool (dysentery), sunken eyes, skin pinch turgor, and thirst state.
+              </p>
             </div>
-            <h3 class="font-display font-bold text-base text-white">Diarrhoea & Dehydration</h3>
-            <p class="text-obsidian-300 text-xs leading-relaxed">
-              Analyzes stool frequency, blood in stool (dysentery), sunken eyes, skin pinch turgor, and thirst state.
-            </p>
-            <div class="space-y-1.5 pt-2 border-t border-teal-950 text-[11px]">
+            <div class="space-y-1.5 pt-3 mt-3 border-t border-teal-950 text-[11px]">
               <div class="text-teal-300">• Score 1: No Dehydration (ORS)</div>
               <div class="text-alert-amber">• Score 2: Some Dehydration / Blood</div>
-              <div class="text-alert-red">• Score 3: Severe Shock / Lethargy</div>
+              <div class="text-alert-red font-bold">• Score 3: Severe Shock / Lethargy</div>
             </div>
           </div>
 
           <!-- Cluster 4: Maternal Danger Signs -->
-          <div class="glass-card p-5 rounded-2xl border-teal-950 space-y-3">
-            <div class="flex items-center justify-between">
-              <span class="h-8 w-8 rounded-lg bg-teal-500/20 text-teal-400 flex items-center justify-center font-bold text-sm">04</span>
-              <span class="text-[10px] font-mono text-obsidian-400 uppercase">Cluster</span>
+          <div class="glass-card p-5 rounded-2xl border-teal-950 flex flex-col justify-between h-full group">
+            <div class="space-y-3">
+              <div class="flex items-center justify-between">
+                <span class="h-8 w-8 rounded-lg bg-teal-500/20 text-teal-400 flex items-center justify-center font-bold text-sm">04</span>
+                <span class="text-[10px] font-mono text-obsidian-400 uppercase">Cluster</span>
+              </div>
+              <h3 class="font-display font-bold text-base text-white group-hover:text-teal-400 transition-colors">Maternal Danger Signs</h3>
+              <p class="text-obsidian-300 text-xs leading-relaxed">
+                Assesses pregnant mothers for severe headaches, visual blurring, vaginal bleeding, and reduced fetal movement.
+              </p>
             </div>
-            <h3 class="font-display font-bold text-base text-white">Maternal Danger Signs</h3>
-            <p class="text-obsidian-300 text-xs leading-relaxed">
-              Assesses pregnant mothers for severe headaches, visual blurring, vaginal bleeding, and reduced fetal movement.
-            </p>
-            <div class="space-y-1.5 pt-2 border-t border-teal-950 text-[11px]">
+            <div class="space-y-1.5 pt-3 mt-3 border-t border-teal-950 text-[11px]">
               <div class="text-alert-amber">• Score 2: Reduced fetal movement</div>
-              <div class="text-alert-red">• Score 3: Pre-eclampsia / Hemorrhage</div>
-              <div class="text-teal-300">• Emergency 108 Auto-Dial Routing</div>
+              <div class="text-alert-red font-bold">• Score 3: Pre-eclampsia / Hemorrhage</div>
+              <div class="text-teal-300">• Emergency 108 CAD Auto-Dial</div>
             </div>
           </div>
+
           <!-- Cluster 5: Envenomation & Trauma -->
-          <div class="glass-card p-5 rounded-2xl border-teal-950 space-y-3">
-            <div class="flex items-center justify-between">
-              <span class="h-8 w-8 rounded-lg bg-teal-500/20 text-teal-400 flex items-center justify-center font-bold text-sm">05</span>
-              <span class="text-[10px] font-mono text-obsidian-400 uppercase">Emergency</span>
+          <div class="glass-card p-5 rounded-2xl border-teal-950 flex flex-col justify-between h-full group">
+            <div class="space-y-3">
+              <div class="flex items-center justify-between">
+                <span class="h-8 w-8 rounded-lg bg-teal-500/20 text-teal-400 flex items-center justify-center font-bold text-sm">05</span>
+                <span class="text-[10px] font-mono text-obsidian-400 uppercase">Emergency</span>
+              </div>
+              <h3 class="font-display font-bold text-base text-white group-hover:text-teal-400 transition-colors">Snake Bites &amp; Trauma</h3>
+              <p class="text-obsidian-300 text-xs leading-relaxed">
+                Handles acute snake bites, scorpion stings, poisonings, major burns, and severe trauma.
+              </p>
             </div>
-            <h3 class="font-display font-bold text-base text-white">Snake Bites &amp; Trauma</h3>
-            <p class="text-obsidian-300 text-xs leading-relaxed">
-              Handles acute snake bites, scorpion stings, poisonings, major burns, and severe trauma.
-            </p>
-            <div class="space-y-1.5 pt-2 border-t border-teal-950 text-[11px]">
+            <div class="space-y-1.5 pt-3 mt-3 border-t border-teal-950 text-[11px]">
               <div class="text-alert-red font-bold">• Score 3: Immediate Red Alert</div>
               <div class="text-teal-300">• 108 CAD Ambulance Auto-Ticket</div>
               <div class="text-teal-400">• ASV / Trauma Dressing Alert</div>
             </div>
           </div>
+
         </div>
 
         <!-- Clinical Safety Box -->
@@ -1106,74 +1126,86 @@
           </p>
         </div>
 
-        <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-4 items-stretch">
           
           <!-- Layer 1: Frontend & Edge -->
-          <div class="glass-card p-5 rounded-2xl border-teal-950 space-y-3">
-            <div class="flex items-center justify-between text-xs font-mono text-teal-400">
-              <span>LAYER 01</span>
-              <span>PWA / Edge</span>
+          <div class="glass-card p-5 rounded-2xl border-teal-950 flex flex-col justify-between h-full group">
+            <div class="space-y-3">
+              <div class="flex items-center justify-between text-xs font-mono text-teal-400">
+                <span>LAYER 01</span>
+                <span>PWA / Edge</span>
+              </div>
+              <h3 class="font-display font-bold text-base text-white group-hover:text-teal-400 transition-colors">Frontend &amp; PWA</h3>
+              <ul class="space-y-1.5 text-xs text-obsidian-300 font-mono">
+                <li>• React 18 + Vite + TS</li>
+                <li>• Service Worker Cache</li>
+                <li>• IndexedDB Outbox Queue</li>
+                <li>• Leaflet + OpenStreetMap</li>
+              </ul>
             </div>
-            <h3 class="font-display font-bold text-base text-white">Frontend & PWA</h3>
-            <ul class="space-y-1.5 text-xs text-obsidian-300 font-mono">
-              <li>• React 18 + Vite</li>
-              <li>• TypeScript & Zustand</li>
-              <li>• Tailwind CSS v3.4+</li>
-              <li>• Service Worker Cache</li>
-              <li>• IndexedDB Offline Storage</li>
-              <li>• Leaflet + OpenStreetMap</li>
-            </ul>
+            <div class="text-[11px] font-mono text-teal-400 pt-3 mt-4 border-t border-teal-950">
+              Offline-First Edge UI
+            </div>
           </div>
 
           <!-- Layer 2: Backend API Gateway -->
-          <div class="glass-card p-5 rounded-2xl border-teal-950 space-y-3">
-            <div class="flex items-center justify-between text-xs font-mono text-teal-400">
-              <span>LAYER 02</span>
-              <span>Microservices</span>
+          <div class="glass-card p-5 rounded-2xl border-teal-950 flex flex-col justify-between h-full group">
+            <div class="space-y-3">
+              <div class="flex items-center justify-between text-xs font-mono text-teal-400">
+                <span>LAYER 02</span>
+                <span>Gateway &amp; Auth</span>
+              </div>
+              <h3 class="font-display font-bold text-base text-white group-hover:text-teal-400 transition-colors">Backend &amp; Security</h3>
+              <ul class="space-y-1.5 text-xs text-obsidian-300 font-mono">
+                <li>• FastAPI + Python 3.11</li>
+                <li>• SQLite &amp; Postgres ORM</li>
+                <li>• Telegram Secret Token Auth</li>
+                <li>• Meta HMAC-SHA256 Guard</li>
+              </ul>
             </div>
-            <h3 class="font-display font-bold text-base text-white">Backend & Workers</h3>
-            <ul class="space-y-1.5 text-xs text-obsidian-300 font-mono">
-              <li>• Python 3.11 + FastAPI</li>
-              <li>• PostgreSQL 15 Database</li>
-              <li>• Redis Session Cache (5m)</li>
-              <li>• Celery Task Queue</li>
-              <li>• Twilio / Gupshup Gateway</li>
-              <li>• Docker Compose Setup</li>
-            </ul>
+            <div class="text-[11px] font-mono text-teal-400 pt-3 mt-4 border-t border-teal-950">
+              Cryptographic Webhooks
+            </div>
           </div>
 
           <!-- Layer 3: Sarvam AI Indic Core -->
-          <div class="glass-card p-5 rounded-2xl border-teal-950 space-y-3">
-            <div class="flex items-center justify-between text-xs font-mono text-teal-400">
-              <span>LAYER 03</span>
-              <span>AI Stack</span>
+          <div class="glass-card p-5 rounded-2xl border-teal-950 flex flex-col justify-between h-full group">
+            <div class="space-y-3">
+              <div class="flex items-center justify-between text-xs font-mono text-teal-400">
+                <span>LAYER 03</span>
+                <span>AI Stack</span>
+              </div>
+              <h3 class="font-display font-bold text-base text-white group-hover:text-teal-400 transition-colors">Sarvam Indic Suite</h3>
+              <ul class="space-y-1.5 text-xs text-obsidian-300 font-mono">
+                <li>• Indic ASR (Speech-to-Text)</li>
+                <li>• Dynamic Dialect Translate</li>
+                <li>• Neural TTS (Bulbul:v2)</li>
+                <li>• 10+ Indic Languages Auto-ID</li>
+              </ul>
             </div>
-            <h3 class="font-display font-bold text-base text-white">Sarvam Indic Suite</h3>
-            <ul class="space-y-1.5 text-xs text-obsidian-300 font-mono">
-              <li>• Indic ASR (Speech-to-Text)</li>
-              <li>• Auto-Language ID</li>
-              <li>• Clinical Entity NER</li>
-              <li>• Indic TTS (Audio Synth)</li>
-              <li>• Indic-to-Indic Translate</li>
-              <li>• Sarvam-2B Bulbul Fallback</li>
-            </ul>
+            <div class="text-[11px] font-mono text-teal-400 pt-3 mt-4 border-t border-teal-950">
+              Voice-First Intelligence
+            </div>
           </div>
 
           <!-- Layer 4: Open Protocols & Registries -->
-          <div class="glass-card p-5 rounded-2xl border-teal-950 space-y-3">
-            <div class="flex items-center justify-between text-xs font-mono text-teal-400">
-              <span>LAYER 04</span>
-              <span>Open Standards</span>
+          <div class="glass-card p-5 rounded-2xl border-teal-950 flex flex-col justify-between h-full group">
+            <div class="space-y-3">
+              <div class="flex items-center justify-between text-xs font-mono text-teal-400">
+                <span>LAYER 04</span>
+                <span>Emergency Core</span>
+              </div>
+              <h3 class="font-display font-bold text-base text-white group-hover:text-teal-400 transition-colors">108 CAD &amp; IMCI Engine</h3>
+              <ul class="space-y-1.5 text-xs text-obsidian-300 font-mono">
+                <li>• WHO IMCI Deterministic Code</li>
+                <li>• 108 CAD Auto-Dispatch</li>
+                <li>• Hospital ASV/ECG Alerts</li>
+                <li>• Haversine Spatial Routing</li>
+              </ul>
             </div>
-            <h3 class="font-display font-bold text-base text-white">NHM & ABDM Integration</h3>
-            <ul class="space-y-1.5 text-xs text-obsidian-300 font-mono">
-              <li>• WHO IMCI Pocket Protocol</li>
-              <li>• NHM Health Facility Registry</li>
-              <li>• data.gov.in PHC Datasets</li>
-              <li>• ABDM ABHA ID Sandbox (P2)</li>
-              <li>• OpenStreetMap Nominatim</li>
-              <li>• National 104/108 Fallback</li>
-            </ul>
+            <div class="text-[11px] font-mono text-teal-400 pt-3 mt-4 border-t border-teal-950">
+              100% Deterministic Safety
+            </div>
           </div>
 
         </div>
@@ -1422,50 +1454,70 @@
           </p>
         </div>
 
-        <div class="grid sm:grid-cols-2 lg:grid-cols-5 gap-3">
+        <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 items-stretch">
           
           <!-- SDG 3 -->
-          <div class="glass-card p-5 rounded-2xl border-teal-900/40 space-y-3">
-            <div class="h-10 w-10 rounded-xl bg-teal-500/20 text-teal-400 flex items-center justify-center font-bold">
-              3
+          <div class="glass-card p-5 rounded-2xl border-teal-900/40 flex flex-col justify-between h-full group">
+            <div class="space-y-3">
+              <div class="h-10 w-10 rounded-xl bg-teal-500/20 text-teal-400 flex items-center justify-center font-bold">
+                3
+              </div>
+              <h3 class="font-display font-bold text-base text-white group-hover:text-teal-400 transition-colors">Good Health (SDG 3)</h3>
+              <p class="text-obsidian-300 text-xs leading-relaxed">
+                <strong>Target 3.8 &amp; 3.c:</strong> Extends universal healthcare coverage and empowers 1 Million frontline ASHA workers with validated clinical decision support.
+              </p>
             </div>
-            <h3 class="font-display font-bold text-base text-white">Good Health (SDG 3)</h3>
-            <p class="text-obsidian-300 text-xs leading-relaxed">
-              <strong>Target 3.8 & 3.c:</strong> Extends universal healthcare coverage and empowers 1 Million undertrained ASHA workers with validated clinical decision support.
-            </p>
+            <div class="text-[11px] font-mono text-teal-400 pt-3 mt-4 border-t border-teal-950">
+              Universal Coverage
+            </div>
           </div>
 
           <!-- SDG 4 -->
-          <div class="glass-card p-5 rounded-2xl border-teal-900/40 space-y-3">
-            <div class="h-10 w-10 rounded-xl bg-teal-500/20 text-teal-400 flex items-center justify-center font-bold">
-              4
+          <div class="glass-card p-5 rounded-2xl border-teal-900/40 flex flex-col justify-between h-full group">
+            <div class="space-y-3">
+              <div class="h-10 w-10 rounded-xl bg-teal-500/20 text-teal-400 flex items-center justify-center font-bold">
+                4
+              </div>
+              <h3 class="font-display font-bold text-base text-white group-hover:text-teal-400 transition-colors">Quality Education (SDG 4)</h3>
+              <p class="text-obsidian-300 text-xs leading-relaxed">
+                <strong>Target 4.6:</strong> Voice-first interaction removes literacy and education barriers from accessing healthcare entirely.
+              </p>
             </div>
-            <h3 class="font-display font-bold text-base text-white">Quality Education (SDG 4)</h3>
-            <p class="text-obsidian-300 text-xs leading-relaxed">
-              <strong>Target 4.6:</strong> Voice-first interaction removes literacy and education barriers from accessing healthcare entirely.
-            </p>
+            <div class="text-[11px] font-mono text-teal-400 pt-3 mt-4 border-t border-teal-950">
+              Zero Literacy Barrier
+            </div>
           </div>
 
           <!-- SDG 10 -->
-          <div class="glass-card p-5 rounded-2xl border-teal-900/40 space-y-3">
-            <div class="h-10 w-10 rounded-xl bg-teal-500/20 text-teal-400 flex items-center justify-center font-bold">
-              10
+          <div class="glass-card p-5 rounded-2xl border-teal-900/40 flex flex-col justify-between h-full group">
+            <div class="space-y-3">
+              <div class="h-10 w-10 rounded-xl bg-teal-500/20 text-teal-400 flex items-center justify-center font-bold">
+                10
+              </div>
+              <h3 class="font-display font-bold text-base text-white group-hover:text-teal-400 transition-colors">Reduced Inequalities (SDG 10)</h3>
+              <p class="text-obsidian-300 text-xs leading-relaxed">
+                <strong>Target 10.2:</strong> Closes the massive urban-rural doctor density divide (80% urban vs 20% rural) through automated triage.
+              </p>
             </div>
-            <h3 class="font-display font-bold text-base text-white">Reduced Inequalities (SDG 10)</h3>
-            <p class="text-obsidian-300 text-xs leading-relaxed">
-              <strong>Target 10.2:</strong> Closes the massive urban-rural doctor density divide (80% urban vs 20% rural) through automated triage.
-            </p>
+            <div class="text-[11px] font-mono text-teal-400 pt-3 mt-4 border-t border-teal-950">
+              Last-Mile Equity
+            </div>
           </div>
 
           <!-- SDG 17 -->
-          <div class="glass-card p-5 rounded-2xl border-teal-900/40 space-y-3">
-            <div class="h-10 w-10 rounded-xl bg-teal-500/20 text-teal-400 flex items-center justify-center font-bold">
-              17
+          <div class="glass-card p-5 rounded-2xl border-teal-900/40 flex flex-col justify-between h-full group">
+            <div class="space-y-3">
+              <div class="h-10 w-10 rounded-xl bg-teal-500/20 text-teal-400 flex items-center justify-center font-bold">
+                17
+              </div>
+              <h3 class="font-display font-bold text-base text-white group-hover:text-teal-400 transition-colors">Partnerships (SDG 17)</h3>
+              <p class="text-obsidian-300 text-xs leading-relaxed">
+                <strong>Target 17.8:</strong> Built on open government datasets (NHM HFDR), WHO protocols, and sovereign Indian AI infrastructure (Sarvam AI).
+              </p>
             </div>
-            <h3 class="font-display font-bold text-base text-white">Partnerships (SDG 17)</h3>
-            <p class="text-obsidian-300 text-xs leading-relaxed">
-              <strong>Target 17.8:</strong> Built on open government datasets (NHM HFDR), WHO protocols, and sovereign Indian AI infrastructure (Sarvam AI).
-            </p>
+            <div class="text-[11px] font-mono text-teal-400 pt-3 mt-4 border-t border-teal-950">
+              National Infrastructure
+            </div>
           </div>
 
         </div>
