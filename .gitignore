@@ -12,6 +12,15 @@ dist
 dist-ssr
 *.local
 
+# Python / backend
+.venv/
+__pycache__/
+*.pyc
+*.db
+
+# Edge model weights (downloaded/exported at provisioning time)
+ml/models/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
