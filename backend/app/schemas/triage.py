@@ -26,6 +26,9 @@ class SymptomPayloadIn(BaseModel):
     unconscious: bool = False
     unable_to_drink_or_breastfeed: bool = False
     vomiting_everything: bool = False
+    acute_poisoning_or_bite: bool = False
+    severe_trauma: bool = False
+
 
     # Fever cluster
     has_fever: bool = False
@@ -97,6 +100,18 @@ class PHCNearby(BaseModel):
     longitude: float
 
 
+class EmergencyDispatchOut(BaseModel):
+    is_emergency: bool = False
+    protocol_key: Optional[str] = None
+    title: Optional[str] = None
+    ticket_id: Optional[str] = None
+    cad_priority: Optional[str] = None
+    ambulance_type: Optional[str] = None
+    phc_readiness: Optional[str] = None
+    steps: list[str] = Field(default_factory=list)
+    map_url: Optional[str] = None
+
+
 class TriageEvaluateRequest(BaseModel):
     payload: SymptomPayloadIn
     client_uuid: str = Field(min_length=8, max_length=64)
@@ -111,3 +126,5 @@ class TriageEvaluateResponse(BaseModel):
     outcome: TriageOutcomeOut
     directive: Directive
     nearest_phc: Optional[PHCNearby] = None
+    emergency_dispatch: Optional[EmergencyDispatchOut] = None
+

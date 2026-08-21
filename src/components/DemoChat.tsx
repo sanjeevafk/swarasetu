@@ -248,6 +248,7 @@ export function DemoChat({ onShowMap }: { onShowMap: () => void }) {
               <TriageResultCard
                 outcome={activeRes.outcome}
                 evaluatedOffline={activeRes.evaluatedOffline}
+                emergencyDispatch={activeRes.emergency_dispatch}
                 message={activeRes.directive?.message_en ?? currentScenario.responseMessageEnglish}
                 onShowMap={onShowMap}
               />
@@ -271,12 +272,19 @@ export function DemoChat({ onShowMap }: { onShowMap: () => void }) {
           <Sparkles className="w-3 h-3" /> Cough & Breathing (Score 2)
         </button>
         <button
+          onClick={() => handleSendCustomText('என் தம்பிக்கு பாம்பு கிடைச்சிருச்சு')}
+          className="text-xs bg-red-50 hover:bg-red-100 dark:bg-red-950/40 text-red-700 dark:text-red-300 px-2.5 py-1 rounded-full border border-red-200 dark:border-red-800 flex-shrink-0 flex items-center gap-1 transition-colors"
+        >
+          <Sparkles className="w-3 h-3" /> Snake Bite 🐍 (Score 3)
+        </button>
+        <button
           onClick={() => handleSendCustomText('सीने में बहुत तेज दर्द है और खून की उल्टी हो रही है')}
           className="text-xs bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 px-2.5 py-1 rounded-full border border-rose-200 dark:border-rose-800 flex-shrink-0 flex items-center gap-1 transition-colors"
         >
           <Sparkles className="w-3 h-3" /> Chest Pain & Blood (Score 3)
         </button>
       </div>
+
 
       {/* Input Area */}
       <div className="bg-[#f0f2f5] dark:bg-[#202c33] p-2 md:p-3 flex items-center gap-2 z-10 border-t border-slate-200 dark:border-slate-800">

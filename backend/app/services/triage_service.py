@@ -10,12 +10,15 @@ from sqlalchemy.orm import Session
 from app.models import AshaAssignment, Case
 from app.schemas.triage import (
     Directive,
+    EmergencyDispatchOut,
     RedFlagOut,
     SymptomPayloadIn,
     TriageOutcomeOut,
 )
 from app.triage import SymptomPayload as EnginePayload
 from app.triage import evaluate
+from app.triage.first_aid import get_first_aid_protocol
+
 
 
 def _to_engine_payload(p: SymptomPayloadIn) -> EnginePayload:
@@ -121,11 +124,37 @@ def evaluate_and_log(db: Session, request) -> dict:
     )
 
     directive = compose_directive(int(outcome.risk_score))
+
+    emergency_dispatch = None
+    if int(outcome.risk_score) >= 3:
+        proto = get_first_aid_protocol(
+            rationale_keys=outcome.rationale_keys,
+            language=request.payload.language,
+            primary_cluster=outcome.primary_cluster,
+        )
+        map_url = None
+        if request.latitude is not None and request.longitude is not None:
+            map_url = f"https://www.google.com/maps/search/?api=1&query={request.latitude},{request.longitude}"
+
+        emergency_dispatch = EmergencyDispatchOut(
+            is_emergency=True,
+            protocol_key=proto["protocol_key"],
+            title=proto["title"],
+            ticket_id=proto["ticket_id"],
+            cad_priority=proto["cad_priority"],
+            ambulance_type=proto["ambulance_type"],
+            phc_readiness=proto["phc_readiness"],
+            steps=proto["steps"],
+            map_url=map_url,
+        )
+
     result = {
         "case_id": case.id if case else None,
         "client_uuid": request.client_uuid,
         "outcome": build_outcome(request.payload),
         "directive": directive,
         "nearest_phc": None,  # populated by router when lat/lon present
+        "emergency_dispatch": emergency_dispatch,
     }
     return result
+

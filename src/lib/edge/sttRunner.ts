@@ -182,6 +182,12 @@ export function normalizeTranscript(text: string, language: LanguageCode): Sympt
   if (matches('difficulty_breathing')) payload.difficulty_breathing = true;
   if (matches('chest_pain_severe')) payload.chest_pain_severe = true;
   if (matches('vomiting_blood')) payload.vomiting_blood = true;
+  if (matches('acute_poisoning_or_bite') || /snake|பாம்பு|सांप|সাপ|poison|விஷம்|bite|கடி/i.test(text)) {
+    payload.acute_poisoning_or_bite = true;
+  }
+  if (matches('severe_trauma') || /burn|தீக்காயம்|जल|accident|fracture|चोट/i.test(text)) {
+    payload.severe_trauma = true;
+  }
 
   return payload;
 }
@@ -200,7 +206,10 @@ function emptyPayloadFor(language: LanguageCode): SymptomPayload {
     unconscious: false,
     unable_to_drink_or_breastfeed: false,
     vomiting_everything: false,
+    acute_poisoning_or_bite: false,
+    severe_trauma: false,
     has_fever: false,
+
     temperature_c: null,
     fever_days: null,
     neck_stiffness: false,

@@ -27,8 +27,10 @@ export interface ActiveEvaluation {
   outcome: TriageOutcome;
   directive: TriageEvaluateResponse['directive'] | null;
   nearest_phc: TriageEvaluateResponse['nearest_phc'];
+  emergency_dispatch?: TriageEvaluateResponse['emergency_dispatch'];
   evaluatedOffline: boolean;
 }
+
 
 interface AppState {
   isDemoActive: boolean;

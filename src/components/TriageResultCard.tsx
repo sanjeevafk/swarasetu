@@ -1,13 +1,14 @@
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Volume2, MapPin, CloudOff, AlertTriangle, ClipboardList } from 'lucide-react';
-import type { RiskLevel, TriageOutcome } from '@/types/api';
+import { Volume2, MapPin, CloudOff, AlertTriangle, ClipboardList, Siren, ShieldAlert, HeartPulse } from 'lucide-react';
+import type { RiskLevel, TriageOutcome, EmergencyDispatch } from '@/types/api';
 
 interface TriageResultCardProps {
   outcome: TriageOutcome;
   message: string;
   evaluatedOffline?: boolean;
+  emergencyDispatch?: EmergencyDispatch | null;
   onShowMap: () => void;
 }
 
@@ -15,6 +16,7 @@ export function TriageResultCard({
   outcome,
   message,
   evaluatedOffline = false,
+  emergencyDispatch,
   onShowMap,
 }: TriageResultCardProps) {
   const riskScore: RiskLevel =
@@ -35,7 +37,7 @@ export function TriageResultCard({
     switch (score) {
       case 1: return 'Self-Care / Home';
       case 2: return 'ASHA Worker Alerted';
-      case 3: return 'Urgent Referral';
+      case 3: return '🔴 Critical Emergency';
     }
   };
 
@@ -63,7 +65,53 @@ export function TriageResultCard({
 
         <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">{outcome.rationale_en}</p>
 
-        {outcome.red_flags.length > 0 && (
+        {/* 4-Pillar Emergency Response Quadrant for Red Emergencies */}
+        {riskScore === 3 && emergencyDispatch?.is_emergency && (
+          <div className="rounded-xl border border-red-300 bg-red-50/80 dark:border-red-800/60 dark:bg-red-950/40 p-3.5 space-y-2.5 shadow-sm">
+            <div className="flex items-center justify-between border-b border-red-200 dark:border-red-900/50 pb-2">
+              <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-red-800 dark:text-red-300">
+                <Siren className="w-4 h-4 text-red-600 animate-pulse" /> 4-Pillar Emergency Dispatch
+              </div>
+              <Badge variant="destructive" className="text-[10px] font-mono">
+                {emergencyDispatch.ticket_id || '108-EMRI-SOS'}
+              </Badge>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+              <div className="flex items-center gap-2 bg-white/80 dark:bg-slate-900/80 p-2 rounded-lg border border-red-100 dark:border-red-950">
+                <ShieldAlert className="w-4 h-4 text-red-600 shrink-0" />
+                <div>
+                  <span className="font-semibold text-slate-900 dark:text-slate-100">108 CAD CAD: </span>
+                  <span className="text-slate-600 dark:text-slate-400">{emergencyDispatch.ambulance_type || '108 ALS Unit Dispatched'}</span>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 bg-white/80 dark:bg-slate-900/80 p-2 rounded-lg border border-red-100 dark:border-red-950">
+                <HeartPulse className="w-4 h-4 text-rose-600 shrink-0" />
+                <div>
+                  <span className="font-semibold text-slate-900 dark:text-slate-100">PHC Readiness: </span>
+                  <span className="text-slate-600 dark:text-slate-400">{emergencyDispatch.phc_readiness || 'Pre-alerted Duty Doctor'}</span>
+                </div>
+              </div>
+            </div>
+
+            {emergencyDispatch.steps.length > 0 && (
+              <div className="bg-white/90 dark:bg-slate-900/90 rounded-lg p-2.5 border border-red-100 dark:border-red-950 space-y-1.5">
+                <span className="text-[11px] font-bold text-red-800 dark:text-red-300 uppercase tracking-wider block">
+                  🩹 Immediate Life-Saving Action Directives
+                </span>
+                <ul className="space-y-1">
+                  {emergencyDispatch.steps.map((step, idx) => (
+                    <li key={idx} className="text-xs text-slate-700 dark:text-slate-300 leading-snug">
+                      {step}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
+        )}
+
+        {outcome.red_flags.length > 0 && (!emergencyDispatch || !emergencyDispatch.is_emergency) && (
           <div className="rounded-lg border border-red-100 bg-red-50/60 dark:border-red-900/40 dark:bg-red-950/30 p-2.5">
             <div className="flex items-center gap-1.5 mb-1.5 text-[10px] font-bold uppercase tracking-widest text-red-700 dark:text-red-400">
               <AlertTriangle className="w-3 h-3" /> Red Flags
@@ -97,10 +145,11 @@ export function TriageResultCard({
         </Button>
         {riskScore === 3 && (
           <Button onClick={onShowMap} size="sm" className="flex-1 bg-red-600 hover:bg-red-700 text-white shadow-md">
-            <MapPin className="w-4 h-4 mr-2" /> Nearest PHC
+            <MapPin className="w-4 h-4 mr-2" /> Live PHC Route
           </Button>
         )}
       </CardFooter>
     </Card>
   );
 }
+
