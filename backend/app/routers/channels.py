@@ -412,28 +412,33 @@ async def handle_telegram_webhook(
     # Handle voice note / audio message
     if voice and voice.get("file_id"):
         file_id = voice.get("file_id")
-        async with httpx.AsyncClient() as client:
-            file_res = await client.get(f"https://api.telegram.org/bot{token}/getFile?file_id={file_id}")
-            if file_res.status_code == 200:
-                file_path = file_res.json().get("result", {}).get("file_path")
-                if file_path:
-                    download_res = await client.get(f"https://api.telegram.org/file/bot{token}/{file_path}")
-                    if download_res.status_code == 200:
-                        asr_res = await sarvam_client.transcribe_audio(
-                            audio_bytes=download_res.content,
-                            filename="voice.ogg",
-                            language_code="hi",
-                        )
-                        incoming_text = asr_res.get("transcript", "")
+        try:
+            async with httpx.AsyncClient(timeout=30.0) as client:
+                file_res = await client.get(f"https://api.telegram.org/bot{token}/getFile?file_id={file_id}")
+                if file_res.status_code == 200:
+                    file_path = file_res.json().get("result", {}).get("file_path")
+                    if file_path:
+                        download_res = await client.get(f"https://api.telegram.org/file/bot{token}/{file_path}")
+                        if download_res.status_code == 200:
+                            asr_res = await sarvam_client.transcribe_audio(
+                                audio_bytes=download_res.content,
+                                filename="voice.ogg",
+                                language_code="hi",
+                            )
+                            incoming_text = asr_res.get("transcript", "")
+                            logger.info("Telegram voice transcribed: %s", incoming_text)
+        except Exception as err:
+            logger.error("Error downloading/transcribing Telegram voice note: %s", err)
 
     if not incoming_text:
         reply_msg = "👋 Hello! I am SwaraSetu Gaon Doctor. Please send me a voice note or type symptoms (e.g., 'Child has fever for 2 days')."
-        async with httpx.AsyncClient() as client:
+        async with httpx.AsyncClient(timeout=30.0) as client:
             await client.post(
                 f"https://api.telegram.org/bot{token}/sendMessage",
                 json={"chat_id": chat_id, "text": reply_msg},
             )
         return {"status": "prompted"}
+
 
     # Extract symptoms and run WHO IMCI triage
     payload = sarvam_client.extract_symptoms_rule_fallback(incoming_text, language="hi")
@@ -453,7 +458,8 @@ async def handle_telegram_webhook(
         phc = res["nearest_phc"]
         reply_text += f"\n\n📍 *Nearest PHC:* {phc['name']}\n📞 *Doctor Contact:* {phc['phone']}\n*Distance:* ~{phc['distance_km']:.1f} km (Open 24/7)"
 
-    async with httpx.AsyncClient() as client:
+    async with httpx.AsyncClient(timeout=30.0) as client:
+
         # Send text message
         await client.post(
             f"https://api.telegram.org/bot{token}/sendMessage",

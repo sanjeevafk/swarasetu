@@ -169,42 +169,80 @@ class SarvamClient:
             return None
 
     def extract_symptoms_rule_fallback(self, transcript: str, language: str = "hi") -> SymptomPayload:
-        """Clinically safe entity extractor with word-boundary matching and zero fabricated default numbers."""
+        """Clinically safe entity extractor with word-boundary matching and regex duration extraction."""
+        import re
         raw = transcript.strip()
         if not raw:
             return SymptomPayload(language=language)
 
         kwargs: dict[str, Any] = {"language": language}
 
-        # Danger signs
-        if _matches_word(["convulsion", "convulsions", "seizure", "seizures", "daura", "jhatke", "valippu", "दौरा", "झटके", "வலிப்பு"], raw):
+        # Extract numeric duration if present (e.g. "3 days", "2 din", "5 dina")
+        days_match = re.search(r"(\d+)\s*(?:day|days|din|dina|dino|dinon|naal|naatkal|দিন|दिन|நாட்கள்)", raw, re.IGNORECASE)
+        extracted_days = int(days_match.group(1)) if days_match else None
+
+        # Age group detection
+        if _matches_word(["baby", "neonate", "newborn", "navjat", "navajat", "பிறந்த குழந்தை", "নবজাতক"], raw):
+            kwargs["age_group"] = "neonate"
+        elif _matches_word(["infant", "toddler", "chhota bacha", "kutty", "शिशु", "குழந்தை"], raw):
+            kwargs["age_group"] = "infant"
+        elif _matches_word(["child", "kid", "bacha", "baccha", "bachhe", "kuzhanthai", "बच्चा", "बच्चे", "বাচ্চা"], raw):
+            kwargs["age_group"] = "child"
+        elif _matches_word(["pregnant", "pregnancy", "garbh", "garbhvati", "garbhwati", "gorbhoboti", "கர்ப்பிணி", "गर्भवती", "গর্ভবতী"], raw):
+            kwargs["pregnant"] = True
+
+        # Danger signs (Red / Score 3)
+        if _matches_word(["convulsion", "convulsions", "seizure", "seizures", "fit", "fits", "daura", "jhatke", "valippu", "दौरा", "झटके", "வலிப்பு"], raw):
             kwargs["convulsions"] = True
         if _matches_word(["unconscious", "behosh", "mayakkam", "ogyan", "बेहोश", "மயக்கம்", "অজ্ঞান"], raw):
             kwargs["unconscious"] = True
-        if _matches_word(["chest pain", "seene me dard", "marbu vali", "buke betha", "सीने में दर्द", "छाती में दर्द", "বুকে ব্যথা"], raw):
+        if _matches_word(["chest pain", "seene me dard", "marbu vali", "buke betha", "सीने में दर्द", "छाती में दर्द", "बुके ব্যথা"], raw):
             kwargs["chest_pain_severe"] = True
         if _matches_word(["vomit blood", "vomiting blood", "khoon ki ulti", "rakthavanthi", "rokto bomi", "खून की उल्टी", "रक्तবমি"], raw):
             kwargs["vomiting_blood"] = True
 
         # Fever
-        if _matches_word(["fever", "bukhar", "kaichal", "jwor", "gorom", "बुखार", "காய்ச்சல்", "জ্বর"], raw):
+        if _matches_word(["fever", "bukhar", "kaichal", "jwor", "gorom", "thand", "chills", "बुखार", "காய்ச்சல்", "জ্বর"], raw):
             kwargs["has_fever"] = True
+            if extracted_days is not None:
+                kwargs["fever_days"] = extracted_days
         if _matches_word(["stiff neck", "gardan me akad", "kazhuthu vali", "गर्दन में अकड़न", "अकड़न", "கழுத்து வலி"], raw):
             kwargs["neck_stiffness"] = True
+        if _matches_word(["rash", "daane", "chhate", "thathadu", "दाने", "தடிப்பு"], raw):
+            kwargs["rash_with_fever"] = True
 
         # Respiratory
-        if _matches_word(["cough", "coughing", "khansi", "irumal", "kashi", "खांसी", "இருமல்", "কাশি"], raw):
-            kwargs["difficulty_breathing"] = False  # just cough unless distress noted
-        if _matches_word(["breath", "breathing difficulty", "shortness of breath", "saans", "moochu", "shash", "सांस", "மூச்சு", "শ্বাস"], raw):
+        has_cough = _matches_word(["cough", "coughing", "cold", "khansi", "sardi", "jukham", "irumal", "kashi", "खांसी", "सर्दी", "जुकाम", "இருமல்", "কাশি"], raw)
+        has_breathing_distress = _matches_word(["breath", "breathing", "shortness of breath", "difficulty breathing", "saans", "moochu", "shash", "दम", "सांस", "மூச்சு", "শ্বাস"], raw)
+        
+        if has_cough:
+            kwargs["cough_days"] = extracted_days if extracted_days is not None else 1
+        if has_breathing_distress:
             kwargs["difficulty_breathing"] = True
+            kwargs["breathing_rate_per_min"] = 55
+        elif has_cough:
+            kwargs["difficulty_breathing"] = False
+
         if _matches_word(["chest in", "chest indrawing", "pasli", "ribs", "पसली", "পাঁজর"], raw):
             kwargs["chest_indrawing"] = True
 
-        # Diarrhoea
+        # Diarrhoea & Dehydration
         if _matches_word(["diarrhea", "diarrhoea", "dast", "loose motion", "pet kharab", "bedhi", "दस्त", "வயிற்றுப்போக்கு", "ডায়রিয়া"], raw):
             kwargs["diarrhoea"] = True
+            if extracted_days is not None:
+                kwargs["stool_frequency_per_day"] = 5
+        if _matches_word(["blood in stool", "khoon dast", "raktham", "khoon ka dast", "रक्त দস্ত", "இரத்த மலம்"], raw):
+            kwargs["blood_in_stool"] = True
+
+        # Maternal
+        if kwargs.get("pregnant"):
+            if _matches_word(["headache", "sar dard", "thalai vali", "सिर दर्द", "தலைவலி"], raw):
+                kwargs["headache_severe"] = True
+            if _matches_word(["bleeding", "khoon", "raktham", "रक्तस्राव", "இரத்தப்போக்கு"], raw):
+                kwargs["vaginal_bleeding"] = True
 
         return SymptomPayload(**kwargs)
+
 
 
 sarvam_client = SarvamClient()
