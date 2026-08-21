@@ -48,12 +48,17 @@ class Settings:
         return os.getenv("TWILIO_ACCOUNT_SID") or None
 
     @property
+    def twilio_api_key_sid(self) -> str | None:
+        return os.getenv("TWILIO_API_KEY_SID") or None
+
+    @property
     def twilio_auth_token(self) -> str | None:
         return os.getenv("TWILIO_AUTH_TOKEN") or None
 
     @property
     def twilio_phone_number(self) -> str:
         return os.getenv("TWILIO_PHONE_NUMBER", "+14155238886")
+
 
 
 @lru_cache
