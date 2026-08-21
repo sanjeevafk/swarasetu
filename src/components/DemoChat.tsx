@@ -1,11 +1,20 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Mic, Send, MoreVertical, Paperclip, ChevronLeft } from 'lucide-react';
+import { Mic, Send, MoreVertical, Paperclip, ChevronLeft, CloudOff } from 'lucide-react';
 import { useAppStore, type AppLanguage } from '@/store/useAppStore';
 import { TriageResultCard } from './TriageResultCard';
 
 export function DemoChat({ onShowMap }: { onShowMap: () => void }) {
-  const { currentScenario, activeLanguage, setLanguage, demoProgress, setDemoProgress } = useAppStore();
+  const {
+    currentScenario,
+    activeLanguage,
+    setLanguage,
+    demoProgress,
+    setDemoProgress,
+    isEvaluating,
+    activeEvaluation,
+    evaluateCurrentScenario,
+  } = useAppStore();
   
   // Progress states: 0=init, 1=recording, 2=stt, 3=ner, 4=imci, 5=result
   const [messages, setMessages] = useState<any[]>([]);
@@ -23,10 +32,10 @@ export function DemoChat({ onShowMap }: { onShowMap: () => void }) {
     setDemoProgress(0);
   }, [activeLanguage, setDemoProgress]);
 
-  const handleMicClick = () => {
+  const handleMicClick = async () => {
     if (demoProgress > 0) return;
     setDemoProgress(1); // Recording
-    
+
     setTimeout(() => {
       setMessages(prev => [...prev, { type: 'audio', duration: currentScenario.audioDuration }]);
       setDemoProgress(2); // STT
@@ -36,12 +45,13 @@ export function DemoChat({ onShowMap }: { onShowMap: () => void }) {
         setDemoProgress(3); // NER
 
         setTimeout(() => {
-          setDemoProgress(4); // IMCI
-
-          setTimeout(() => {
-            setDemoProgress(5); // Result
-          }, 1500);
-        }, 1500);
+          setDemoProgress(4); // IMCI engine running — real evaluation starts here
+          void evaluateCurrentScenario().then(() => {
+            setTimeout(() => {
+              setDemoProgress(5); // Result
+            }, 900);
+          });
+        }, 1200);
       }, 1500);
     }, 1500);
   };
@@ -153,8 +163,17 @@ export function DemoChat({ onShowMap }: { onShowMap: () => void }) {
                <div className="w-full bg-[#1e1e1e] text-slate-300 rounded-lg p-3 font-mono text-[11px] shadow-lg border border-slate-800">
                   <div className="text-emerald-400 mb-1 font-bold"># IMCI Engine Running...</div>
                   <div className="opacity-80">&gt; evaluating symptoms against WHO guidelines...</div>
-                  {demoProgress === 4 ? (
+                  {demoProgress === 4 || isEvaluating ? (
                     <div className="animate-pulse text-amber-400 font-bold">&gt; calculating risk...</div>
+                  ) : activeEvaluation ? (
+                    <>
+                      <div className="text-emerald-400 font-bold">&gt; decision: risk score {activeEvaluation.outcome.risk_score} ({activeEvaluation.outcome.primary_cluster})</div>
+                      {activeEvaluation.evaluatedOffline && (
+                        <div className="mt-1 flex items-center gap-1 text-amber-400">
+                          <CloudOff className="w-3 h-3" /> on-device IMCI engine (offline)
+                        </div>
+                      )}
+                    </>
                   ) : (
                     <div className="text-emerald-400 font-bold">&gt; decision: {currentScenario.imciDecision}</div>
                   )}
@@ -162,11 +181,12 @@ export function DemoChat({ onShowMap }: { onShowMap: () => void }) {
             </motion.div>
           )}
 
-          {demoProgress === 5 && (
+          {demoProgress === 5 && activeEvaluation && (
             <motion.div initial={{ opacity:0, y:20 }} animate={{opacity:1, y:0}} className="w-full mt-2 mb-4">
-              <TriageResultCard 
-                riskScore={currentScenario.riskScore} 
-                message={currentScenario.responseMessageOriginal}
+              <TriageResultCard
+                outcome={activeEvaluation.outcome}
+                evaluatedOffline={activeEvaluation.evaluatedOffline}
+                message={activeEvaluation.directive?.message_en ?? currentScenario.responseMessageEnglish}
                 onShowMap={onShowMap}
               />
             </motion.div>
