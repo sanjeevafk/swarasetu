@@ -84,6 +84,9 @@ class SymptomPayload:
     unconscious: bool = False
     unable_to_drink_or_breastfeed: bool = False
     vomiting_everything: bool = False
+    acute_poisoning_or_bite: bool = False
+    severe_trauma: bool = False
+
 
     # Fever cluster
     has_fever: bool = False
