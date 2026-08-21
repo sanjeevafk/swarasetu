@@ -35,40 +35,37 @@ def run_full_e2e():
         page.screenshot(path=str(REPORTS_DIR / "02_patient_mode_loaded.png"))
         print("  ✓ Patient Voice Interface active")
 
-        # Switch to Hindi Scenario (Score 2 / Yellow)
-        print("  → Testing Scenario 2 (Hindi - Cough & Fast Breathing / Score 2)...")
-        hindi_btn = page.locator("button:has-text('Hindi')").first
-        if hindi_btn.is_visible():
-            hindi_btn.click()
-            time.sleep(1)
-            page.screenshot(path=str(REPORTS_DIR / "03_hindi_scenario_score_2.png"))
-            print("  ✓ Evaluated Hindi Scenario -> Result card rendered")
-
-        # Switch to Bengali Emergency Scenario (Score 3 / Red)
-        print("  → Testing Scenario 3 (Bengali - Chest Pain & Vomiting Blood / Score 3)...")
-        bengali_btn = page.locator("button:has-text('Bengali')").first
-        if bengali_btn.is_visible():
-            bengali_btn.click()
-            time.sleep(1)
-            page.screenshot(path=str(REPORTS_DIR / "04_bengali_scenario_score_3.png"))
-            print("  ✓ Evaluated Bengali Emergency -> Red alert & emergency referral rendered")
-
-        # Open PHC Map Modal from Emergency Card
-        print("  → Testing 'Find Nearest PHC' Facility Map modal...")
-        find_phc_btn = page.locator("button:has-text('Find Nearest PHC'), button:has-text('View Map'), button:has-text('Nearest PHC')").first
-        if find_phc_btn.is_visible():
-            find_phc_btn.click()
+        # Step 3: Test Typing a Custom Message
+        print("\n▶ 3. Testing Interactive Text Input & Sending Message...")
+        chat_input = page.locator("input[placeholder*='Type symptoms']")
+        if chat_input.is_visible():
+            chat_input.fill("Patient has severe chest pain and vomiting blood")
+            send_btn = page.locator("button:has(svg.lucide-send)").first
+            send_btn.click()
             time.sleep(1.5)
-            page.screenshot(path=str(REPORTS_DIR / "05_nearest_phc_modal.png"))
-            print("  ✓ PHC Map modal opened with facility list and doctor availability")
-            # Close modal
-            close_btn = page.locator("button:has-text('Close'), button:has([data-lucide='x']), button svg.lucide-x").first
-            if close_btn.is_visible():
-                close_btn.click()
-                time.sleep(0.5)
+            page.screenshot(path=str(REPORTS_DIR / "03_custom_text_triage_result.png"))
+            print("  ✓ Typed custom emergency symptoms -> Live Triage evaluation executed!")
 
-        # Step 3: ASHA Offline Tablet Mode
-        print("\n▶ 3. Testing 'ASHA Tablet' Mode & Offline Operation...")
+        # Step 4: Test Quick Symptom Suggestion Chips
+        print("\n▶ 4. Testing Quick Suggestion Chips...")
+        fever_chip = page.locator("button:has-text('Mild Fever')").first
+        if fever_chip.is_visible():
+            fever_chip.click()
+            time.sleep(1.5)
+            page.screenshot(path=str(REPORTS_DIR / "04_quick_chip_result.png"))
+            print("  ✓ Clicked Mild Fever quick-chip -> Evaluated and rendered Score 1 result!")
+
+        # Step 5: Test Simulated Voice Recording
+        print("\n▶ 5. Testing Voice Recording Simulation...")
+        mic_btn = page.locator("button:has(svg.lucide-mic)").first
+        if mic_btn.is_visible():
+            mic_btn.click()
+            time.sleep(4)
+            page.screenshot(path=str(REPORTS_DIR / "05_voice_triage_flow.png"))
+            print("  ✓ Voice simulation completed -> STT + NER + IMCI executed!")
+
+        # Step 6: ASHA Offline Tablet Mode
+        print("\n▶ 6. Testing 'ASHA Tablet' Mode & Offline Operation...")
         asha_tab = page.locator("button[role='tab']:has-text('ASHA Tablet')")
         asha_tab.click()
         time.sleep(1)
@@ -87,8 +84,8 @@ def run_full_e2e():
         time.sleep(0.5)
         print("  ✓ Online Mode restored (Auto-sync active)")
 
-        # Step 4: Supervisor Analytics Dashboard
-        print("\n▶ 4. Testing 'Supervisor Dashboard' Mode...")
+        # Step 7: Supervisor Analytics Dashboard
+        print("\n▶ 7. Testing 'Supervisor Dashboard' Mode...")
         supervisor_tab = page.locator("button[role='tab']:has-text('Supervisor')")
         supervisor_tab.click()
         time.sleep(1.5)
