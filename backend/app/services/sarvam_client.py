@@ -16,10 +16,17 @@ SARVAM_BASE_URL = "https://api.sarvam.ai"
 
 # Language code mapping between SwaraSetu and Sarvam API (BCP-47)
 LANGUAGE_MAP: dict[str, str] = {
-    "en": "en-IN",
     "hi": "hi-IN",
     "ta": "ta-IN",
     "bn": "bn-IN",
+    "te": "te-IN",
+    "kn": "kn-IN",
+    "ml": "ml-IN",
+    "mr": "mr-IN",
+    "gu": "gu-IN",
+    "pa": "pa-IN",
+    "en": "en-IN",
+    "unknown": "unknown",
 }
 
 
