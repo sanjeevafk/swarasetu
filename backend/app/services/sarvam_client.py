@@ -466,7 +466,6 @@ class SarvamClient:
         # Diarrhoea & Stool
         if matches_any(KEYWORD_DIARRHOEA) or _matches_word(["diarrhea", "diarrhoea", "dast", "loose motion", "pet kharab", "bedhi", "दस्त", "வயிற்றுப்போக்கு", "ডায়রিয়া"], raw):
             kwargs["diarrhoea"] = True
-            kwargs["stool_frequency_per_day"] = 4
         if _matches_word(["blood in stool", "khoon dast", "raktham", "khoon ka dast", "रक्त दस्त", "রক্ত আমাশয়", "রক্ত পায়খানা", "রক্ত মল", "இரத்த மலம்"], raw):
             kwargs["blood_in_stool"] = True
 
