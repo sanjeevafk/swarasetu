@@ -34,6 +34,8 @@ function evaluateGeneralDangerSigns(p: SymptomPayload): ClusterFinding {
     [p.vomiting_everything, 'vomiting_everything'],
     [p.chest_pain_severe, 'severe_chest_pain'],
     [p.vomiting_blood, 'vomiting_blood'],
+    [p.acute_poisoning_or_bite, 'acute_poisoning_or_bite'],
+    [p.severe_trauma, 'severe_trauma'],
   ];
   const codes = checks.filter(([present]) => present).map(([, code]) => code);
 
@@ -44,8 +46,15 @@ function evaluateGeneralDangerSigns(p: SymptomPayload): ClusterFinding {
   if (codes.includes('severe_chest_pain') || codes.includes('vomiting_blood')) {
     keys.push('severe_chest_pain');
   }
+  if (codes.includes('acute_poisoning_or_bite')) {
+    keys.push('snake_bite_emergency');
+  }
+  if (codes.includes('severe_trauma')) {
+    keys.push('severe_trauma_burn');
+  }
   return { cluster: 'general', risk_score: 3, rationale_keys: keys, red_flag_codes: codes, matched: true };
 }
+
 
 function evaluateFever(p: SymptomPayload): ClusterFinding {
   const measured = p.temperature_c !== null && p.temperature_c >= 37.5;
@@ -247,6 +256,8 @@ const ACTION_TEXT: Record<string, string> = {
 const RATIONALE_TEXT: Record<string, string> = {
   general_danger_sign: 'A general danger sign was detected. This needs emergency care now.',
   severe_chest_pain: 'Severe chest pain with vomiting blood can indicate a medical emergency.',
+  snake_bite_emergency: 'Snake bite or acute envenomation is a critical life-threatening emergency. Immediate anti-venom at nearest PHC is required.',
+  severe_trauma_burn: 'Severe injury, major burn, or trauma requires immediate emergency medical care and hospital stabilization.',
   fever_neck_stiffness_meningitis:
     'Fever with neck stiffness suggests possible meningitis and must be referred immediately.',
   fever_convulsions: 'Convulsions with fever are a danger sign requiring immediate referral.',
@@ -278,6 +289,8 @@ const RED_FLAG_DESCRIPTIONS: Record<string, string> = {
   vomiting_everything: 'Vomiting everything',
   severe_chest_pain: 'Severe chest pain',
   vomiting_blood: 'Vomiting blood (haematemesis)',
+  acute_poisoning_or_bite: 'Snake bite / acute envenomation / poisoning',
+  severe_trauma: 'Severe trauma, fracture, or major burn injury',
   neonatal_fever: 'Fever in baby under 2 months',
   neck_stiffness_meningitis: 'Fever with neck stiffness (suspected meningitis)',
   febrile_convulsions: 'Fever with convulsions',
@@ -297,6 +310,7 @@ const RED_FLAG_DESCRIPTIONS: Record<string, string> = {
   reduced_fetal_movement: 'Reduced fetal movement',
   eclampsia_convulsions: 'Convulsions in pregnancy (possible eclampsia)',
 };
+
 
 function actionsFor(risk: 1 | 2 | 3, primaryCluster: string): string[] {
   let keys: string[];
