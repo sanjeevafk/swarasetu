@@ -27,7 +27,24 @@ __all__ = [
     "evaluate_respiratory",
     "evaluate_diarrhoea",
     "evaluate_maternal",
+    "evaluate_adhoc_request",
 ]
+
+
+def evaluate_adhoc_request(p: SymptomPayload) -> ClusterFinding:
+    """Non-symptom intent: supply/logistics/advisory requests.
+
+    Vitamin, vaccination-schedule and medicine queries carry no clinical
+    danger sign but still warrant an ASHA worker touchpoint (level 2).
+    Max-risk aggregation keeps every red-flag path dominant over this.
+    """
+    if p.advice_request:
+        return ClusterFinding(
+            cluster="general",
+            risk_score=RiskScore.ASHA_DISPATCH,
+            rationale_keys=("adhoc_supply_request",),
+        )
+    return ClusterFinding(cluster="general", risk_score=RiskScore.SELF_CARE, matched=False)
 
 
 def evaluate_general_danger_signs(p: SymptomPayload) -> ClusterFinding:

@@ -120,6 +120,9 @@ class SymptomPayload:
     vaginal_bleeding: bool = False
     reduced_fetal_movement: bool = False
 
+    # Non-symptom intent (logistics / supply / advisory requests routed to ASHA)
+    advice_request: bool = False
+
     # Provenance
     language: str = "en"
 
