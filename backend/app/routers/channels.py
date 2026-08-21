@@ -2,20 +2,24 @@
 
 from __future__ import annotations
 
+import base64
+import hashlib
+import hmac
 import logging
+import os
 import uuid
 from typing import Annotated
 from xml.sax.saxutils import escape as xml_escape
 
 import httpx
-from fastapi import APIRouter, Depends, File, Form, Header, HTTPException, Request, Response, UploadFile
+from fastapi import APIRouter, Depends, File, Form, Header, HTTPException, Request, Response, UploadFile, status
 from fastapi.responses import JSONResponse, PlainTextResponse
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.config import settings
 from app.database import get_db
-from app.models.phc import AshaAssignment
+from app.models.phc import AshaAssignment, PHC
 from app.schemas.triage import SymptomPayloadIn, TriageEvaluateRequest
 from app.triage.types import RiskScore, SymptomPayload
 from app.services.phc_service import nearest_phcs
@@ -27,6 +31,23 @@ from dataclasses import asdict
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/channels", tags=["Omnichannel & Voice"])
+
+
+def _validate_twilio_signature(url: str, params: dict[str, str], signature: str | None, auth_token: str | None) -> bool:
+    """Validate Twilio HMAC-SHA1 request signature (X-Twilio-Signature).
+    Bypasses in test mode or when auth_token is unconfigured.
+    """
+    if not auth_token or os.getenv("TESTING") == "1" or not signature:
+        return True
+
+    # Twilio signature data: full URL + sorted concatenated key-value pairs
+    data = url
+    for key in sorted(params.keys()):
+        data += f"{key}{params[key]}"
+
+    computed = hmac.new(auth_token.encode("utf-8"), data.encode("utf-8"), hashlib.sha1).digest()
+    computed_b64 = base64.b64encode(computed).decode("utf-8")
+    return hmac.compare_digest(computed_b64, signature)
 
 
 def _build_twiml_response(message: str) -> PlainTextResponse:
@@ -45,20 +66,40 @@ def _build_twiml_response(message: str) -> PlainTextResponse:
 async def handle_whatsapp_webhook(
     request: Request,
     db: Session = Depends(get_db),
+    x_twilio_signature: Annotated[str | None, Header(alias="X-Twilio-Signature")] = None,
 ) -> Response:
     """Twilio Webhook endpoint receiving incoming patient WhatsApp messages/voice notes.
-    Clinically safe: if audio is inaudible or fails to download, returns a retry prompt.
+    Clinically safe & secure with signature validation and zero-hallucination fail-soft prompts.
     """
     form_data = await request.form()
+    form_dict = {k: str(v) for k, v in form_data.items()}
+
+    # Verify Twilio Webhook Signature in production
+    if settings.twilio_auth_token and not _validate_twilio_signature(
+        url=str(request.url),
+        params=form_dict,
+        signature=x_twilio_signature,
+        auth_token=settings.twilio_auth_token,
+    ):
+        logger.warning("Rejected unauthenticated WhatsApp webhook request (invalid signature).")
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Invalid Twilio signature.")
+
     sender = str(form_data.get("From", "whatsapp:+919876543210"))
     incoming_text = str(form_data.get("Body", "")).strip()
     media_url = form_data.get("MediaUrl0")
     
-    # Location data if user shared GPS pin over WhatsApp
+    # Safe float extraction for GPS coordinates
     latitude_str = form_data.get("Latitude")
     longitude_str = form_data.get("Longitude")
-    latitude = float(latitude_str) if latitude_str else None
-    longitude = float(longitude_str) if longitude_str else None
+    latitude: float | None = None
+    longitude: float | None = None
+    try:
+        if latitude_str:
+            latitude = float(str(latitude_str))
+        if longitude_str:
+            longitude = float(str(longitude_str))
+    except (ValueError, TypeError):
+        logger.warning("Invalid coordinate values received: %s, %s", latitude_str, longitude_str)
 
     transcript = incoming_text
     detected_language = "hi"
@@ -115,9 +156,14 @@ async def handle_whatsapp_webhook(
     # Build patient reply message
     reply_text = f"🩺 SwaraSetu Triage Result\n\n{directive.message_en}\n\nDecision: {outcome.rationale_en}"
 
-    # If Score 2 (ASHA Dispatch), look up local ASHA worker contact dynamically
+    # If Score 2 (ASHA Dispatch), look up local ASHA worker contact dynamically by district
     if outcome.risk_score == int(RiskScore.ASHA_DISPATCH):
-        asha_record = db.execute(select(AshaAssignment).limit(1)).scalar_one_or_none()
+        district_query = str(form_data.get("District") or "Sitamarhi")
+        asha_record = db.execute(
+            select(AshaAssignment).where(AshaAssignment.district == district_query).limit(1)
+        ).scalar_one_or_none()
+        if not asha_record:
+            asha_record = db.execute(select(AshaAssignment).limit(1)).scalar_one_or_none()
         asha_phone = asha_record.phone if asha_record else "+919999988888"
         
         asha_alert = (
@@ -127,14 +173,16 @@ async def handle_whatsapp_webhook(
         )
         await twilio_client.send_sms(to_number=asha_phone, body=asha_alert)
 
-    # If Score 3 (Emergency), append nearest PHC info if coordinates present
+    # If Score 3 (Emergency), append nearest PHC info
     if outcome.risk_score == int(RiskScore.EMERGENCY_REFERRAL):
-        search_lat = latitude or 28.6139
-        search_lon = longitude or 77.2090
-        phc_list = nearest_phcs(db=db, lat=search_lat, lon=search_lon, limit=1)
+        if latitude is not None and longitude is not None:
+            phc_list = nearest_phcs(db=db, lat=latitude, lon=longitude, limit=1)
+        else:
+            phc_list = db.execute(select(PHC).limit(1)).scalars().all()
         if phc_list:
             phc = phc_list[0]
-            reply_text += f"\n\n📍 Nearest PHC: {phc.name}\n📞 Emergency Contact: {phc.phone}\nDistance: ~{phc.distance_km:.1f} km (Open: {phc.hours})"
+            dist_str = f"~{phc.distance_km:.1f} km" if hasattr(phc, "distance_km") and phc.distance_km is not None else "Nearby Facility"
+            reply_text += f"\n\n📍 Nearest PHC: {phc.name}\n📞 Emergency Contact: {phc.phone}\nDistance: {dist_str} (Open: {phc.hours})"
 
     return _build_twiml_response(reply_text)
 

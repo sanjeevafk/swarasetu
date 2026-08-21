@@ -11,12 +11,15 @@ import time
 from collections import Counter
 from pathlib import Path
 
-# Ensure root is on python path
-ROOT = Path(__file__).resolve().parents[2]
-sys.path.insert(0, str(ROOT))
+# Ensure backend and repo root are on python path
+BACKEND_DIR = Path(__file__).resolve().parents[1]
+REPO_ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(REPO_ROOT))
+sys.path.insert(0, str(BACKEND_DIR))
 
 from app.triage.engine import evaluate
 from app.triage.types import RiskScore, SymptomPayload
+
 
 
 def map_ground_truth(triage_level_str: str) -> int:
@@ -146,10 +149,11 @@ def parse_vitals_and_symptoms(item: dict) -> SymptomPayload:
 
 
 def run_benchmark():
-    dataset_file = ROOT / "triage_protocols_structured.json"
+    dataset_file = REPO_ROOT / "triage_protocols_structured.json"
     if not dataset_file.exists():
         print(f"Error: {dataset_file} not found.")
         sys.exit(1)
+
         
     with open(dataset_file, "r", encoding="utf-8") as f:
         cases = json.load(f)

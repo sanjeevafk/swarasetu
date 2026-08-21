@@ -8,7 +8,8 @@ import type {
   TriageOutcome,
   TriageEvaluateResponse,
 } from '@/types/api';
-import { emptyPayload } from '@/types/api';
+import { emptyPayload, sanitizePayload } from '@/types/api';
+
 import { api, ApiUnreachableError } from '@/lib/api';
 import { evaluateLocal } from '@/lib/triageLocal';
 import { countQueued, enqueue, flushOutbox } from '@/lib/outbox';
@@ -93,7 +94,7 @@ function buildPayload(scenario: SymptomScenario): SymptomPayload {
     p.fever_days = parseDays(scenario.nerExtraction.duration) ?? 1;
   }
   if (has('cough')) {
-    p.cough_days = parseDays(scenario.nerExtraction.duration) ?? 2;
+    p.cough_days = parseDays(scenario.nerExtraction.duration) ?? 1;
   }
   if (has('breathing difficulty', 'difficulty breathing', 'shortness of breath')) {
     p.difficulty_breathing = true;
@@ -111,8 +112,9 @@ function buildPayload(scenario: SymptomScenario): SymptomPayload {
     p.unable_to_drink_or_breastfeed = true;
   }
 
-  return p;
+  return sanitizePayload(p);
 }
+
 
 function parseDays(duration: string | undefined): number | null {
   if (!duration) return null;
