@@ -68,12 +68,21 @@ class Settings:
         return os.getenv("META_PHONE_NUMBER_ID") or None
 
     @property
-    def meta_verify_token(self) -> str:
-        return os.getenv("META_VERIFY_TOKEN", "swarasetu_meta_verify_2026")
+    def meta_verify_token(self) -> str | None:
+        return os.getenv("META_VERIFY_TOKEN") or None
+
+    @property
+    def meta_app_secret(self) -> str | None:
+        return os.getenv("META_APP_SECRET") or None
 
     @property
     def telegram_bot_token(self) -> str | None:
         return os.getenv("TELEGRAM_BOT_TOKEN") or None
+
+    @property
+    def telegram_webhook_secret(self) -> str | None:
+        return os.getenv("TELEGRAM_WEBHOOK_SECRET") or None
+
 
 
 

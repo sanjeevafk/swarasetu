@@ -25,9 +25,10 @@ LANGUAGE_MAP: dict[str, str] = {
     "mr": "mr-IN",
     "gu": "gu-IN",
     "pa": "pa-IN",
+    "od": "od-IN",
     "en": "en-IN",
-    "unknown": "unknown",
 }
+
 
 
 def _matches_word(pattern_list: list[str], text: str) -> bool:
@@ -243,7 +244,6 @@ class SarvamClient:
             kwargs["cough_days"] = extracted_days if extracted_days is not None else 1
         if has_breathing_distress:
             kwargs["difficulty_breathing"] = True
-            kwargs["breathing_rate_per_min"] = 55
         elif has_cough:
             kwargs["difficulty_breathing"] = False
 
@@ -253,9 +253,7 @@ class SarvamClient:
         # Diarrhoea & Dehydration
         if _matches_word(["diarrhea", "diarrhoea", "dast", "loose motion", "pet kharab", "bedhi", "दस्त", "வயிற்றுப்போக்கு", "ডায়রিয়া"], raw):
             kwargs["diarrhoea"] = True
-            if extracted_days is not None:
-                kwargs["stool_frequency_per_day"] = 5
-        if _matches_word(["blood in stool", "khoon dast", "raktham", "khoon ka dast", "रक्त দস্ত", "இரத்த மலம்"], raw):
+        if _matches_word(["blood in stool", "khoon dast", "raktham", "khoon ka dast", "रक्त दस्त", "রক্ত আমাশয়", "রক্ত পায়খানা", "রক্ত মল", "இரத்த மலம்"], raw):
             kwargs["blood_in_stool"] = True
 
         # Maternal

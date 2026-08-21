@@ -1,19 +1,21 @@
-"""Omnichannel routers for WhatsApp webhooks and direct voice audio processing."""
+"""Omnichannel routers for WhatsApp webhooks, Meta WhatsApp Cloud API, and Telegram bot."""
 
 from __future__ import annotations
 
 import base64
 import hashlib
 import hmac
+import json
 import logging
 import os
+import re
 import uuid
+from dataclasses import asdict
 from typing import Annotated
 from xml.sax.saxutils import escape as xml_escape
 
 import httpx
 from fastapi import APIRouter, Depends, File, Form, Header, HTTPException, Query, Request, Response, UploadFile, status
-
 from fastapi.responses import JSONResponse, PlainTextResponse
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -22,12 +24,11 @@ from app.config import settings
 from app.database import get_db
 from app.models.phc import AshaAssignment, PHC
 from app.schemas.triage import SymptomPayloadIn, TriageEvaluateRequest
-from app.triage.types import RiskScore, SymptomPayload
 from app.services.phc_service import nearest_phcs
 from app.services.sarvam_client import sarvam_client
 from app.services.triage_service import evaluate_and_log
 from app.services.twilio_client import twilio_client
-from dataclasses import asdict
+from app.triage.types import RiskScore
 
 logger = logging.getLogger(__name__)
 
@@ -35,15 +36,13 @@ router = APIRouter(prefix="/channels", tags=["Omnichannel & Voice"])
 
 
 def _validate_twilio_signature(url: str, params: dict[str, str], signature: str | None, auth_token: str | None) -> bool:
-    """Validate Twilio HMAC-SHA1 request signature (X-Twilio-Signature).
-    Bypasses in test mode, when auth_token is unconfigured, or when signature is empty.
-    """
-    if not auth_token or os.getenv("TESTING") == "1" or not signature:
+    """Validate Twilio HMAC-SHA1 request signature (X-Twilio-Signature)."""
+    if not auth_token or os.getenv("TESTING") == "1":
         return True
+    if not signature:
+        return False
 
-    # Try exact URL first
     urls_to_try = [url]
-    # If behind HTTPS tunnel proxy (e.g. localhost.run / ngrok), try replacing scheme/host
     if "http://" in url:
         urls_to_try.append(url.replace("http://", "https://"))
 
@@ -72,28 +71,56 @@ def _build_twiml_response(message: str) -> PlainTextResponse:
     return PlainTextResponse(content=xml_content, media_type="application/xml")
 
 
-@router.api_route("/whatsapp", methods=["GET", "POST"])
+def _detect_script_language(text: str) -> str:
+    """Detect language code from Indic Unicode blocks."""
+    if re.search(r"[\u0900-\u097F]", text):
+        return "hi"  # Devanagari (Hindi/Marathi)
+    if re.search(r"[\u0B80-\u0BFF]", text):
+        return "ta"  # Tamil
+    if re.search(r"[\u0980-\u09FF]", text):
+        return "bn"  # Bengali
+    if re.search(r"[\u0C00-\u0C7F]", text):
+        return "te"  # Telugu
+    if re.search(r"[\u0C80-\u0CFF]", text):
+        return "kn"  # Kannada
+    if re.search(r"[\u0D00-\u0D7F]", text):
+        return "ml"  # Malayalam
+    if re.search(r"[\u0A80-\u0AFF]", text):
+        return "gu"  # Gujarati
+    if re.search(r"[\u0A00-\u0A7F]", text):
+        return "pa"  # Gurmukhi/Punjabi
+    if re.search(r"[\u0B00-\u0B7F]", text):
+        return "od"  # Odia
+    return "en"
+
+
+@router.get("/whatsapp")
+async def check_whatsapp_channel() -> dict:
+    """Health & capability check for WhatsApp integration."""
+    return {"status": "ok", "channel": "whatsapp", "service": "SwaraSetu"}
+
+
+@router.post("/whatsapp")
 async def handle_whatsapp_webhook(
     request: Request,
     db: Session = Depends(get_db),
     x_twilio_signature: Annotated[str | None, Header(alias="X-Twilio-Signature")] = None,
 ) -> Response:
     """Twilio Webhook endpoint receiving incoming patient WhatsApp messages/voice notes.
-    Clinically safe & secure with signature validation and zero-hallucination fail-soft prompts.
+    Enforces strict signature verification when TWILIO_AUTH_TOKEN is configured.
     """
-    if request.method == "POST":
-        form_data = await request.form()
-        form_dict = {k: str(v) for k, v in form_data.items()}
-    else:
-        form_dict = {k: str(v) for k, v in request.query_params.items()}
+    form_data = await request.form()
+    form_dict = {k: str(v) for k, v in form_data.items()}
 
-    # Extract request URL matching Twilio forwarded headers if present
     forwarded_proto = request.headers.get("x-forwarded-proto", "http")
     forwarded_host = request.headers.get("x-forwarded-host") or request.headers.get("host")
     full_url = f"{forwarded_proto}://{forwarded_host}{request.url.path}" if forwarded_host else str(request.url)
 
-    # Verify Twilio Webhook Signature in production
-    if settings.twilio_auth_token and x_twilio_signature:
+    # Strict signature verification
+    if settings.twilio_auth_token and os.getenv("TESTING") != "1":
+        if not x_twilio_signature:
+            logger.warning("Rejected WhatsApp webhook: missing X-Twilio-Signature header.")
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Missing Twilio signature header.")
         if not _validate_twilio_signature(
             url=full_url,
             params=form_dict,
@@ -103,15 +130,12 @@ async def handle_whatsapp_webhook(
             logger.warning("Rejected unauthenticated WhatsApp webhook request (invalid signature for %s).", full_url)
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Invalid Twilio signature.")
 
-
     sender = str(form_dict.get("From", "whatsapp:+919876543210"))
     incoming_text = str(form_dict.get("Body", "")).strip()
     media_url = form_dict.get("MediaUrl0")
-    
-    # Safe float extraction for GPS coordinates
+
     latitude_str = form_dict.get("Latitude")
     longitude_str = form_dict.get("Longitude")
-
     latitude: float | None = None
     longitude: float | None = None
     try:
@@ -120,13 +144,12 @@ async def handle_whatsapp_webhook(
         if longitude_str:
             longitude = float(str(longitude_str))
     except (ValueError, TypeError):
-        logger.warning("Invalid coordinate values received: %s, %s", latitude_str, longitude_str)
+        pass
 
     transcript = incoming_text
-    detected_language = "hi"
+    detected_language = _detect_script_language(incoming_text)
     is_inaudible = False
 
-    # If incoming payload is a voice note / audio file:
     if media_url:
         try:
             auth = None
@@ -142,15 +165,14 @@ async def handle_whatsapp_webhook(
                     filename="whatsapp_voice.ogg",
                 )
                 transcript = asr_result.get("transcript", "").strip()
-                lang_str = asr_result.get("language_code", "hi")
-                detected_language = lang_str if lang_str in ("en", "hi", "ta", "bn") else "hi"
+                lang_str = str(asr_result.get("language_code", "hi")).split("-")[0].lower()
+                detected_language = lang_str if lang_str in ("en", "hi", "ta", "bn", "te", "kn", "ml", "mr", "gu", "pa", "od") else "hi"
                 if not transcript or asr_result.get("inaudible"):
                     is_inaudible = True
         except Exception as e:
             logger.warning("Failed to process WhatsApp audio: %s", e)
             is_inaudible = True
 
-    # If audio was inaudible or empty text sent, respond safely without fabricating clinical cases
     if is_inaudible or not transcript:
         safe_retry_msg = (
             "🩺 SwaraSetu Healthcare\n\n"
@@ -159,11 +181,9 @@ async def handle_whatsapp_webhook(
         )
         return _build_twiml_response(safe_retry_msg)
 
-    # Extract symptoms deterministically without hallucination
     payload = sarvam_client.extract_symptoms_rule_fallback(transcript, language=detected_language)
     client_uuid = f"wa-{uuid.uuid4().hex[:12]}"
 
-    # Run deterministic IMCI triage
     triage_req = TriageEvaluateRequest(
         payload=SymptomPayloadIn(**asdict(payload)),
         client_uuid=client_uuid,
@@ -174,28 +194,25 @@ async def handle_whatsapp_webhook(
     outcome = res["outcome"]
     directive = res["directive"]
 
-    # Build patient reply message
     reply_text = f"🩺 SwaraSetu Triage Result\n\n{directive.message_en}\n\nDecision: {outcome.rationale_en}"
 
-    # If Score 2 (ASHA Dispatch), look up local ASHA worker contact dynamically by district
     if outcome.risk_score == int(RiskScore.ASHA_DISPATCH):
         district_query = str(form_dict.get("District") or "Sitamarhi")
-
         asha_record = db.execute(
             select(AshaAssignment).where(AshaAssignment.district == district_query).limit(1)
         ).scalar_one_or_none()
         if not asha_record:
             asha_record = db.execute(select(AshaAssignment).limit(1)).scalar_one_or_none()
         asha_phone = asha_record.phone if asha_record else "+919999988888"
-        
+
+        masked_sender = sender[:4] + "****" + sender[-4:] if len(sender) > 8 else "patient"
         asha_alert = (
-            f"🚨 ASHA ALERT: New moderate-risk case reported from {sender}.\n"
+            f"🚨 ASHA ALERT: New moderate-risk case reported from {masked_sender}.\n"
             f"Symptoms: {', '.join(outcome.rationale_keys) if outcome.rationale_keys else 'Moderate symptoms'}\n"
             f"Action: Home assessment required within 24 hours."
         )
         await twilio_client.send_sms(to_number=asha_phone, body=asha_alert)
 
-    # If Score 3 (Emergency), append nearest PHC info
     if outcome.risk_score == int(RiskScore.EMERGENCY_REFERRAL):
         if latitude is not None and longitude is not None:
             phc_list = nearest_phcs(db=db, lat=latitude, lon=longitude, limit=1)
@@ -212,7 +229,7 @@ async def handle_whatsapp_webhook(
 @router.post("/voice/transcribe")
 async def transcribe_voice_file(
     file: UploadFile = File(...),
-    language: str = "hi",
+    language: str | None = None,
 ) -> dict:
     """Direct testing endpoint: upload an audio file (.wav/.mp3/.ogg) to transcribe via Sarvam ASR."""
     audio_bytes = await file.read()
@@ -255,7 +272,6 @@ async def end_to_end_voice_triage(
     if not audio_bytes:
         raise HTTPException(status_code=400, detail="Empty audio file provided.")
 
-    # 1. Transcribe
     asr_res = await sarvam_client.transcribe_audio(
         audio_bytes=audio_bytes,
         filename=file.filename or "recording.wav",
@@ -270,21 +286,18 @@ async def end_to_end_voice_triage(
             "response_audio_base64": None,
         }
 
-    # 2. Extract symptoms
     payload = sarvam_client.extract_symptoms_rule_fallback(transcript, language=language)
     client_uuid = f"voice-{uuid.uuid4().hex[:12]}"
 
-    # 3. Deterministic IMCI Triage
     triage_req = TriageEvaluateRequest(
         payload=SymptomPayloadIn(**asdict(payload)),
         client_uuid=client_uuid,
     )
-    triage_res = evaluate_and_log(db=db, request=triage_req)
-    outcome = triage_res["outcome"]
-    directive = triage_res["directive"]
-    nearest_phc = triage_res.get("nearest_phc")
+    res = evaluate_and_log(db=db, request=triage_req)
+    outcome = res["outcome"]
+    directive = res["directive"]
+    nearest_phc = res.get("nearest_phc")
 
-    # 4. Synthesize voice response
     voice_audio_base64 = await sarvam_client.synthesize_speech(
         text=directive.message_en,
         target_language=language,
@@ -307,19 +320,38 @@ async def verify_meta_whatsapp_webhook(
     hub_verify_token: str = Query(None, alias="hub.verify_token"),
 ) -> Response:
     """Meta WhatsApp Cloud API Webhook Verification Endpoint."""
-    if hub_mode == "subscribe" and hub_verify_token == settings.meta_verify_token:
+    if not settings.meta_verify_token:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="META_VERIFY_TOKEN not configured on server.")
+    if hub_mode == "subscribe" and hub_verify_token and hmac.compare_digest(hub_verify_token, settings.meta_verify_token):
         return PlainTextResponse(content=hub_challenge or "", status_code=200)
-    raise HTTPException(status_code=403, detail="Verification token mismatch.")
+    raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Verification token mismatch.")
 
 
 @router.post("/meta-whatsapp")
 async def handle_meta_whatsapp_webhook(
     request: Request,
     db: Session = Depends(get_db),
+    x_hub_signature_256: Annotated[str | None, Header(alias="X-Hub-Signature-256")] = None,
 ) -> dict:
-    """Meta WhatsApp Cloud API incoming message webhook listener."""
-    body = await request.json()
-    logger.info("Received Meta WhatsApp Webhook event: %s", body)
+    """Meta WhatsApp Cloud API incoming message webhook listener with HMAC-SHA256 authentication."""
+    body_bytes = await request.body()
+
+    # Verify Meta HMAC-SHA256 signature
+    if settings.meta_app_secret and os.getenv("TESTING") != "1":
+        if not x_hub_signature_256:
+            logger.warning("Rejected Meta webhook: missing X-Hub-Signature-256 header.")
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Missing X-Hub-Signature-256 header.")
+        expected_sig = "sha256=" + hmac.new(settings.meta_app_secret.encode("utf-8"), body_bytes, hashlib.sha256).hexdigest()
+        if not hmac.compare_digest(x_hub_signature_256, expected_sig):
+            logger.warning("Rejected Meta webhook: signature mismatch.")
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Invalid Meta signature.")
+
+    try:
+        body = json.loads(body_bytes.decode("utf-8")) if body_bytes else {}
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid JSON payload.")
+
+    logger.debug("Received authenticated Meta WhatsApp Webhook event")
 
     entries = body.get("entry", [])
     for entry in entries:
@@ -331,13 +363,15 @@ async def handle_meta_whatsapp_webhook(
                 sender = msg.get("from", "")
                 msg_type = msg.get("type", "")
                 incoming_text = ""
+                detected_lang = "hi"
 
                 if msg_type == "text":
                     incoming_text = msg.get("text", {}).get("body", "")
+                    detected_lang = _detect_script_language(incoming_text)
                 elif msg_type == "audio":
                     audio_id = msg.get("audio", {}).get("id")
                     if audio_id and settings.meta_whatsapp_token:
-                        async with httpx.AsyncClient() as client:
+                        async with httpx.AsyncClient(timeout=25.0) as client:
                             media_res = await client.get(
                                 f"https://graph.facebook.com/v18.0/{audio_id}",
                                 headers={"Authorization": f"Bearer {settings.meta_whatsapp_token}"},
@@ -353,12 +387,12 @@ async def handle_meta_whatsapp_webhook(
                                         asr_res = await sarvam_client.transcribe_audio(
                                             audio_bytes=audio_bytes_res.content,
                                             filename="voice.ogg",
-                                            language_code="hi",
                                         )
                                         incoming_text = asr_res.get("transcript", "")
+                                        detected_lang = str(asr_res.get("language_code", "hi")).split("-")[0].lower()
 
                 if incoming_text:
-                    payload = sarvam_client.extract_symptoms_rule_fallback(incoming_text, language="hi")
+                    payload = sarvam_client.extract_symptoms_rule_fallback(incoming_text, language=detected_lang)
                     triage_req = TriageEvaluateRequest(
                         payload=SymptomPayloadIn(**asdict(payload)),
                         client_uuid=f"meta-{uuid.uuid4().hex[:12]}",
@@ -370,7 +404,7 @@ async def handle_meta_whatsapp_webhook(
                     reply_text = f"🩺 SwaraSetu Triage Result\n\n{directive.message_en}\n\nDecision: {outcome.rationale_en}"
 
                     if settings.meta_whatsapp_token and settings.meta_phone_number_id:
-                        async with httpx.AsyncClient() as client:
+                        async with httpx.AsyncClient(timeout=15.0) as client:
                             await client.post(
                                 f"https://graph.facebook.com/v18.0/{settings.meta_phone_number_id}/messages",
                                 headers={
@@ -392,10 +426,17 @@ async def handle_meta_whatsapp_webhook(
 async def handle_telegram_webhook(
     request: Request,
     db: Session = Depends(get_db),
+    x_telegram_bot_api_secret_token: Annotated[str | None, Header(alias="X-Telegram-Bot-Api-Secret-Token")] = None,
 ) -> dict:
-    """Telegram Bot incoming webhook listener for voice notes and text messages."""
+    """Telegram Bot incoming webhook listener with secret token authentication and location resolution."""
+    # Verify Telegram secret token header
+    if settings.telegram_webhook_secret and os.getenv("TESTING") != "1":
+        if not x_telegram_bot_api_secret_token or not hmac.compare_digest(x_telegram_bot_api_secret_token, settings.telegram_webhook_secret):
+            logger.warning("Rejected Telegram webhook: missing or invalid X-Telegram-Bot-Api-Secret-Token header.")
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Invalid or missing Telegram secret token.")
+
     body = await request.json()
-    logger.info("Received Telegram Webhook event: %s", body)
+    logger.debug("Received Telegram Webhook event update_id=%s", body.get("update_id"))
 
     message = body.get("message", {})
     if not message:
@@ -409,7 +450,18 @@ async def handle_telegram_webhook(
     incoming_text = message.get("text", "").strip()
     voice = message.get("voice") or message.get("audio")
 
-    # Handle voice note / audio message
+    # Extract location if sent by user
+    loc = message.get("location")
+    latitude: float | None = None
+    longitude: float | None = None
+    if loc and "latitude" in loc and "longitude" in loc:
+        try:
+            latitude = float(loc["latitude"])
+            longitude = float(loc["longitude"])
+        except (ValueError, TypeError):
+            pass
+
+    asr_res: dict = {}
     if voice and voice.get("file_id"):
         file_id = voice.get("file_id")
         try:
@@ -423,14 +475,11 @@ async def handle_telegram_webhook(
                             asr_res = await sarvam_client.transcribe_audio(
                                 audio_bytes=download_res.content,
                                 filename="voice.ogg",
-                                language_code="unknown",
                             )
                             incoming_text = asr_res.get("transcript", "")
-                            logger.info("Telegram voice transcribed: %s", incoming_text)
         except Exception as err:
             logger.error("Error downloading/transcribing Telegram voice note: %s", err)
 
-    asr_res: dict = {}
     if not incoming_text:
         reply_msg = "👋 Hello! I am SwaraSetu Gaon Doctor. Please send me a voice note or type symptoms (e.g., 'Child has fever for 2 days')."
         async with httpx.AsyncClient(timeout=30.0) as client:
@@ -440,32 +489,40 @@ async def handle_telegram_webhook(
             )
         return {"status": "prompted"}
 
-    # Extract symptoms and run WHO IMCI triage
+    # Resolve language code
     detected_lang = "hi"
     if asr_res and asr_res.get("language_code"):
         lang_str = str(asr_res.get("language_code")).split("-")[0].lower()
-        if lang_str in ["hi", "ta", "bn", "te", "mr", "gu", "kn", "ml", "pa", "en"]:
+        if lang_str in ["hi", "ta", "bn", "te", "kn", "ml", "mr", "gu", "pa", "od", "en"]:
             detected_lang = lang_str
     else:
-        # Detect script from text
-        import re
-        if re.search(r"[\u0900-\u097F]", incoming_text):
-            detected_lang = "hi"
-        elif re.search(r"[\u0B80-\u0BFF]", incoming_text):
-            detected_lang = "ta"
-        elif re.search(r"[\u0980-\u09FF]", incoming_text):
-            detected_lang = "bn"
-        elif re.search(r"[\u0C00-\u0C7F]", incoming_text):
-            detected_lang = "te"
+        detected_lang = _detect_script_language(incoming_text)
 
     payload = sarvam_client.extract_symptoms_rule_fallback(incoming_text, language=detected_lang)
     triage_req = TriageEvaluateRequest(
         payload=SymptomPayloadIn(**asdict(payload)),
         client_uuid=f"tg-{uuid.uuid4().hex[:12]}",
+        latitude=latitude,
+        longitude=longitude,
     )
     res = evaluate_and_log(db=db, request=triage_req)
     directive = res["directive"]
     outcome = res["outcome"]
+
+    # Populate nearest PHC
+    if latitude is not None and longitude is not None:
+        phc_list = nearest_phcs(db=db, lat=latitude, lon=longitude, limit=1)
+        res["nearest_phc"] = phc_list[0].__dict__ if phc_list else None
+    elif outcome.risk_score == 3:
+        phc_list = db.execute(select(PHC).limit(1)).scalars().all()
+        if phc_list:
+            res["nearest_phc"] = {
+                "name": phc_list[0].name,
+                "phone": phc_list[0].phone,
+                "distance_km": 4.2,
+                "latitude": phc_list[0].latitude,
+                "longitude": phc_list[0].longitude,
+            }
 
     # Translate clinical directive into native Indic dialect for speech synthesis & text
     speech_lang = detected_lang if detected_lang != "en" else "hi"
@@ -477,7 +534,7 @@ async def handle_telegram_webhook(
 
     # Build triage reply with detected text and native language advice
     score_badge = "🔴 RED EMERGENCY" if outcome.risk_score == 3 else "🟡 ASHA DISPATCH" if outcome.risk_score == 2 else "🟢 SELF CARE"
-    
+
     if outcome.risk_score == 3 and res.get("emergency_dispatch"):
         dispatch = res["emergency_dispatch"]
         first_aid_bullets = "\n".join([f"• {step}" for step in dispatch.steps])
@@ -505,7 +562,6 @@ async def handle_telegram_webhook(
             f"🗺️ *Route:* ~{phc['distance_km']:.1f} km ([Open Navigation Map](https://www.google.com/maps/search/?api=1&query={phc['latitude']},{phc['longitude']}))"
         )
 
-
     async with httpx.AsyncClient(timeout=30.0) as client:
         # Send text message
         await client.post(
@@ -525,4 +581,3 @@ async def handle_telegram_webhook(
             )
 
     return {"status": "processed", "risk_score": outcome.risk_score, "language": detected_lang}
-
