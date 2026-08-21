@@ -6,7 +6,7 @@ from typing import Optional
 
 from pydantic import BaseModel, Field
 
-from backend.app.schemas.triage import SymptomPayloadIn
+from app.schemas.triage import SymptomPayloadIn
 
 
 class SyncCaseItem(BaseModel):
@@ -25,4 +25,9 @@ class SyncCaseItem(BaseModel):
 class SyncResponse(BaseModel):
     accepted: int
     duplicates: int
+    rejected: int = 0
     total: int
+    accepted_uuids: list[str] = Field(default_factory=list)
+    duplicate_uuids: list[str] = Field(default_factory=list)
+    rejected_uuids: list[str] = Field(default_factory=list)
+

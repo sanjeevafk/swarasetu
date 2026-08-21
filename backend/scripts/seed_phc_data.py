@@ -10,8 +10,8 @@ from __future__ import annotations
 
 from sqlalchemy.orm import Session
 
-from backend.app.database import SessionLocal, init_db
-from backend.app.models import AshaAssignment, PHC
+from app.database import SessionLocal, init_db
+from app.models import AshaAssignment, PHC
 
 # Facilities anchored around Sitamarhi district, North Bihar (matches demo map).
 PHCS = [

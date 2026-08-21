@@ -5,10 +5,10 @@ from __future__ import annotations
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
-from backend.app.database import get_db
-from backend.app.schemas.triage import TriageEvaluateRequest, TriageEvaluateResponse
-from backend.app.services.phc_service import nearest_phcs
-from backend.app.services.triage_service import evaluate_and_log
+from app.database import get_db
+from app.schemas.triage import TriageEvaluateRequest, TriageEvaluateResponse
+from app.services.phc_service import nearest_phcs
+from app.services.triage_service import evaluate_and_log
 
 router = APIRouter(prefix="/api/v1/triage", tags=["triage"])
 

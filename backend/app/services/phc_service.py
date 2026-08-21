@@ -6,8 +6,8 @@ from math import asin, cos, radians, sin, sqrt
 
 from sqlalchemy.orm import Session
 
-from backend.app.models import PHC
-from backend.app.schemas.triage import PHCNearby
+from app.models import PHC
+from app.schemas.triage import PHCNearby
 
 EARTH_RADIUS_KM = 6371.0088
 

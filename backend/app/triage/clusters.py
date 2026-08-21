@@ -5,7 +5,7 @@ Evaluation order inside every cluster is a fixed severity ladder so outcomes
 are fully deterministic and auditable.
 """
 
-from backend.app.triage.types import (
+from app.triage.types import (
     AGE_ADULT,
     AGE_ADOLESCENT,
     AGE_CHILD,

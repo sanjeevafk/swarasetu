@@ -15,8 +15,8 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 
-from backend.app.triage.engine import evaluate
-from backend.app.triage.types import RiskScore, SymptomPayload
+from app.triage.engine import evaluate
+from app.triage.types import RiskScore, SymptomPayload
 
 
 def map_ground_truth(triage_level_str: str) -> int:

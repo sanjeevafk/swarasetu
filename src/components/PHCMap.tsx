@@ -5,7 +5,9 @@ import 'leaflet/dist/leaflet.css';
 import { mockPHCs } from '@/data/mockPHCs';
 import { Badge } from '@/components/ui/badge';
 import { CloudOff } from 'lucide-react';
-import type { PHCNearby } from '@/types/api';
+import { api } from '@/lib/api';
+
+
 
 // Fix for default Leaflet marker icons in React
 import iconRetinaUrl from 'leaflet/dist/images/marker-icon-2x.png';
@@ -47,6 +49,7 @@ const fallbackFacilities: MapFacility[] = mockPHCs.map((p) => ({
 }));
 
 export function PHCMap() {
+
   const defaultCenter: [number, number] = [26.5, 85.5]; // Central Rural Bihar coords
   const [facilities, setFacilities] = useState<MapFacility[]>(fallbackFacilities);
   const [isLive, setIsLive] = useState(false);
@@ -55,24 +58,24 @@ export function PHCMap() {
     let cancelled = false;
     const load = async () => {
       try {
-        const res = await fetch(`/api/v1/phcs/nearest?lat=${defaultCenter[0]}&lon=${defaultCenter[1]}&limit=10`);
-        if (!res.ok) throw new Error(String(res.status));
-        const data = (await res.json()) as PHCNearby[];
-        if (cancelled || data.length === 0) return;
-        setFacilities(
-          data.map((p) => ({
-            id: String(p.id),
-            name: p.name,
-            distanceKm: p.distance_km,
-            hours: p.hours,
-            phone: p.phone,
-            coordinates: [p.latitude, p.longitude] as [number, number],
-            doctorAvailable: p.doctor_available,
-          })),
-        );
-        setIsLive(true);
+        const data = await api.nearestPhcs(defaultCenter[0], defaultCenter[1], 10);
+
+        if (!cancelled && data.length > 0) {
+          setFacilities(
+            data.map((p) => ({
+              id: String(p.id),
+              name: p.name,
+              distanceKm: p.distance_km,
+              hours: p.hours,
+              phone: p.phone,
+              coordinates: [p.latitude, p.longitude],
+              doctorAvailable: p.doctor_available,
+            })),
+          );
+          setIsLive(true);
+        }
       } catch {
-        if (!cancelled) setIsLive(false); // keep static fallback pins
+        if (!cancelled) setIsLive(false);
       }
     };
     void load();

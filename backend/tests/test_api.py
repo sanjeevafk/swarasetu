@@ -9,8 +9,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from fastapi.testclient import TestClient  # noqa: E402
 
-from backend.app.main import app  # noqa: E402
-from backend.app.database import init_db  # noqa: E402
+from app.main import app  # noqa: E402
+from app.database import init_db  # noqa: E402
 from backend.scripts.seed_phc_data import PHCS  # noqa: E402
 
 
@@ -18,8 +18,8 @@ from backend.scripts.seed_phc_data import PHCS  # noqa: E402
 def client():
     init_db()
     # Seed PHC data directly for the module.
-    from backend.app.database import SessionLocal
-    from backend.app.models import PHC
+    from app.database import SessionLocal
+    from app.models import PHC
 
     db = SessionLocal()
     if db.query(PHC).count() == 0:
