@@ -60,7 +60,26 @@ def haversine_km(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
     return round(6371.0 * c, 2)
 ```
 
+### 1.3 How Coordinates Link to Contact Details
+Coordinates do not generate phone numbers on their own; instead, every entry in the database or offline bundle is a **self-contained facility profile** that binds its GPS latitude and longitude directly to its verified contact information:
+
+```
+[ Incoming Patient GPS: 26.4501, 85.3410 ]
+                   │
+                   ▼ (Haversine Distance Check across all DB records)
+[ Matched Record: Belsand PHC (d = 0.38 km) ]
+  ├── name: "Belsand Primary Health Center"
+  ├── latitude: 26.4468
+  ├── longitude: 85.3402
+  ├── phone: "+91-6226-282234" ──────▶ [ Extracted for Patient Emergency Card ]
+  ├── is_24x7: True
+  └── doctor_available: True
+```
+
+Similarly, **ASHA field worker phone numbers** are linked to their assigned administrative villages in the `AshaAssignment` table. When an evaluation triggers a Score 2 (ASHA Dispatch), the system queries the village match and extracts the worker's direct mobile number to trigger an SMS ping.
+
 ---
+
 
 ## 2. Production vs. Prototype Data Sources
 
