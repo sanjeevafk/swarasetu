@@ -91,8 +91,8 @@ Comprehensive technical and architecture guides are available in the [`docs/`](.
 
 - 📱 **[Dual-Channel Architecture (Online WhatsApp vs. Offline Tablet)](./docs/HOW_SWARASETU_WORKS.md)**: Architectural breakdown explaining how WhatsApp provides zero-install patient access while the tablet PWA runs 100% offline in media-dark villages.
 - 🗺️ **[Geospatial Facility Routing & ABDM Registry Guide](./docs/SWARASETU_GEOSPATIAL_FACILITY_ROUTING_GUIDE.md)**: Hardware satellite GPS offline routing, Haversine math, ABDM Health Facility Registry data models, and regional customization (Tamil Nadu, Kerala, Jharkhand).
-- 🏗️ **[System Architecture & 3-Tier Deployment](./docs/SWARASETU_PRODUCT_ARCHITECTURE_SIH2026.md)**: Technical breakdown of Cloud Sarvam, on-device quantized Indic-Seamless, and 2GB tablet fallback tiers.
-- 🏆 **[SIH 2026 Comprehensive Evaluation Guide](./docs/SWARASETU_SIH_COMPREHENSIVE_GUIDE.md)**: Hackathon problem statement alignment, clinical safety defense, judge Q&A responses, and competitive moats.
+- 🏗️ **[System Architecture & 3-Tier Deployment](./docs/SWARASETU_PRODUCT_ARCHITECTURE.md)**: Technical breakdown of Cloud Sarvam, on-device quantized Indic-Seamless, and 2GB tablet fallback tiers.
+- 🏆 **[Comprehensive Evaluation Guide](./docs/SWARASETU_COMPREHENSIVE_GUIDE.md)**: Problem statement alignment, clinical safety defense, technical Q&A responses, and competitive moats.
 - 📊 **[Clinical Evaluation & Benchmarks](./docs/EVALUATION.md)**: Benchmark results, offline latency, and 0% under-triage safety validation across 2,251 rural emergency cases.
 
 

@@ -94,7 +94,7 @@ To support rural populations and semi-literate field workers:
 
 ---
 
-## 5. Smart India Hackathon (SIH) Execution & Pitching Strategy
+## 5. Deployment Execution & Pitching Strategy
 
 ### 10-Day Build Roadmap
 
@@ -110,7 +110,7 @@ Week 2 — Integration & Fail-Safes
 └── Day 10: Demo Run-Throughs & Pitch Refinement
 ```
 
-### 3-Minute SIH Pitch Script
+### 3-Minute Product Pitch Script
 
 1. **0:00 - 0:40 | Problem & Impact:**
    * *"India has 0.7 doctors per 1,000 rural citizens. 800M people live 45 minutes from healthcare. Text-based apps fail due to low literacy. SwaraSetu is an offline-first, voice-native triage assistant."*
@@ -123,9 +123,9 @@ Week 2 — Integration & Fail-Safes
 5. **2:45 - 3:00 | Conclusion & Alignment:**
    * Summarize alignment with UN SDGs 3, 4, 10 and India's National Health Mission (NHM).
 
-### SIH Q&A Defense Matrix
+### Evaluation Q&A Defense Matrix
 
-| Judge Question | Strategy / Response |
+| Evaluator Question | Strategy / Response |
 |---|---|
 | **Medical Accuracy & LLM Hallucination** | We do **not** use generative LLMs for medical reasoning. Sarvam AI is used strictly for translation and entity extraction. Medical triage relies 100% on deterministic decision trees executing official WHO IMCI protocols. |
 | **Low-Literacy Usability** | Patients interact verbally via voice notes without viewing screens. For ASHA workers, the tablet PWA incorporates a Touch-to-Hear UX framework where every visual icon plays audio explanations in the local dialect. |

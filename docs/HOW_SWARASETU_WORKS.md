@@ -1,6 +1,6 @@
 # How SwaraSetu Works: The Dual-Channel (Online WhatsApp + Offline Tablet) Architecture
 
-A frequent question from technical evaluators and Smart India Hackathon (SIH) judges is:
+A frequent question from technical evaluators and reviewers is:
 > **"How is SwaraSetu an offline healthcare app if it integrates with WhatsApp?"**
 
 The answer lies in SwaraSetu's **Dual-Channel / 3-Tier Architecture**, designed specifically for the dual realities of India's rural healthcare landscape.
@@ -119,7 +119,7 @@ WhatsApp and cloud voice APIs cannot function without internet packets. In deep 
 
 ---
 
-## 5. Technical Defense for SIH Judges
+## 5. Technical Defense for Technical Evaluators
 
 When presenting to evaluation committees, highlight this clear distinction:
 

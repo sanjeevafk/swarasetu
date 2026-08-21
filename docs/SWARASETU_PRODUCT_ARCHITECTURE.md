@@ -51,7 +51,7 @@
 
 ---
 
-## 🏆 Why It Wins SIH 2026 & Hackathons
+## 🏆 Core Architecture Advantages
 
 1. **Deterministic Medical Logic vs. LLM Hallucination:**
    Using AI *only* for speech-to-text, translation, and entity extraction while running a **deterministic WHO decision tree** guarantees clinical accuracy and patient safety.
