@@ -39,12 +39,13 @@ load_dotenv('.env')
 load_dotenv('backend/.env')
 
 token = os.getenv('TELEGRAM_BOT_TOKEN')
-secret = os.getenv('TELEGRAM_WEBHOOK_SECRET', 'swarasetu_tg_sec_98f12a3d4c')
+secret = os.getenv('TELEGRAM_WEBHOOK_SECRET')
 webhook_url = 'https://swarasetu-live.loca.lt/channels/telegram'
 
 if token:
     try:
-        set_url = f'https://api.telegram.org/bot{token}/setWebhook?url={webhook_url}&secret_token={secret}&drop_pending_updates=True'
+        secret_param = f'&secret_token={secret}' if secret else ''
+        set_url = f'https://api.telegram.org/bot{token}/setWebhook?url={webhook_url}{secret_param}&drop_pending_updates=True'
         req = urllib.request.urlopen(set_url)
         res = json.loads(req.read())
         if res.get('ok'):
