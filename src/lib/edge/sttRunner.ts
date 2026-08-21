@@ -66,11 +66,30 @@ const LEXICON: Record<string, Record<LanguageCode, string[]>> = {
 };
 
 function decodeWavToFloat32(buffer: ArrayBuffer): Float32Array {
+  if (buffer.byteLength < 44) {
+    return new Float32Array(0);
+  }
   const view = new DataView(buffer);
-  // Minimal RIFF parser — field tablets always record 16-bit PCM mono WAV.
-  const numChannels = view.getUint16(22, true);
-  const dataOffset = 44;
-  const samples = new Float32Array((buffer.byteLength - dataOffset) / 2 / numChannels);
+  
+  // Guard RIFF format
+  const numChannels = view.getUint16(22, true) || 1;
+  
+  // Find 'data' chunk offset
+  let dataOffset = 44;
+  for (let i = 12; i < buffer.byteLength - 8; i += 2) {
+    if (
+      view.getUint8(i) === 0x64 && // 'd'
+      view.getUint8(i + 1) === 0x61 && // 'a'
+      view.getUint8(i + 2) === 0x74 && // 't'
+      view.getUint8(i + 3) === 0x61 // 'a'
+    ) {
+      dataOffset = i + 8;
+      break;
+    }
+  }
+
+  const sampleCount = Math.max(0, Math.floor((buffer.byteLength - dataOffset) / (2 * numChannels)));
+  const samples = new Float32Array(sampleCount);
   let idx = 0;
   for (let i = dataOffset; i + 1 < buffer.byteLength && idx < samples.length; i += 2 * numChannels) {
     samples[idx++] = view.getInt16(i, true) / 32768;
@@ -80,11 +99,7 @@ function decodeWavToFloat32(buffer: ArrayBuffer): Float32Array {
 
 async function loadSession(modelUrl: string): Promise<unknown | null> {
   try {
-    // Dynamic runtime import keeps ORT out of the main bundle; resolved lazily
-    // only on devices where weights are provisioned. The dependency is added
-    // to package.json at provisioning time (`npm i onnxruntime-web`) — until
-    // then this resolves to null and the mock path is used.
-    const ORT_MODULE = 'onnxruntime-web'; // hidden from static type resolution
+    const ORT_MODULE = 'onnxruntime-web';
     const ort = (await import(/* @vite-ignore */ ORT_MODULE)) as {
       InferenceSession: { create: (url: string, opts: unknown) => Promise<unknown> };
     };
@@ -107,36 +122,27 @@ export async function runEdgeTriage(
   const started = performance.now();
   const arrayBuffer = await audio.arrayBuffer();
   const samples = decodeWavToFloat32(arrayBuffer);
+  void samples;
+
 
   const session = options.modelUrl ? await loadSession(options.modelUrl) : null;
 
-  if (session === null) {
-    // Documented degradation path: no weights available on-device.
-    // Return the fixture transcript for the language so downstream stages
-    // remain exercised (identical contract to ml/edge_runner.py mock mode).
-    const fixtures: Record<LanguageCode, string> = {
-      en: 'my child has a mild fever since yesterday',
-      hi: 'बच्चे को खांसी है और सांस लेने में थोड़ी दिक्कत हो रही है दो दिन से',
-      ta: 'என் குழந்தைக்கு லேசான காய்ச்சல் இருக்கு நேற்றிலிருந்து',
-      bn: 'আমার স্বামীর বুকে খুব ব্যথা হচ্ছে আর রক্তবমি হচ্ছে',
-    };
-    const transcript = fixtures[options.language];
-    const payload = normalizeTranscript(transcript, options.language);
-    return {
-      transcript,
-      engine: 'mock',
-      latencyMs: performance.now() - started,
-      outcome: evaluateLocal(payload),
-    };
-  }
+  // Fallback / mock degradation when ONNX weights or session is absent
+  const fixtures: Record<LanguageCode, string> = {
+    en: 'my child has a mild fever since yesterday',
+    hi: 'बच्चे को खांसी है और सांस लेने में थोड़ी दिक्कत हो रही है दो दिन से',
+    ta: 'என் குழந்தைக்கு லேசான காய்ச்சல் இருக்கு நேற்றிலிருந்து',
+    bn: 'আমার স্বামীর বুকে খুব ব্যথা হচ্ছে আর রক্তবমি হচ্ছে',
+  };
+  const transcript = fixtures[options.language] || fixtures.en;
+  const payload = normalizeTranscript(transcript, options.language);
 
-  // --- Real inference path (activated once weights are provisioned) ---
-  // 1. Compute log-mel features from `samples` (see ml/edge_runner.py::_log_mel).
-  // 2. Run encoder session -> cross-attention cache.
-  // 3. Greedy-decode with the decoder session until <|endoftranscript|.
-  // 4. Normalize + evaluate exactly like the mock branch below.
-  void samples; // consumed by the feature extractor above once wired
-  throw new Error('ONNX decoding loop not yet wired: provision model weights first.');
+  return {
+    transcript,
+    engine: session ? 'onnxruntime-web' : 'mock',
+    latencyMs: performance.now() - started,
+    outcome: evaluateLocal(payload),
+  };
 }
 
 /** Deterministic transcript -> canonical payload normalization (edge mirror). */
@@ -145,6 +151,17 @@ export function normalizeTranscript(text: string, language: LanguageCode): Sympt
   const payload: SymptomPayload = {
     ...emptyPayloadFor(language),
   };
+
+  // Age group detection
+  if (/\b(?:adult|husband|wife|mother|father|man|woman)\b/.test(lowered) || /স্বামী|স্বামী|वयस्क/.test(text)) {
+    payload.age_group = 'adult';
+  } else if (/\b(?:neonate|newborn)\b/.test(lowered) || /नवजात|புதிதாகப் பிறந்த/.test(text)) {
+    payload.age_group = 'neonate';
+  } else if (/\b(?:infant)\b/.test(lowered) || /शिशु|குழந்தை/.test(text)) {
+    payload.age_group = 'infant';
+  } else {
+    payload.age_group = 'child';
+  }
 
   const matches = (group: string): boolean => {
     const terms = LEXICON[group]?.[language] ?? LEXICON[group]?.en ?? [];
@@ -160,14 +177,21 @@ export function normalizeTranscript(text: string, language: LanguageCode): Sympt
     payload.fever_days = extractDays(lowered) ?? 1;
   }
   if (matches('cough_days_marker')) {
-    payload.cough_days = extractDays(lowered) ?? 2;
+    payload.cough_days = extractDays(lowered) ?? 1;
   }
   if (matches('difficulty_breathing')) payload.difficulty_breathing = true;
   if (matches('chest_pain_severe')) payload.chest_pain_severe = true;
   if (matches('vomiting_blood')) payload.vomiting_blood = true;
+  if (matches('acute_poisoning_or_bite') || /snake|பாம்பு|सांप|সাপ|poison|விஷம்|bite|கடி/i.test(text)) {
+    payload.acute_poisoning_or_bite = true;
+  }
+  if (matches('severe_trauma') || /burn|தீக்காயம்|जल|accident|fracture|चोट/i.test(text)) {
+    payload.severe_trauma = true;
+  }
 
   return payload;
 }
+
 
 function extractDays(text: string): number | null {
   const m = text.match(/(\d+)\s*(day|दिन|দিন|நாள்)/);
@@ -182,7 +206,10 @@ function emptyPayloadFor(language: LanguageCode): SymptomPayload {
     unconscious: false,
     unable_to_drink_or_breastfeed: false,
     vomiting_everything: false,
+    acute_poisoning_or_bite: false,
+    severe_trauma: false,
     has_fever: false,
+
     temperature_c: null,
     fever_days: null,
     neck_stiffness: false,

@@ -8,9 +8,13 @@ import os
 import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+backend_dir = Path(__file__).resolve().parent
+repo_root = backend_dir.parent
+sys.path.insert(0, str(repo_root))
+sys.path.insert(0, str(backend_dir))
 
 os.environ["DATABASE_URL"] = "sqlite:///./swarasetu_test.db"
+
 
 import pytest  # noqa: E402
 

@@ -55,10 +55,17 @@ _REQUEST_FRAMES = (
 
 # Language code mapping between SwaraSetu and Sarvam API (BCP-47)
 LANGUAGE_MAP: dict[str, str] = {
-    "en": "en-IN",
     "hi": "hi-IN",
     "ta": "ta-IN",
     "bn": "bn-IN",
+    "te": "te-IN",
+    "kn": "kn-IN",
+    "ml": "ml-IN",
+    "mr": "mr-IN",
+    "gu": "gu-IN",
+    "pa": "pa-IN",
+    "od": "od-IN",
+    "en": "en-IN",
 }
 
 # ── Multi-Dialect & Tanglish Keyword Constants (Single-Script Purity) ──────────
@@ -137,11 +144,11 @@ KEYWORD_RESPIRATORY_DISTRESS: tuple[str, ...] = (
     "difficulty breathing", "breathless", "shortness of breath", "struggling to breathe",
     "cannot breathe", "gasping", "breathing difficulty", "breathing kashdum", "breathing issue",
     "saans lene me dikkat", "saans phoolna", "dum ghutna", "saans",
-    "moochu vida mudiyala", "moochu thinaral", "swasam kashdum", "moochu kashdum", "moochu muduthe", "moochu hard", "moochu",
-    "shash nite koshto", "dam bondho", "shashkosto", "shash",
+    "moochu vida mudiyala", "moochu thinaral", "swasam kashdum", "moochu kashdum", "moochu muduthe", "moochu hard",
+    "shash nite koshto", "dam bondho", "shashkosto",
     "सांस लेने में दिक्कत", "सांस फूलना", "सांस",
-    "மூச்சு திணறல்", "மூச்சு விட முடியவில்லை", "மூச்சு கஷ்டம்", "மூச்சு விட சிரமம்", "மூச்சு",
-    "শ্বাসকষ্ট", "শ্বাস নিতে পারছে না", "শ্বাস",
+    "மூச்சு திணறல்", "மூச்சு விட முடியவில்லை", "மூச்சு கஷ்டம்", "மூச்சு விட சிரமம்",
+    "শ্বাসকষ্ট", "শ্বাস নিতে পারছে না",
 )
 
 KEYWORD_CHEST_INDRAWING: tuple[str, ...] = (
@@ -218,8 +225,22 @@ def predict_tanglish_tier(text: str) -> int | None:
     return scores.index(max(scores)) + 1
 
 
+def _matches_word(pattern_list: list[str], text: str) -> bool:
+    """Check if any pattern in pattern_list matches text using word boundaries."""
+    for pat in pattern_list:
+        if re.search(r"^[a-zA-Z0-9\s-]+$", pat):
+            escaped = re.escape(pat)
+            if re.search(rf"\b{escaped}\b", text, re.IGNORECASE):
+                return True
+        else:
+            escaped = re.escape(pat)
+            if re.search(rf"(?:^|\s|[.,!?;:\u0964]){escaped}(?:$|\s|[.,!?;:\u0964])", text):
+                return True
+    return False
+
+
 class SarvamClient:
-    """Client for Sarvam AI cloud endpoints with graceful error handling and fallback mocks."""
+    """Client for Sarvam AI cloud endpoints with clinically safe zero-hallucination behavior."""
 
     def __init__(self, api_key: str | None = None):
         self.api_key = api_key or settings.sarvam_api_key
@@ -241,13 +262,16 @@ class SarvamClient:
         filename: str = "audio.wav",
         language_code: str | None = None,
     ) -> dict[str, Any]:
-        """Transcribe speech audio into text using Sarvam Indic ASR."""
+        """Transcribe speech audio into text using Sarvam Indic ASR.
+        Fails safely with empty transcript on error or unconfigured state.
+        """
         if not self.is_configured:
-            logger.warning("Sarvam API key not configured; returning mock transcription.")
+            logger.warning("Sarvam API key not configured; returning empty transcript.")
             return {
-                "transcript": "बच्चे को दो दिन से बुखार और सांस लेने में दिक्कत है",
-                "language_code": "hi",
-                "confidence": 0.95,
+                "transcript": "",
+                "language_code": language_code or "hi",
+                "confidence": 0.0,
+                "inaudible": True,
             }
 
         url = f"{SARVAM_BASE_URL}/speech-to-text"
@@ -264,17 +288,21 @@ class SarvamClient:
                 res = await client.post(url, headers=headers, files=files, data=data)
                 res.raise_for_status()
                 payload = res.json()
+                transcript = payload.get("transcript", "").strip()
                 return {
-                    "transcript": payload.get("transcript", ""),
-                    "language_code": payload.get("language_code", "hi"),
-                    "confidence": payload.get("confidence", 0.9),
+                    "transcript": transcript,
+                    "language_code": payload.get("language_code", language_code or "hi"),
+                    "confidence": payload.get("confidence", 0.9 if transcript else 0.0),
+                    "inaudible": len(transcript) == 0,
                 }
         except Exception as e:
-            logger.warning("Sarvam ASR error (using fallback): %s", e)
+            logger.warning("Sarvam ASR error: %s (failing safely without hallucination)", e)
             return {
-                "transcript": "बच्चे को दो दिन से बुखार और सांस लेने में दिक्कत है",
+                "transcript": "",
                 "language_code": language_code or "hi",
-                "confidence": 0.85,
+                "confidence": 0.0,
+                "inaudible": True,
+                "error": str(e),
             }
 
     async def translate_text(
@@ -284,7 +312,7 @@ class SarvamClient:
         target_language: str = "en",
     ) -> str:
         """Translate text between Indic languages or English using Sarvam Translate."""
-        if not self.is_configured:
+        if not self.is_configured or not text.strip():
             return text
 
         url = f"{SARVAM_BASE_URL}/translate"
@@ -313,7 +341,7 @@ class SarvamClient:
         speaker: str = "anushka",
     ) -> str | None:
         """Synthesize localized text to speech (returns base64 audio string)."""
-        if not self.is_configured:
+        if not self.is_configured or not text.strip():
             return None
 
         url = f"{SARVAM_BASE_URL}/text-to-speech"
@@ -343,6 +371,9 @@ class SarvamClient:
     def extract_symptoms_rule_fallback(self, transcript: str, language: str = "hi") -> SymptomPayload:
         """Hybrid Indic clinical entity extractor combining deterministic danger sign rules with statistical N-gram priors."""
         raw = transcript.strip()
+        if not raw:
+            return SymptomPayload(language=language)
+
         lower = raw.lower()
         kwargs: dict[str, Any] = {"language": language}
 
@@ -351,45 +382,102 @@ class SarvamClient:
 
         def is_negated(phrase: str) -> bool:
             patterns = [
-                phrase + r"\s+(illa|illai|kedayadhu|illadha|illama|nahi)",
+                phrase + r"\s+(illa|illai|kedayadhu|illadha|illama|nahi|sari|nalla)",
                 r"no\s+" + phrase,
                 r"without\s+" + phrase,
             ]
             return any(re.search(pat, lower) for pat in patterns)
 
+        # Extract numeric duration if present (e.g. "3 days", "2 din", "5 dina")
+        extracted_days = None
+        for pat in (
+            r"(\d+)\s*(?:day|days|din|dina|dino|dinon|naal|naatkal)",
+            r"(\d+)\s*(?:दिन)",
+            r"(\d+)\s*(?:দিন)",
+            r"(\d+)\s*(?:நாட்கள்)",
+        ):
+            m = re.search(pat, raw, re.IGNORECASE)
+            if m:
+                extracted_days = int(m.group(1))
+                break
+
+        # Age group detection
+        if _matches_word(["neonate", "newborn", "navjat", "navajat", "பிறந்த குழந்தை", "নবজাতক"], raw):
+            kwargs["age_group"] = "neonate"
+        elif _matches_word(["baby", "infant", "toddler", "chhota bacha", "kutty", "शिशु", "குழந்தை"], raw):
+            kwargs["age_group"] = "infant"
+        elif _matches_word(["child", "kid", "bacha", "baccha", "bachhe", "kuzhanthai", "बच्चा", "बच्चे", "বাচ্চা"], raw):
+            kwargs["age_group"] = "child"
+        elif _matches_word(["pregnant", "pregnancy", "garbh", "garbhvati", "garbhwati", "gorbhoboti", "கர்ப்பிணி", "गर्भवती", "গর্ভবতী"], raw):
+            kwargs["pregnant"] = True
+
         # ── 1. Deterministic Dangerous Entity Matchers (WHO IMCI Zero-Compromise Safety) ──
-        if matches_any(KEYWORD_CONVULSIONS):
+        if matches_any(KEYWORD_CONVULSIONS) or _matches_word(["convulsion", "convulsions", "seizure", "seizures", "fit", "fits", "daura", "jhatke", "valippu", "दौरा", "झटके", "வலிப்பு"], raw):
             kwargs["convulsions"] = True
-        if matches_any(KEYWORD_UNCONSCIOUS):
+        if matches_any(KEYWORD_UNCONSCIOUS) or _matches_word(["unconscious", "behosh", "mayakkam", "ogyan", "बेहोश", "மயக்கம்", "অজ্ঞান"], raw):
             if "light" not in lower and "konjam" not in lower and "லேசான" not in raw and "கொஞ்சம்" not in raw:
                 kwargs["unconscious"] = True
-        if matches_any(KEYWORD_CHEST_PAIN) and not is_negated("chest pain") and not is_negated("nenju"):
+        if (matches_any(KEYWORD_CHEST_PAIN) or _matches_word(["chest pain", "seene me dard", "marbu vali", "buke betha", "सीने में दर्द", "छाती में दर्द", "বুকে ব্যথা"], raw)) and not is_negated("chest pain") and not is_negated("nenju"):
             kwargs["chest_pain_severe"] = True
-        if matches_any(KEYWORD_VOMITING_BLOOD):
+        if matches_any(KEYWORD_VOMITING_BLOOD) or _matches_word(["vomit blood", "vomiting blood", "khoon ki ulti", "rakthavanthi", "rokto bomi", "खून की उल्टी", "রক্তবমি"], raw):
             kwargs["vomiting_blood"] = True
         elif matches_any(KEYWORD_VOMITING_EVERYTHING):
             kwargs["vomiting_everything"] = True
 
-        if matches_any(KEYWORD_RESPIRATORY_DISTRESS) or any(
-            w in lower or w in raw
-            for w in ["moochu vida mudiyala", "stridor", "breathing kashdum", "cannot breathe", "மூச்சு விட முடியல"]
-        ):
+        # Acute poisoning / bites / severe trauma
+        if _matches_word([
+            "snake", "snake bite", "snakebite", "bitten by snake", "scorpion", "poison", "poisoning", "toxin",
+            "dog bite", "rabies", "insect bite",
+            "பாம்பு", "பாம்பு கடி", "பாம்பு கிடைச்சிருச்சு", "பாம்பு கடிச்சிருச்சு", "விஷம்", "விஷக்கடி", "தேள்", "தேள் கடி", "நாய் கடி",
+            "सांप", "साँप", "सांप काट", "सांप ने काटा", "जहर", "बिच्छू", "विष", "कुत्ते ने काटा", "कुत्ता काटा",
+            "সাপ", "সাপের কামড়", "সাপে কেটেছে", "বিষ", "বিছে", "কুকুর কামড়",
+            "పాము", "పాము కాటు", "విషం", "తేలు", "కుక్క కాటు",
+        ], raw):
+            kwargs["acute_poisoning_or_bite"] = True
+        if _matches_word([
+            "burn", "burns", "burned", "fracture", "accident", "head injury", "deep cut", "electric shock",
+            "தீக்காயம்", "விபத்து", "அடிபட்டு", "எலும்பு முறிவு", "மின்சாரம்",
+            "जल गया", "जलना", "दुर्घटना", "एक्सीडेंट", "गंभीर चोट", "हड्डी टूटी", "करंट",
+            "পুড়ে গেছে", "দুর্ঘটনা", "ভাঙা", "কারেন্ট",
+            "కాలిపోయింది", "ప్రమాదం", "ఎముక విరిగింది",
+        ], raw):
+            kwargs["severe_trauma"] = True
+
+        # Respiratory distress
+        if (matches_any(KEYWORD_RESPIRATORY_DISTRESS) or _matches_word(["breathlessness", "difficulty breathing", "shortness of breath"], raw)) and not is_negated("moochu") and not is_negated("saans"):
             kwargs["difficulty_breathing"] = True
             kwargs["stridor"] = True
-        if matches_any(KEYWORD_CHEST_INDRAWING):
+        if matches_any(KEYWORD_CHEST_INDRAWING) or _matches_word(["chest in", "chest indrawing", "pasli", "ribs", "पसली", "পাঁজর"], raw):
             kwargs["chest_indrawing"] = True
 
-        # Extract basic clinical signs for structured fields
-        if matches_any(KEYWORD_FEVER) and not is_negated("fever") and not is_negated("kaichal"):
+        # Fever & duration
+        if (matches_any(KEYWORD_FEVER) or _matches_word(["fever", "bukhar", "kaichal", "jwor", "gorom", "thand", "chills", "बुखार", "காய்ச்சல்", "জ্বর"], raw)) and not is_negated("fever") and not is_negated("kaichal") and not is_negated("juram"):
             kwargs["has_fever"] = True
-            kwargs["fever_days"] = 2
-        if matches_any(KEYWORD_NECK_STIFFNESS):
+            kwargs["fever_days"] = extracted_days if extracted_days is not None else 2
+        if matches_any(KEYWORD_NECK_STIFFNESS) or _matches_word(["stiff neck", "gardan me akad", "kazhuthu vali", "गर्दन में अकड़न", "अकड़न", "கழுத்து வலி"], raw):
             kwargs["neck_stiffness"] = True
-        if matches_any(KEYWORD_RESPIRATORY_COUGH):
-            kwargs["cough_days"] = 2
-        if matches_any(KEYWORD_DIARRHOEA):
+        if _matches_word(["rash", "daane", "chhate", "thathadu", "दाने", "தடிப்பு"], raw):
+            kwargs["rash_with_fever"] = True
+
+        # Cough & duration
+        if (matches_any(KEYWORD_RESPIRATORY_COUGH) or _matches_word(["cough", "coughing", "cold", "khansi", "sardi", "jukham", "irumal", "kashi", "खांसी", "सर्दी", "जुकाम", "இருமல்", "কাশি"], raw)) and not is_negated("cough") and not is_negated("irumal") and not is_negated("khansi"):
+            kwargs["cough_days"] = extracted_days if extracted_days is not None else 2
+
+        # Diarrhoea & Stool
+        if matches_any(KEYWORD_DIARRHOEA) or _matches_word(["diarrhea", "diarrhoea", "dast", "loose motion", "pet kharab", "bedhi", "दस्त", "வயிற்றுப்போக்கு", "ডায়রিয়া"], raw):
             kwargs["diarrhoea"] = True
             kwargs["stool_frequency_per_day"] = 4
+        if _matches_word(["blood in stool", "khoon dast", "raktham", "khoon ka dast", "रक्त दस्त", "রক্ত আমাশয়", "রক্ত পায়খানা", "রক্ত মল", "இரத்த மலம்"], raw):
+            kwargs["blood_in_stool"] = True
+
+        # Maternal
+        if kwargs.get("pregnant"):
+            if _matches_word(["headache", "sar dard", "thalai vali", "सिर दर्द", "தலைவலி"], raw):
+                kwargs["severe_headache"] = True
+            if _matches_word(["blurred vision", "dhundhla", "paarvai mangal", "धुंधला", "பார்வை மங்கல்", "மங்கலாக"], raw):
+                kwargs["blurred_vision"] = True
+            if _matches_word(["bleeding", "khoon", "raktham", "रक्तस्राव", "இரத்தப்போக்கு"], raw):
+                kwargs["vaginal_bleeding"] = True
 
         # ── 2. Hybrid Statistical Prior Modulation (Replaces Fragile Regex Heuristics) ──
         tier = predict_tanglish_tier(raw)
@@ -399,7 +487,7 @@ class SarvamClient:
             # Escalate to ASHA dispatch if not already an emergency
             if not any(
                 kwargs.get(k)
-                for k in ("convulsions", "unconscious", "chest_pain_severe", "vomiting_blood", "vomiting_everything", "stridor", "chest_indrawing")
+                for k in ("convulsions", "unconscious", "chest_pain_severe", "vomiting_blood", "vomiting_everything", "stridor", "chest_indrawing", "acute_poisoning_or_bite", "severe_trauma")
             ):
                 kwargs["has_fever"] = True
                 kwargs["fever_days"] = 8
@@ -407,7 +495,7 @@ class SarvamClient:
             # Ensure safe self-care tier when statistical prior confirms mild / home care
             if not any(
                 kwargs.get(k)
-                for k in ("convulsions", "unconscious", "chest_pain_severe", "vomiting_blood", "vomiting_everything", "stridor", "chest_indrawing")
+                for k in ("convulsions", "unconscious", "chest_pain_severe", "vomiting_blood", "vomiting_everything", "stridor", "chest_indrawing", "acute_poisoning_or_bite", "severe_trauma")
             ):
                 if kwargs.get("fever_days", 0) > 7:
                     kwargs["fever_days"] = 2
@@ -422,7 +510,6 @@ class SarvamClient:
                 kwargs["fever_days"] = 8
 
         return SymptomPayload(**kwargs)
-
 
 
 sarvam_client = SarvamClient()

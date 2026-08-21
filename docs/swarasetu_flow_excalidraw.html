@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SwaraSetu - Excalidraw Application Flow</title>
+  <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600;700&family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --paper: #faf8f5;
+      --paper-card: #ffffff;
+      --ink: #1e293b;
+      --muted: #475569;
+      --accent: #e05638;
+      --accent-tint: #fef2f2;
+      --border-color: #334155;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--paper);
+      color: var(--ink);
+      font-family: 'Geist', sans-serif;
+      padding: 2rem;
+      line-height: 1.5;
+    }
+
+    .container {
+      max-width: 1320px;
+      margin: 0 auto;
+    }
+
+    header {
+      margin-bottom: 2rem;
+      text-align: center;
+    }
+
+    .eyebrow {
+      font-family: 'Geist Mono', monospace;
+      font-size: 0.75rem;
+      font-weight: 600;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 0.4rem;
+    }
+
+    h1 {
+      font-family: 'Caveat', cursive;
+      font-size: 2.75rem;
+      font-weight: 700;
+      color: var(--ink);
+      margin-bottom: 0.5rem;
+    }
+
+    p.subtitle {
+      font-size: 1rem;
+      color: var(--muted);
+    }
+
+    .diagram-card {
+      background: var(--paper-card);
+      border: 2px solid var(--border-color);
+      border-radius: 12px;
+      padding: 1.5rem 1rem;
+      box-shadow: 4px 4px 0px rgba(51, 65, 85, 0.15);
+      margin-bottom: 2rem;
+      overflow-x: auto;
+    }
+
+    svg {
+      display: block;
+      width: 100%;
+      height: auto;
+      min-width: 1200px;
+    }
+
+    .flow-steps {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 1.25rem;
+    }
+
+    .step-box {
+      background: #ffffff;
+      border: 1.5px solid var(--border-color);
+      border-radius: 8px;
+      padding: 1.25rem;
+      position: relative;
+    }
+
+    .step-number {
+      font-family: 'Caveat', cursive;
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--accent);
+      margin-bottom: 0.25rem;
+    }
+
+    .step-box h3 {
+      font-size: 1rem;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+    }
+
+    .step-box p {
+      font-size: 0.85rem;
+      color: var(--muted);
+    }
+
+    footer {
+      text-align: center;
+      font-family: 'Geist Mono', monospace;
+      font-size: 0.75rem;
+      color: var(--muted);
+      margin-top: 2rem;
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <header>
+    <div class="eyebrow">HIGH-LEVEL APP FLOW</div>
+    <h1>SwaraSetu Functioning &amp; Data Pipeline</h1>
+    <p class="subtitle">Clean, hand-drawn Excalidraw representation of user intake, AI processing, WHO triage, and automated dispatch.</p>
+  </header>
+
+  <div class="diagram-card">
+    <svg viewBox="0 0 1280 380" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <!-- Excalidraw Sketchy Displacement Filter -->
+        <filter id="sketchy" x="-4%" y="-4%" width="108%" height="108%">
+          <feTurbulence type="fractalNoise" baseFrequency="0.02" numOctaves="2" seed="12"/>
+          <feDisplacementMap in="SourceGraphic" scale="2.0"/>
+        </filter>
+
+        <!-- Arrow Markers -->
+        <marker id="arrow-sketch" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto">
+          <path d="M 0,0 L 10,4 L 0,8 L 2,4 Z" fill="#334155"/>
+        </marker>
+        <marker id="arrow-accent" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto">
+          <path d="M 0,0 L 10,4 L 0,8 L 2,4 Z" fill="#e05638"/>
+        </marker>
+      </defs>
+
+      <!-- Background Canvas -->
+      <rect width="100%" height="100%" fill="#ffffff" rx="8"/>
+
+      <!-- ==================== SKETCHY SHAPES & LINES (Filtered) ==================== -->
+      <g filter="url(#sketchy)">
+
+        <!-- Stage 1 Box: Patient Intake -->
+        <rect x="30" y="65" width="210" height="210" rx="8" fill="#f8fafc" stroke="#334155" stroke-width="2"/>
+
+        <!-- Stage 2 Box: Sarvam Indic AI -->
+        <rect x="280" y="65" width="210" height="210" rx="8" fill="#f8fafc" stroke="#334155" stroke-width="2"/>
+
+        <!-- Stage 3 Box: WHO IMCI Engine (Focal Accent) -->
+        <rect x="530" y="65" width="210" height="210" rx="8" fill="#fef2f2" stroke="#e05638" stroke-width="2.5"/>
+
+        <!-- Stage 4 Box: Dynamic Action -->
+        <rect x="780" y="65" width="210" height="210" rx="8" fill="#f8fafc" stroke="#334155" stroke-width="2"/>
+
+        <!-- Stage 5 Box: Offline Sync -->
+        <rect x="1030" y="65" width="210" height="210" rx="8" fill="#f8fafc" stroke="#334155" stroke-width="2"/>
+
+        <!-- Connecting Arrows -->
+        <!-- Arrow 1 -> 2 -->
+        <path d="M 240,170 H 280" fill="none" stroke="#334155" stroke-width="2" marker-end="url(#arrow-sketch)"/>
+
+        <!-- Arrow 2 -> 3 -->
+        <path d="M 490,170 H 530" fill="none" stroke="#e05638" stroke-width="2" marker-end="url(#arrow-accent)"/>
+
+        <!-- Arrow 3 -> 4 -->
+        <path d="M 740,170 H 780" fill="none" stroke="#e05638" stroke-width="2" marker-end="url(#arrow-accent)"/>
+
+        <!-- Arrow 4 -> 5 -->
+        <path d="M 990,170 H 1030" fill="none" stroke="#334155" stroke-width="2" marker-end="url(#arrow-sketch)"/>
+
+      </g>
+
+
+      <!-- ==================== CRISP TEXT & LABELS (No Filter - Zero Overflow) ==================== -->
+
+      <!-- Step 1 Text -->
+      <text x="135" y="100" fill="#e05638" font-family="'Caveat', cursive" font-size="20" font-weight="700" text-anchor="middle">1. Patient Intake</text>
+      <text x="135" y="132" fill="#1e293b" font-family="'Geist', sans-serif" font-size="12" font-weight="600" text-anchor="middle">Voice / Text Input</text>
+      <text x="135" y="156" fill="#475569" font-family="'Geist', sans-serif" font-size="11" text-anchor="middle">• WhatsApp Voice Notes</text>
+      <text x="135" y="178" fill="#475569" font-family="'Geist', sans-serif" font-size="11" text-anchor="middle">• CHW Tablet PWA Form</text>
+      <text x="135" y="200" fill="#475569" font-family="'Geist', sans-serif" font-size="11" text-anchor="middle">• 22+ Indic Dialects</text>
+      <text x="135" y="234" fill="#94a3b8" font-family="'Geist Mono', monospace" font-size="9" text-anchor="middle">Zero App Install Required</text>
+
+      <!-- Step 2 Text -->
+      <text x="385" y="100" fill="#e05638" font-family="'Caveat', cursive" font-size="20" font-weight="700" text-anchor="middle">2. Sarvam Indic AI</text>
+      <text x="385" y="132" fill="#1e293b" font-family="'Geist', sans-serif" font-size="12" font-weight="600" text-anchor="middle">Speech ASR &amp; NER</text>
+      <text x="385" y="156" fill="#475569" font-family="'Geist', sans-serif" font-size="11" text-anchor="middle">• Indic Speech-to-Text</text>
+      <text x="385" y="178" fill="#475569" font-family="'Geist', sans-serif" font-size="11" text-anchor="middle">• Dialect Auto-Detection</text>
+      <text x="385" y="200" fill="#475569" font-family="'Geist', sans-serif" font-size="11" text-anchor="middle">• Clinical NER Extractor</text>
+      <text x="385" y="234" fill="#94a3b8" font-family="'Geist Mono', monospace" font-size="9" text-anchor="middle">Audio &rarr; Structured JSON</text>
+
+      <!-- Step 3 Text (IMCI Focal Engine) -->
+      <text x="635" y="100" fill="#e05638" font-family="'Caveat', cursive" font-size="20" font-weight="700" text-anchor="middle">3. WHO IMCI Engine</text>
+      <text x="635" y="132" fill="#1e293b" font-family="'Geist', sans-serif" font-size="12" font-weight="700" text-anchor="middle">Deterministic Triage</text>
+      <text x="635" y="156" fill="#e05638" font-family="'Geist', sans-serif" font-size="11" font-weight="600" text-anchor="middle">Score 1: Self-Care Home</text>
+      <text x="635" y="178" fill="#e05638" font-family="'Geist', sans-serif" font-size="11" font-weight="600" text-anchor="middle">Score 2: ASHA Visit (24h)</text>
+      <text x="635" y="200" fill="#e05638" font-family="'Geist', sans-serif" font-size="11" font-weight="600" text-anchor="middle">Score 3: Emergency PHC</text>
+      <text x="635" y="234" fill="#e05638" font-family="'Geist Mono', monospace" font-size="9" font-weight="600" text-anchor="middle">100% Deterministic Code</text>
+
+      <!-- Step 4 Text -->
+      <text x="885" y="100" fill="#e05638" font-family="'Caveat', cursive" font-size="20" font-weight="700" text-anchor="middle">4. Automated Action</text>
+      <text x="885" y="132" fill="#1e293b" font-family="'Geist', sans-serif" font-size="12" font-weight="600" text-anchor="middle">Omnichannel Response</text>
+      <text x="885" y="156" fill="#475569" font-family="'Geist', sans-serif" font-size="11" text-anchor="middle">• Localized Voice (TTS)</text>
+      <text x="885" y="178" fill="#475569" font-family="'Geist', sans-serif" font-size="11" text-anchor="middle">• ASHA Worker SMS Alert</text>
+      <text x="885" y="200" fill="#475569" font-family="'Geist', sans-serif" font-size="11" text-anchor="middle">• GPS Map to Nearest PHC</text>
+      <text x="885" y="234" fill="#94a3b8" font-family="'Geist Mono', monospace" font-size="9" text-anchor="middle">Voice + SMS + Map Route</text>
+
+      <!-- Step 5 Text -->
+      <text x="1135" y="100" fill="#e05638" font-family="'Caveat', cursive" font-size="20" font-weight="700" text-anchor="middle">5. Offline Sync</text>
+      <text x="1135" y="132" fill="#1e293b" font-family="'Geist', sans-serif" font-size="12" font-weight="600" text-anchor="middle">IndexedDB PWA Outbox</text>
+      <text x="1135" y="156" fill="#475569" font-family="'Geist', sans-serif" font-size="11" text-anchor="middle">• Offline Case Queueing</text>
+      <text x="1135" y="178" fill="#475569" font-family="'Geist', sans-serif" font-size="11" text-anchor="middle">• On-Device STT / Engine</text>
+      <text x="1135" y="200" fill="#475569" font-family="'Geist', sans-serif" font-size="11" text-anchor="middle">• Auto Batch Sync on Restore</text>
+      <text x="1135" y="234" fill="#94a3b8" font-family="'Geist Mono', monospace" font-size="9" text-anchor="middle">100% Offline Capable</text>
+
+      <!-- Subtitle banner at bottom -->
+      <rect x="30" y="300" width="1210" height="40" rx="6" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1"/>
+      <text x="635" y="325" fill="#475569" font-family="'Geist Mono', monospace" font-size="11" text-anchor="middle">PATIENT INTAKE &rarr; SARVAM AI &rarr; WHO IMCI TRIAGE ENGINE &rarr; ACTION / DISPATCH &rarr; OFFLINE SYNC</text>
+
+    </svg>
+  </div>
+
+  <div class="flow-steps">
+    <div class="step-box">
+      <div class="step-number">Step 1</div>
+      <h3>Voice &amp; Text Intake</h3>
+      <p>Patients speak or type symptoms in local Indic dialects via WhatsApp or CHW tablet.</p>
+    </div>
+    <div class="step-box">
+      <div class="step-number">Step 2</div>
+      <h3>Sarvam Indic AI</h3>
+      <p>Converts speech to text and extracts clinical symptoms into standardized medical entities.</p>
+    </div>
+    <div class="step-box">
+      <div class="step-number">Step 3</div>
+      <h3>Deterministic Triage</h3>
+      <p>Python WHO IMCI engine evaluates risk (Score 1, 2, or 3) with zero LLM math in decisions.</p>
+    </div>
+    <div class="step-box">
+      <div class="step-number">Step 4</div>
+      <h3>Omnichannel Action</h3>
+      <p>Synthesizes voice replies, alerts local ASHA workers via SMS, or maps the nearest PHC.</p>
+    </div>
+    <div class="step-box">
+      <div class="step-number">Step 5</div>
+      <h3>Offline Sync</h3>
+      <p>IndexedDB stores offline cases on CHW tablets and auto-syncs when network returns.</p>
+    </div>
+  </div>
+
+  <footer>
+    SWARASETU EXCALIDRAW FLOW SPECIFICATION — ZERO OVERLAP GUARANTEE
+  </footer>
+</div>
+
+</body>
+</html>

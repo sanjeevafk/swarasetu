@@ -7,7 +7,7 @@ from collections.abc import Generator
 from sqlalchemy import create_engine
 from sqlalchemy.orm import DeclarativeBase, Session, sessionmaker
 
-from backend.app.config import settings
+from app.config import settings
 
 
 class Base(DeclarativeBase):
@@ -37,6 +37,6 @@ def get_db() -> Generator[Session, None, None]:
 def init_db() -> None:
     """Create tables if they do not exist (dev convenience; Postgres schema
     is also provisioned via scripts/init.sql in docker-compose)."""
-    from backend.app.models import case, phc  # noqa: F401  (register mappers)
+    from app.models import case, phc  # noqa: F401  (register mappers)
 
     Base.metadata.create_all(bind=engine)

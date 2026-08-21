@@ -1,16 +1,28 @@
-"""Tests for omnichannel WhatsApp webhook, Sarvam integration, and voice endpoints."""
+"""Tests for omnichannel WhatsApp webhook, Meta Cloud API, Telegram, Sarvam integration, and voice endpoints."""
 
 from __future__ import annotations
 
+import hashlib
+import hmac
 import io
+import json
+import os
 import pytest
 from fastapi.testclient import TestClient
 
+from app.config import settings
 from app.main import app
 from app.services.sarvam_client import sarvam_client
 from app.services.twilio_client import twilio_client
 
 client = TestClient(app)
+
+
+@pytest.fixture(autouse=True)
+def ensure_testing_env():
+    os.environ["TESTING"] = "1"
+    yield
+    os.environ["TESTING"] = "1"
 
 
 def test_sarvam_client_fallback_extraction():
@@ -22,12 +34,18 @@ def test_sarvam_client_fallback_extraction():
     assert payload.language == "hi"
 
 
-
 def test_twilio_mock_dispatch():
     """Verify twilio client provides graceful mock return when API keys are not live."""
     import asyncio
     res = asyncio.run(twilio_client.send_sms(to_number="+919876543210", body="Test ASHA Alert"))
     assert "sid" in res or "status" in res
+
+
+def test_whatsapp_get_health_check():
+    """Verify GET /channels/whatsapp returns a lightweight health response instead of running triage."""
+    res = client.get("/channels/whatsapp")
+    assert res.status_code == 200
+    assert res.json().get("channel") == "whatsapp"
 
 
 def test_whatsapp_webhook_text_triage():
@@ -54,11 +72,89 @@ def test_whatsapp_webhook_emergency_triage():
     assert "Nearest PHC" in response.text or "Emergency" in response.text
 
 
+def test_twilio_signature_missing_header_forbidden_in_prod():
+    """Verify missing signature header returns 403 Forbidden in production mode."""
+    os.environ["TESTING"] = "0"
+    try:
+        data = {"From": "whatsapp:+919876543210", "Body": "Hello"}
+        res = client.post("/channels/whatsapp", data=data)
+        assert res.status_code == 403
+    finally:
+        os.environ["TESTING"] = "1"
+
+
 def test_voice_transcribe_endpoint():
     """Verify voice transcription testing endpoint accepts audio files."""
     dummy_wav = io.BytesIO(b"RIFF....WAVEfmt ....data....")
     files = {"file": ("test.wav", dummy_wav, "audio/wav")}
     response = client.post("/channels/voice/transcribe?language=hi", files=files)
+
     assert response.status_code == 200
     res_data = response.json()
     assert "transcript" in res_data
+
+
+def test_whatsapp_webhook_empty_message_returns_retry_prompt():
+    """Verify empty/inaudible WhatsApp payload returns safe retry prompt instead of fake symptoms."""
+    data = {
+        "From": "whatsapp:+919876543210",
+        "Body": "",
+    }
+    response = client.post("/channels/whatsapp", data=data)
+    assert response.status_code == 200
+    assert "could not hear your voice note clearly" in response.text or "SwaraSetu Healthcare" in response.text
+    assert "Fever and cough" not in response.text
+
+
+def test_meta_webhook_verification():
+    """Verify Meta webhook challenge verification succeeds with matching token and fails on mismatch."""
+    token = settings.meta_verify_token or "swarasetu_meta_verify_2026"
+    res_ok = client.get(f"/channels/meta-whatsapp?hub.mode=subscribe&hub.challenge=11223344&hub.verify_token={token}")
+    assert res_ok.status_code == 200
+    assert res_ok.text == "11223344"
+
+    res_fail = client.get("/channels/meta-whatsapp?hub.mode=subscribe&hub.challenge=11223344&hub.verify_token=wrong_token")
+    assert res_fail.status_code == 403
+
+
+def test_meta_webhook_signature_hmac():
+    """Verify Meta incoming webhook authenticates with HMAC-SHA256 signature."""
+    payload = {"entry": []}
+    payload_bytes = json.dumps(payload).encode("utf-8")
+    app_secret = settings.meta_app_secret or "meta_app_sec_7a8b9c1d2e"
+    valid_sig = "sha256=" + hmac.new(app_secret.encode("utf-8"), payload_bytes, hashlib.sha256).hexdigest()
+
+    # Valid signature
+    res = client.post("/channels/meta-whatsapp", content=payload_bytes, headers={"X-Hub-Signature-256": valid_sig, "Content-Type": "application/json"})
+    assert res.status_code == 200
+
+    # Invalid signature
+    os.environ["TESTING"] = "0"
+    try:
+        res_invalid = client.post("/channels/meta-whatsapp", content=payload_bytes, headers={"X-Hub-Signature-256": "sha256=invalidhash", "Content-Type": "application/json"})
+        assert res_invalid.status_code == 403
+    finally:
+        os.environ["TESTING"] = "1"
+
+
+from unittest.mock import AsyncMock, patch
+
+def test_telegram_webhook_secret_token_auth():
+    """Verify Telegram webhook requires X-Telegram-Bot-Api-Secret-Token when secret is configured."""
+    secret = settings.telegram_webhook_secret or "swarasetu_tg_sec_98f12a3d4c"
+    valid_payload = {"message": {"chat": {"id": 12345}, "text": "Child has mild fever for 1 day"}}
+
+    with patch("httpx.AsyncClient.post", new_callable=AsyncMock) as mock_post:
+        mock_post.return_value.status_code = 200
+        # Valid secret header
+        res = client.post("/channels/telegram", json=valid_payload, headers={"X-Telegram-Bot-Api-Secret-Token": secret})
+        assert res.status_code == 200
+
+        # Invalid / missing secret header in non-test mode
+        os.environ["TESTING"] = "0"
+        try:
+            res_fail = client.post("/channels/telegram", json=valid_payload, headers={"X-Telegram-Bot-Api-Secret-Token": "bad_token"})
+            assert res_fail.status_code == 403
+        finally:
+            os.environ["TESTING"] = "1"
+

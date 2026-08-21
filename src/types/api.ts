@@ -15,7 +15,10 @@ export interface SymptomPayload {
   unconscious: boolean;
   unable_to_drink_or_breastfeed: boolean;
   vomiting_everything: boolean;
+  acute_poisoning_or_bite: boolean;
+  severe_trauma: boolean;
   has_fever: boolean;
+
   temperature_c: number | null;
   fever_days: number | null;
   neck_stiffness: boolean;
@@ -50,7 +53,10 @@ export function emptyPayload(language: LanguageCode = 'en'): SymptomPayload {
     unconscious: false,
     unable_to_drink_or_breastfeed: false,
     vomiting_everything: false,
+    acute_poisoning_or_bite: false,
+    severe_trauma: false,
     has_fever: false,
+
     temperature_c: null,
     fever_days: null,
     neck_stiffness: false,
@@ -72,11 +78,37 @@ export function emptyPayload(language: LanguageCode = 'en'): SymptomPayload {
     restless_irritable: false,
     severe_headache: false,
     blurred_vision: false,
+
     vaginal_bleeding: false,
     reduced_fetal_movement: false,
     language,
   };
 }
+
+export function sanitizePayload(raw: Partial<SymptomPayload>): SymptomPayload {
+
+  const base = emptyPayload(raw.language || 'en');
+  const sanitized: SymptomPayload = { ...base, ...raw };
+
+  if (sanitized.temperature_c !== null && sanitized.temperature_c !== undefined) {
+    sanitized.temperature_c = Math.min(45.0, Math.max(30.0, sanitized.temperature_c));
+  }
+  if (sanitized.breathing_rate_per_min !== null && sanitized.breathing_rate_per_min !== undefined) {
+    sanitized.breathing_rate_per_min = Math.min(120, Math.max(0, Math.round(sanitized.breathing_rate_per_min)));
+  }
+  if (sanitized.fever_days !== null && sanitized.fever_days !== undefined) {
+    sanitized.fever_days = Math.min(365, Math.max(0, Math.round(sanitized.fever_days)));
+  }
+  if (sanitized.cough_days !== null && sanitized.cough_days !== undefined) {
+    sanitized.cough_days = Math.min(365, Math.max(0, Math.round(sanitized.cough_days)));
+  }
+  if (sanitized.stool_frequency_per_day !== null && sanitized.stool_frequency_per_day !== undefined) {
+    sanitized.stool_frequency_per_day = Math.min(100, Math.max(0, Math.round(sanitized.stool_frequency_per_day)));
+  }
+
+  return sanitized;
+}
+
 
 export interface RedFlag {
   code: string;
@@ -121,13 +153,27 @@ export interface TriageEvaluateRequest {
   longitude?: number | null;
 }
 
+export interface EmergencyDispatch {
+  is_emergency: boolean;
+  protocol_key?: string | null;
+  title?: string | null;
+  ticket_id?: string | null;
+  cad_priority?: string | null;
+  ambulance_type?: string | null;
+  phc_readiness?: string | null;
+  steps: string[];
+  map_url?: string | null;
+}
+
 export interface TriageEvaluateResponse {
   case_id: number | null;
   client_uuid: string;
   outcome: TriageOutcome;
   directive: Directive;
   nearest_phc: PHCNearby | null;
+  emergency_dispatch?: EmergencyDispatch | null;
 }
+
 
 export interface SyncCaseItem {
   client_uuid: string;
@@ -142,8 +188,13 @@ export interface SyncCaseItem {
 export interface SyncResponse {
   accepted: number;
   duplicates: number;
+  rejected?: number;
   total: number;
+  accepted_uuids?: string[];
+  duplicate_uuids?: string[];
+  rejected_uuids?: string[];
 }
+
 
 export interface AnalyticsSummary {
   total_cases: number;

@@ -1,13 +1,15 @@
 import { create } from 'zustand';
 import { defaultScenarios, type SymptomScenario } from '@/data/mockSymptoms';
 import type {
+  AgeGroup,
   LanguageCode,
   RiskLevel,
   SymptomPayload,
   TriageOutcome,
   TriageEvaluateResponse,
 } from '@/types/api';
-import { emptyPayload } from '@/types/api';
+import { emptyPayload, sanitizePayload } from '@/types/api';
+
 import { api, ApiUnreachableError } from '@/lib/api';
 import { evaluateLocal } from '@/lib/triageLocal';
 import { countQueued, enqueue, flushOutbox } from '@/lib/outbox';
@@ -25,8 +27,10 @@ export interface ActiveEvaluation {
   outcome: TriageOutcome;
   directive: TriageEvaluateResponse['directive'] | null;
   nearest_phc: TriageEvaluateResponse['nearest_phc'];
+  emergency_dispatch?: TriageEvaluateResponse['emergency_dispatch'];
   evaluatedOffline: boolean;
 }
+
 
 interface AppState {
   isDemoActive: boolean;
@@ -38,6 +42,7 @@ interface AppState {
 
   // Live evaluation state
   isEvaluating: boolean;
+  isSyncing: boolean;
   activeEvaluation: ActiveEvaluation | null;
   backendOnline: boolean | null; // null = unknown / not probed yet
   pendingSyncCount: number;
@@ -57,20 +62,29 @@ interface AppState {
   buildPayloadFromScenario: (scenario: SymptomScenario) => SymptomPayload;
 }
 
+let evaluationSequence = 0;
+
 function uuid(): string {
   if ('crypto' in globalThis && 'randomUUID' in crypto) return crypto.randomUUID();
   return `sw-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
 }
 
-/** Map a demo scenario's NER extraction to the canonical symptom payload.
- *  Deterministic heuristics keyed off the mock fixture fields. */
+/** Map a demo scenario's NER extraction to the canonical symptom payload. */
 function buildPayload(scenario: SymptomScenario): SymptomPayload {
   const p = emptyPayload(LANGUAGE_CODE[scenario.language] ?? 'en');
   const symptoms = scenario.nerExtraction.symptoms.map((s) => s.toLowerCase());
   const flags = scenario.nerExtraction.redFlags ?? [];
-  const age = (scenario.nerExtraction.patientAge ?? 'child').toLowerCase();
+  const ageRaw = (scenario.nerExtraction.patientAge ?? 'child').toLowerCase();
 
-  p.age_group = age.includes('adult') ? 'adult' : 'child';
+  let ageGroup: AgeGroup = 'child';
+  if (ageRaw.includes('neonate') || ageRaw.includes('newborn') || ageRaw.includes('day')) {
+    ageGroup = 'neonate';
+  } else if (ageRaw.includes('infant') || ageRaw.includes('month')) {
+    ageGroup = 'infant';
+  } else if (ageRaw.includes('adult') || ageRaw.includes('year-old male') || ageRaw.includes('year-old female')) {
+    ageGroup = 'adult';
+  }
+  p.age_group = ageGroup;
   p.language = LANGUAGE_CODE[scenario.language] ?? 'en';
 
   const has = (...keys: string[]) =>
@@ -82,7 +96,7 @@ function buildPayload(scenario: SymptomScenario): SymptomPayload {
     p.fever_days = parseDays(scenario.nerExtraction.duration) ?? 1;
   }
   if (has('cough')) {
-    p.cough_days = parseDays(scenario.nerExtraction.duration) ?? 2;
+    p.cough_days = parseDays(scenario.nerExtraction.duration) ?? 1;
   }
   if (has('breathing difficulty', 'difficulty breathing', 'shortness of breath')) {
     p.difficulty_breathing = true;
@@ -100,8 +114,9 @@ function buildPayload(scenario: SymptomScenario): SymptomPayload {
     p.unable_to_drink_or_breastfeed = true;
   }
 
-  return p;
+  return sanitizePayload(p);
 }
+
 
 function parseDays(duration: string | undefined): number | null {
   if (!duration) return null;
@@ -118,6 +133,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   isOfflineMode: true,
 
   isEvaluating: false,
+  isSyncing: false,
   activeEvaluation: null,
   backendOnline: null,
   pendingSyncCount: 0,
@@ -144,9 +160,11 @@ export const useAppStore = create<AppState>((set, get) => ({
   buildPayloadFromScenario: (scenario) => buildPayload(scenario),
 
   evaluateCurrentScenario: async (scenarioOverride) => {
+    const currentSeq = ++evaluationSequence;
     const scenario = scenarioOverride ?? get().currentScenario;
     const payload = buildPayload(scenario);
     const client_uuid = uuid();
+
     set({ isEvaluating: true, activeEvaluation: null });
 
     let evaluation: ActiveEvaluation;
@@ -168,16 +186,24 @@ export const useAppStore = create<AppState>((set, get) => ({
         set({ backendOnline: true });
       } catch (err) {
         // Backend unreachable: graceful degradation to local engine + queue.
-        const offline = err instanceof ApiUnreachableError || !(err instanceof Error && err.message.startsWith('API '));
-        if (offline) set({ backendOnline: false });
-        const outcome = evaluateLocal(payload);
-        await enqueue({ client_uuid, payload, created_at: new Date().toISOString(), client_risk_score: outcome.risk_score });
-        evaluation = { outcome, directive: null, nearest_phc: null, evaluatedOffline: true };
+        const isNetworkUnreachable = err instanceof ApiUnreachableError;
+        if (isNetworkUnreachable) {
+          set({ backendOnline: false });
+          const outcome = evaluateLocal(payload);
+          await enqueue({ client_uuid, payload, created_at: new Date().toISOString(), client_risk_score: outcome.risk_score });
+          evaluation = { outcome, directive: null, nearest_phc: null, evaluatedOffline: true };
+        } else {
+          // Explicit API rejection (4xx client error): evaluate locally for UI feedback without polluting queue
+          const outcome = evaluateLocal(payload);
+          evaluation = { outcome, directive: null, nearest_phc: null, evaluatedOffline: true };
+        }
       }
     }
 
-    const count = await countQueued();
-    set({ isEvaluating: false, activeEvaluation: evaluation, pendingSyncCount: count });
+    if (currentSeq === evaluationSequence) {
+      const count = await countQueued();
+      set({ isEvaluating: false, activeEvaluation: evaluation, pendingSyncCount: count });
+    }
     return evaluation;
   },
 
@@ -191,14 +217,26 @@ export const useAppStore = create<AppState>((set, get) => ({
   },
 
   syncNow: async () => {
-    const res = await flushOutbox((items) => api.syncCases(items));
-    if (res.ok) {
-      const count = await countQueued();
-      set({ backendOnline: true, pendingSyncCount: count });
+    set({ isSyncing: true });
+    try {
+      const res = await flushOutbox((items) => api.syncCases(items));
+      if (res.ok) {
+        const count = await countQueued();
+        set({ backendOnline: true, pendingSyncCount: count });
+      }
+      return res.ok;
+    } finally {
+      set({ isSyncing: false });
     }
-    return res.ok;
   },
 }));
+
+// Setup auto-reconnect listener in browser
+if (typeof window !== 'undefined') {
+  window.addEventListener('online', () => {
+    void useAppStore.getState().syncNow();
+  });
+}
 
 // Keep risk level typing narrow for consumers of the store outcome.
 export type { RiskLevel };

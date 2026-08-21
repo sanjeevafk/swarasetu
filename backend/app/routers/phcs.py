@@ -5,10 +5,10 @@ from __future__ import annotations
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 
-from backend.app.config import settings
-from backend.app.database import get_db
-from backend.app.schemas.triage import PHCNearby
-from backend.app.services.phc_service import nearest_phcs
+from app.config import settings
+from app.database import get_db
+from app.schemas.triage import PHCNearby
+from app.services.phc_service import nearest_phcs
 
 router = APIRouter(prefix="/api/v1/phcs", tags=["phcs"])
 

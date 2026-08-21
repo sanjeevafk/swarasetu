@@ -1,15 +1,15 @@
 """Pydantic request/response schemas."""
 
-from backend.app.schemas.triage import (
+from app.schemas.triage import (
     RedFlagOut,
     TriageEvaluateRequest,
     TriageEvaluateResponse,
     TriageOutcomeOut,
     Directive,
 )
-from backend.app.schemas.phc import PHCNearby
-from backend.app.schemas.analytics import AnalyticsSummary
-from backend.app.schemas.sync import SyncCaseItem, SyncResponse
+from app.schemas.phc import PHCNearby
+from app.schemas.analytics import AnalyticsSummary
+from app.schemas.sync import SyncCaseItem, SyncResponse
 
 __all__ = [
     "RedFlagOut",

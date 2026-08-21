@@ -1,11 +1,12 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useAppStore } from '@/store/useAppStore';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
-import { User, Activity, CheckCircle2, CloudOff, RefreshCw } from 'lucide-react';
+import { User, Activity, CheckCircle2, CloudOff, RefreshCw, Volume2, MessageSquare } from 'lucide-react';
 import { DemoChat } from './DemoChat';
+import { TouchToHearPanel } from './TouchToHearPanel';
 
 export function CHWTablet({ onShowMap }: { onShowMap: () => void }) {
   const {
@@ -13,9 +14,13 @@ export function CHWTablet({ onShowMap }: { onShowMap: () => void }) {
     toggleOfflineMode,
     currentScenario,
     activeEvaluation,
+    isSyncing,
     pendingSyncCount,
     refreshPendingSyncCount,
+    activeLanguage,
   } = useAppStore();
+
+  const [tabMode, setTabMode] = useState<'chat' | 'visual'>('chat');
 
   useEffect(() => {
     void refreshPendingSyncCount();
@@ -31,7 +36,29 @@ export function CHWTablet({ onShowMap }: { onShowMap: () => void }) {
           <Activity className="w-5 h-5" />
           <span className="font-bold text-lg tracking-tight">Swara ASHA Portal</span>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
+          {/* Mode Tab Switcher */}
+          <div className="flex items-center bg-black/20 rounded-lg p-0.5 gap-0.5">
+            <button
+              onClick={() => setTabMode('chat')}
+              className={`flex items-center gap-1 px-2 py-1 rounded-md text-xs font-semibold transition-all ${
+                tabMode === 'chat' ? 'bg-white/20 text-white' : 'text-emerald-200 hover:text-white'
+              }`}
+            >
+              <MessageSquare className="w-3.5 h-3.5" />
+              Voice
+            </button>
+            <button
+              onClick={() => setTabMode('visual')}
+              className={`flex items-center gap-1 px-2 py-1 rounded-md text-xs font-semibold transition-all ${
+                tabMode === 'visual' ? 'bg-white/20 text-white' : 'text-emerald-200 hover:text-white'
+              }`}
+            >
+              <Volume2 className="w-3.5 h-3.5" />
+              Touch-to-Hear
+            </button>
+          </div>
+          {/* Offline Toggle */}
           <div className="flex items-center space-x-2 bg-black/20 px-2 py-1 rounded-md">
             <Switch id="offline-mode" checked={isOfflineMode} onCheckedChange={toggleOfflineMode} />
             <Label htmlFor="offline-mode" className="text-xs font-semibold uppercase tracking-wider cursor-pointer">
@@ -80,15 +107,16 @@ export function CHWTablet({ onShowMap }: { onShowMap: () => void }) {
                 </div>
               </div>
             )}
-            {!isOfflineMode && pendingSyncCount > 0 && (
+            {!isOfflineMode && isSyncing && (
               <div className="bg-blue-50 dark:bg-blue-900/40 text-blue-700 dark:text-blue-400 p-3 rounded-xl flex items-start gap-2 text-sm shadow-sm border border-blue-200 dark:border-blue-800">
                 <RefreshCw className="w-5 h-5 flex-shrink-0 mt-0.5 animate-spin" />
                 <div>
-                   <div className="font-bold mb-0.5">Syncing {pendingSyncCount} queued record(s)…</div>
+                   <div className="font-bold mb-0.5">Syncing {pendingSyncCount > 0 ? `${pendingSyncCount} ` : ''}queued record(s)…</div>
                 </div>
               </div>
             )}
         </div>
+
 
         {/* Main Content - Triage Frame */}
         <div className="flex-1 h-full pb-4">
@@ -97,10 +125,15 @@ export function CHWTablet({ onShowMap }: { onShowMap: () => void }) {
               <div className="absolute top-0 left-1/2 -translate-x-1/2 w-32 h-4 bg-slate-200 dark:bg-slate-800 rounded-b-xl z-20 flex justify-center items-end pb-1">
                 <div className="w-2 h-2 rounded-full bg-slate-400 dark:bg-slate-700" />
               </div>
-              <DemoChat onShowMap={onShowMap} />
+              {tabMode === 'chat' ? (
+                <DemoChat onShowMap={onShowMap} />
+              ) : (
+                <TouchToHearPanel language={activeLanguage} />
+              )}
            </div>
         </div>
       </div>
     </div>
   );
 }
+

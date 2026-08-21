@@ -15,7 +15,7 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from backend.app.triage import (  # noqa: E402
+from app.triage import (  # noqa: E402
     AGE_ADULT,
     AGE_CHILD,
     AGE_INFANT,

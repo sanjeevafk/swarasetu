@@ -9,8 +9,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from fastapi.testclient import TestClient  # noqa: E402
 
-from backend.app.main import app  # noqa: E402
-from backend.app.database import init_db  # noqa: E402
+from app.main import app  # noqa: E402
+from app.database import init_db  # noqa: E402
 from backend.scripts.seed_phc_data import PHCS  # noqa: E402
 
 
@@ -18,8 +18,8 @@ from backend.scripts.seed_phc_data import PHCS  # noqa: E402
 def client():
     init_db()
     # Seed PHC data directly for the module.
-    from backend.app.database import SessionLocal
-    from backend.app.models import PHC
+    from app.database import SessionLocal
+    from app.models import PHC
 
     db = SessionLocal()
     if db.query(PHC).count() == 0:
@@ -134,3 +134,33 @@ def test_sync_empty_list(client):
     res = client.post("/api/v1/sync/cases", json=[])
     assert res.status_code == 200
     assert res.json()["total"] == 0
+
+
+def test_sync_batch_with_invalid_poison_pill_item(client):
+    """Verify one schema-invalid record does not 422 the whole batch; valid records persist cleanly."""
+    items = [
+        {
+            "client_uuid": "sync-valid-0001",
+            "payload": {"has_fever": True, "fever_days": 1},
+            "district": "Sitamarhi",
+        },
+        {
+            "client_uuid": "sync-poison-pill-0002",
+            "payload": {"temperature_c": 99.9},  # Exceeds Pydantic max 45.0
+            "district": "Sitamarhi",
+        },
+        {
+            "client_uuid": "sync-valid-0003",
+            "payload": {"diarrhoea": True},
+            "district": "Sheohar",
+        },
+    ]
+    res = client.post("/api/v1/sync/cases", json=items)
+    assert res.status_code == 200
+    data = res.json()
+    assert data["accepted"] == 2
+    assert data["rejected"] == 1
+    assert "sync-poison-pill-0002" in data["rejected_uuids"]
+    assert "sync-valid-0001" in data["accepted_uuids"]
+    assert "sync-valid-0003" in data["accepted_uuids"]
+

@@ -7,8 +7,8 @@ from collections import Counter
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from backend.app.models import Case
-from backend.app.schemas.analytics import (
+from app.models import Case
+from app.schemas.analytics import (
     AnalyticsSummary,
     DistrictStats,
     RecentCaseOut,

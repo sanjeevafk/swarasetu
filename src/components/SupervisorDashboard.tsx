@@ -7,6 +7,8 @@ import { CloudOff } from 'lucide-react';
 import type { AnalyticsSummary } from '@/types/api';
 import { useAppStore } from '@/store/useAppStore';
 
+import { api } from '@/lib/api';
+
 const CLUSTER_COLORS: Record<string, string> = {
   fever: '#10b981',
   respiratory: '#f97316',
@@ -24,9 +26,7 @@ export function SupervisorDashboard() {
     const load = async () => {
       if (isOfflineMode) return;
       try {
-        const res = await fetch('/api/v1/analytics/summary');
-        if (!res.ok) throw new Error(String(res.status));
-        const data = (await res.json()) as AnalyticsSummary;
+        const data = await api.analyticsSummary();
         if (!cancelled) {
           setSummary(data);
           setLoadFailed(false);
@@ -43,6 +43,7 @@ export function SupervisorDashboard() {
       clearInterval(t);
     };
   }, [isOfflineMode]);
+
 
   const districtData =
     summary && summary.districts.length > 0
@@ -169,25 +170,30 @@ export function SupervisorDashboard() {
   );
 }
 
-/** Rolling % of red cases per day derived from live case timestamps. */
+/** Rolling % of red cases per calendar day derived from live case timestamps sorted chronologically. */
 function buildRollingRedRate(summary: AnalyticsSummary): { day: string; rate: number }[] {
-  const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-  const buckets = new Map<string, { total: number; red: number }>();
+  const buckets = new Map<string, { total: number; red: number; timestamp: number }>();
   for (const c of summary.recent_cases) {
     if (!c.created_at) continue;
     const d = new Date(c.created_at);
-    const key = days[d.getDay()];
-    const b = buckets.get(key) ?? { total: 0, red: 0 };
+    if (isNaN(d.getTime())) continue;
+    const key = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    const dayTimestamp = new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
+    const b = buckets.get(key) ?? { total: 0, red: 0, timestamp: dayTimestamp };
     b.total += 1;
     if (c.risk_score === 3) b.red += 1;
     buckets.set(key, b);
   }
   if (buckets.size === 0) return fallbackTrend;
-  return [...buckets.entries()].map(([day, b]) => ({
-    day,
-    rate: b.total === 0 ? 0 : Math.round((b.red / b.total) * 100),
-  }));
+  return [...buckets.entries()]
+    .sort((a, b) => a[1].timestamp - b[1].timestamp)
+    .slice(-7)
+    .map(([day, b]) => ({
+      day,
+      rate: b.total === 0 ? 0 : Math.round((b.red / b.total) * 100),
+    }));
 }
+
 
 function recentRows(
   summary: AnalyticsSummary | null,

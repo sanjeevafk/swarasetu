@@ -34,3 +34,5 @@ ml/models/
 *.njsproj
 *.sln
 *.sw?
+e2e_reports/
+.venv
