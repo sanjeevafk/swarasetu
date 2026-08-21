@@ -3,20 +3,24 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>SwaraSetu - System Architecture Diagram</title>
+  <title>SwaraSetu - System Architecture Diagram v1.2.1</title>
   <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet">
   <style>
     :root {
-      --paper: #f5f5f5;
-      --paper-2: #ffffff;
-      --ink: #2d3142;
-      --muted: #4f5d75;
-      --soft: #7a8399;
-      --rule: rgba(45, 49, 66, 0.12);
-      --rule-solid: #bfc0c0;
-      --accent: #eb6c36;
-      --accent-tint: rgba(235, 108, 54, 0.08);
-      --link: #2e5aa8;
+      --paper: #f8fafc;
+      --paper-card: #ffffff;
+      --ink: #1e293b;
+      --muted: #475569;
+      --soft: #64748b;
+      --rule: rgba(51, 65, 85, 0.12);
+      --accent: #e11d48;
+      --accent-tint: rgba(225, 29, 72, 0.08);
+      --coral: #ea580c;
+      --coral-tint: rgba(234, 88, 12, 0.08);
+      --link: #2563eb;
+      --link-tint: rgba(37, 99, 235, 0.08);
+      --teal: #0d9488;
+      --teal-tint: rgba(13, 148, 136, 0.08);
     }
 
     * {
@@ -34,7 +38,7 @@
     }
 
     .container {
-      max-width: 1280px;
+      max-width: 1400px;
       margin: 0 auto;
     }
 
@@ -46,17 +50,17 @@
 
     .eyebrow {
       font-family: 'Geist Mono', monospace;
-      font-size: 0.75rem;
+      font-size: 0.8rem;
       font-weight: 600;
       letter-spacing: 0.18em;
       text-transform: uppercase;
-      color: var(--accent);
+      color: var(--coral);
       margin-bottom: 0.5rem;
     }
 
     h1 {
       font-family: 'Instrument Serif', Georgia, serif;
-      font-size: 2.75rem;
+      font-size: 3rem;
       font-weight: 400;
       color: var(--ink);
       line-height: 1.15;
@@ -64,15 +68,17 @@
     }
 
     .subtitle {
-      font-size: 1.1rem;
+      font-size: 1.125rem;
       color: var(--muted);
-      max-width: 900px;
+      max-width: 980px;
     }
 
     .diagram-wrapper {
-      background: var(--paper);
-      border-radius: 8px;
-      padding: 1rem 0;
+      background: #ffffff;
+      border: 1px solid var(--rule);
+      box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05);
+      border-radius: 12px;
+      padding: 1.5rem;
       margin-bottom: 2.5rem;
       overflow-x: auto;
     }
@@ -81,27 +87,28 @@
       display: block;
       width: 100%;
       height: auto;
-      min-width: 1100px;
+      min-width: 1240px;
     }
 
     .grid-cards {
       display: grid;
-      grid-template-columns: 1.1fr 1fr 0.9fr;
+      grid-template-columns: 1fr 1fr 1fr;
       gap: 1.5rem;
       margin-bottom: 2.5rem;
     }
 
-    @media (max-width: 960px) {
+    @media (max-width: 1024px) {
       .grid-cards {
         grid-template-columns: 1fr;
       }
     }
 
     .card {
-      background: var(--paper-2);
+      background: var(--paper-card);
       border: 1px solid var(--rule);
-      border-radius: 6px;
+      border-radius: 8px;
       padding: 1.5rem;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.02);
     }
 
     .card-header {
@@ -112,31 +119,25 @@
     }
 
     .card-dot {
-      width: 8px;
-      height: 8px;
+      width: 10px;
+      height: 10px;
       border-radius: 50%;
-      background-color: var(--muted);
     }
 
-    .card-dot.coral {
-      background-color: var(--accent);
-    }
-
-    .card-dot.link {
-      background-color: var(--link);
-    }
+    .card-dot.coral { background-color: var(--coral); }
+    .card-dot.link { background-color: var(--link); }
+    .card-dot.teal { background-color: var(--teal); }
 
     .card h3 {
-      font-family: 'Geist', sans-serif;
-      font-size: 1.1rem;
+      font-size: 1.15rem;
       font-weight: 600;
       color: var(--ink);
     }
 
     .card p {
-      font-size: 0.9rem;
+      font-size: 0.925rem;
       color: var(--muted);
-      margin-bottom: 0.75rem;
+      margin-bottom: 0.85rem;
     }
 
     .card ul {
@@ -166,7 +167,7 @@
       justify-content: space-between;
       align-items: center;
       font-family: 'Geist Mono', monospace;
-      font-size: 0.75rem;
+      font-size: 0.8rem;
       color: var(--soft);
     }
   </style>
@@ -175,280 +176,281 @@
 
 <div class="container">
   <header>
-    <div class="eyebrow">SYSTEM ARCHITECTURE SPECIFICATION</div>
+    <div class="eyebrow">SYSTEM ARCHITECTURE SPECIFICATION v1.2.1</div>
     <h1>SwaraSetu End-to-End System Topology</h1>
     <p class="subtitle">
-      Offline-first, voice-native triage platform bridging last-mile healthcare in rural India.
-      Features a deterministic WHO IMCI clinical decision engine, dual-tier Sarvam AI cloud &amp; edge STT, and dynamic ASHA worker dispatching.
+      Voice-native, offline-resilient rural clinical triage and emergency dispatch platform. Combines 
+      dialect-aware Sarvam AI speech synthesis, zero-hallucination WHO IMCI clinical decision trees, 
+      and an automated 4-Pillar 108 Emergency Response System.
     </p>
   </header>
 
   <div class="diagram-wrapper">
-    <svg viewBox="0 0 1200 760" xmlns="http://www.w3.org/2000/svg">
+    <svg viewBox="0 0 1340 760" xmlns="http://www.w3.org/2000/svg">
       <defs>
-        <!-- Arrow Markers -->
-        <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
-          <polygon points="0 0, 8 3, 0 6" fill="#4f5d75"/>
+        <marker id="arr-gray" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+          <polygon points="0 0, 8 3, 0 6" fill="#64748b"/>
         </marker>
-        <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
-          <polygon points="0 0, 8 3, 0 6" fill="#eb6c36"/>
+        <marker id="arr-coral" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+          <polygon points="0 0, 8 3, 0 6" fill="#ea580c"/>
         </marker>
-        <marker id="arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
-          <polygon points="0 0, 8 3, 0 6" fill="#2e5aa8"/>
+        <marker id="arr-blue" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+          <polygon points="0 0, 8 3, 0 6" fill="#2563eb"/>
+        </marker>
+        <marker id="arr-red" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+          <polygon points="0 0, 8 3, 0 6" fill="#e11d48"/>
+        </marker>
+        <marker id="arr-teal" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+          <polygon points="0 0, 8 3, 0 6" fill="#0d9488"/>
         </marker>
       </defs>
 
-      <!-- Background Paper -->
-      <rect width="100%" height="100%" fill="#f5f5f5"/>
+      <!-- Background -->
+      <rect width="100%" height="100%" fill="#ffffff"/>
 
-      <!-- ==================== LAYER BOUNDARIES / ZONES ==================== -->
+      <!-- ==================== COLUMN ZONES ==================== -->
+      <!-- Zone 1 -->
+      <rect x="30" y="50" width="220" height="580" rx="8" fill="#f8fafc" stroke="#e2e8f0" stroke-width="1"/>
+      <rect x="45" y="58" width="190" height="20" rx="4" fill="#ffffff" stroke="#cbd5e1" stroke-width="0.8"/>
+      <text x="140" y="72" fill="#475569" font-size="9" font-family="'Geist Mono', monospace" font-weight="600" text-anchor="middle" letter-spacing="0.1em">1. CHANNELS &amp; ACTORS</text>
 
-      <!-- Zone 1: Entry Points -->
-      <rect x="40" y="80" width="192" height="424" rx="8" fill="rgba(45,49,66,0.02)" stroke="rgba(45,49,66,0.10)" stroke-width="0.8"/>
-      <rect x="52" y="84" width="168" height="12" rx="2" fill="#f5f5f5"/>
-      <text x="136" y="93" fill="rgba(45,49,66,0.45)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">1. CHANNELS &amp; ACTORS</text>
+      <!-- Zone 2 -->
+      <rect x="280" y="50" width="220" height="580" rx="8" fill="#f8fafc" stroke="#e2e8f0" stroke-width="1"/>
+      <rect x="295" y="58" width="190" height="20" rx="4" fill="#ffffff" stroke="#cbd5e1" stroke-width="0.8"/>
+      <text x="390" y="72" fill="#475569" font-size="9" font-family="'Geist Mono', monospace" font-weight="600" text-anchor="middle" letter-spacing="0.1em">2. OFFLINE EDGE CLIENT</text>
 
-      <!-- Zone 2: Edge & Offline Tier -->
-      <rect x="272" y="80" width="192" height="424" rx="8" fill="rgba(45,49,66,0.02)" stroke="rgba(45,49,66,0.10)" stroke-width="0.8"/>
-      <rect x="284" y="84" width="168" height="12" rx="2" fill="#f5f5f5"/>
-      <text x="368" y="93" fill="rgba(45,49,66,0.45)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">2. OFFLINE CLIENT TIER</text>
+      <!-- Zone 3 -->
+      <rect x="530" y="50" width="240" height="580" rx="8" fill="#f8fafc" stroke="#e2e8f0" stroke-width="1"/>
+      <rect x="555" y="58" width="190" height="20" rx="4" fill="#ffffff" stroke="#cbd5e1" stroke-width="0.8"/>
+      <text x="650" y="72" fill="#475569" font-size="9" font-family="'Geist Mono', monospace" font-weight="600" text-anchor="middle" letter-spacing="0.1em">3. FASTAPI GATEWAY &amp; AUTH</text>
 
-      <!-- Zone 3: FastAPI Backend Tier -->
-      <rect x="504" y="80" width="208" height="424" rx="8" fill="rgba(45,49,66,0.02)" stroke="rgba(45,49,66,0.10)" stroke-width="0.8"/>
-      <rect x="524" y="84" width="168" height="12" rx="2" fill="#f5f5f5"/>
-      <text x="608" y="93" fill="rgba(45,49,66,0.45)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">3. API &amp; SERVICE TIER</text>
+      <!-- Zone 4 -->
+      <rect x="800" y="50" width="240" height="580" rx="8" fill="#f8fafc" stroke="#e2e8f0" stroke-width="1"/>
+      <rect x="825" y="58" width="190" height="20" rx="4" fill="#ffffff" stroke="#cbd5e1" stroke-width="0.8"/>
+      <text x="920" y="72" fill="#475569" font-size="9" font-family="'Geist Mono', monospace" font-weight="600" text-anchor="middle" letter-spacing="0.1em">4. CLINICAL &amp; DISPATCH CORE</text>
 
-      <!-- Zone 4: Clinical Core & AI Tier -->
-      <rect x="744" y="80" width="208" height="424" rx="8" fill="rgba(45,49,66,0.02)" stroke="rgba(45,49,66,0.10)" stroke-width="0.8"/>
-      <rect x="764" y="84" width="168" height="12" rx="2" fill="#f5f5f5"/>
-      <text x="848" y="93" fill="rgba(45,49,66,0.45)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">4. CLINICAL &amp; AI ENGINE</text>
-
-      <!-- Zone 5: Data & External Tier -->
-      <rect x="984" y="80" width="176" height="424" rx="8" fill="rgba(45,49,66,0.02)" stroke="rgba(45,49,66,0.10)" stroke-width="0.8"/>
-      <rect x="996" y="84" width="152" height="12" rx="2" fill="#f5f5f5"/>
-      <text x="1072" y="93" fill="rgba(45,49,66,0.45)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">5. DATA &amp; INTEGRATIONS</text>
-
-
-      <!-- ==================== CONNECTORS & ARROWS (Z-Order: Before Nodes) ==================== -->
-
-      <!-- Arrow 1: WhatsApp Patient -> Twilio HMAC Security -->
-      <path d="M 216,148 H 456 Q 464,148 464,156 V 264 Q 464,272 472,272 H 520" fill="none" stroke="#2e5aa8" stroke-width="1.2" marker-end="url(#arrow-link)"/>
-      <rect x="446" y="200" width="36" height="12" rx="2" fill="#f5f5f5"/>
-      <text x="464" y="209" fill="#2e5aa8" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">WEBHOOK</text>
-
-      <!-- Arrow 2: CHW Tablet PWA -> FastAPI Gateway (Online) -->
-      <path d="M 216,244 H 464 Q 472,244 472,236 V 164 Q 472,156 480,156 H 520" fill="none" stroke="#2e5aa8" stroke-width="1.2" marker-end="url(#arrow-link)"/>
-      <rect x="454" y="184" width="36" height="12" rx="2" fill="#f5f5f5"/>
-      <text x="472" y="193" fill="#2e5aa8" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">REST API</text>
-
-      <!-- Arrow 3: CHW Tablet PWA -> IndexedDB Outbox (Offline Queue) -->
-      <path d="M 216,268 H 288" fill="none" stroke="#4f5d75" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
-      <rect x="234" y="254" width="36" height="12" rx="2" fill="#f5f5f5"/>
-      <text x="252" y="263" fill="#4f5d75" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">QUEUE</text>
-
-      <!-- Arrow 4: CHW Tablet PWA -> Edge ONNX & Local IMCI -->
-      <path d="M 216,292 H 244 Q 252,292 252,300 V 372 Q 252,380 260,380 H 288" fill="none" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow)"/>
-      <rect x="234" y="328" width="36" height="12" rx="2" fill="#f5f5f5"/>
-      <text x="252" y="337" fill="#4f5d75" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">OFFLINE</text>
-
-      <!-- Arrow 5: IndexedDB Outbox -> Triage & Sync Services -->
-      <path d="M 448,260 H 476 Q 484,260 484,268 V 376 Q 484,384 492,384 H 520" fill="none" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow)"/>
-      <rect x="466" y="312" width="36" height="12" rx="2" fill="#f5f5f5"/>
-      <text x="484" y="321" fill="#4f5d75" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">AUTO FLUSH</text>
-
-      <!-- Arrow 6: FastAPI Gateway -> Deterministic WHO IMCI Engine -->
-      <path d="M 696,156 H 760" fill="none" stroke="#eb6c36" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
-      <rect x="708" y="142" width="40" height="12" rx="2" fill="#f5f5f5"/>
-      <text x="728" y="151" fill="#eb6c36" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">EVALUATE</text>
-
-      <!-- Arrow 7: FastAPI Gateway -> Sarvam AI Cloud Pipeline -->
-      <path d="M 696,180 H 720 Q 728,180 728,188 V 276 Q 728,284 736,284 H 760" fill="none" stroke="#eb6c36" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
-      <rect x="710" y="224" width="36" height="12" rx="2" fill="#f5f5f5"/>
-      <text x="728" y="233" fill="#eb6c36" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">ASR/TTS</text>
-
-      <!-- Arrow 8: WHO IMCI Engine -> PostgreSQL 15 -->
-      <path d="M 936,160 H 1000" fill="none" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow)"/>
-      <rect x="948" y="146" width="40" height="12" rx="2" fill="#f5f5f5"/>
-      <text x="968" y="155" fill="#4f5d75" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">PERSIST</text>
-
-      <!-- Arrow 9: WHO IMCI Engine -> Twilio SMS (Score 2 Alert) -->
-      <path d="M 936,184 H 960 Q 968,184 968,192 V 272 Q 968,280 976,280 H 1000" fill="none" stroke="#eb6c36" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
-      <rect x="950" y="224" width="36" height="12" rx="2" fill="#f5f5f5"/>
-      <text x="968" y="233" fill="#eb6c36" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">DISPATCH</text>
-
-      <!-- Arrow 10: Spatial PHC Router -> Sarvam/OSM Services (Score 3) -->
-      <path d="M 936,396 H 1000" fill="none" stroke="#2e5aa8" stroke-width="1.2" marker-end="url(#arrow-link)"/>
-      <rect x="948" y="382" width="40" height="12" rx="2" fill="#f5f5f5"/>
-      <text x="968" y="391" fill="#2e5aa8" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">ROUTING</text>
-
-      <!-- Arrow 11: Sarvam AI Cloud Pipeline -> External Sarvam API -->
-      <path d="M 936,284 H 960 Q 968,284 968,292 V 372 Q 968,380 976,380 H 1000" fill="none" stroke="#2e5aa8" stroke-width="1.2" marker-end="url(#arrow-link)"/>
-      <rect x="950" y="324" width="36" height="12" rx="2" fill="#f5f5f5"/>
-      <text x="968" y="333" fill="#2e5aa8" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">REST</text>
-
-      <!-- Arrow 12: District Supervisor -> Triage & Sync Services -->
-      <path d="M 216,388 H 456 Q 464,388 464,396 V 404 H 520" fill="none" stroke="#4f5d75" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
-      <rect x="444" y="390" width="40" height="12" rx="2" fill="#f5f5f5"/>
-      <text x="464" y="399" fill="#4f5d75" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">METRICS</text>
+      <!-- Zone 5 -->
+      <rect x="1070" y="50" width="240" height="580" rx="8" fill="#f8fafc" stroke="#e2e8f0" stroke-width="1"/>
+      <rect x="1095" y="58" width="190" height="20" rx="4" fill="#ffffff" stroke="#cbd5e1" stroke-width="0.8"/>
+      <text x="1190" y="72" fill="#475569" font-size="9" font-family="'Geist Mono', monospace" font-weight="600" text-anchor="middle" letter-spacing="0.1em">5. DATA &amp; DISPATCH NETWORKS</text>
 
 
-      <!-- ==================== NODE BOXES (Z-Order: Top) ==================== -->
+      <!-- ==================== CONNECTOR PATHS (Z-Index: Background) ==================== -->
+      
+      <!-- Telegram & WhatsApp -> Gateway Auth -->
+      <path d="M 230,135 H 550" fill="none" stroke="#2563eb" stroke-width="1.5" marker-end="url(#arr-blue)"/>
+      <rect x="360" y="125" width="85" height="18" rx="4" fill="#ffffff" stroke="#cbd5e1" stroke-width="0.8"/>
+      <text x="402" y="137" fill="#2563eb" font-size="8.5" font-family="'Geist Mono', monospace" font-weight="600" text-anchor="middle">WEBHOOK/SSL</text>
 
-      <!-- Node 1: Patients (WhatsApp / Voice) -->
+      <!-- PWA Tablet -> Outbox (Offline) -->
+      <path d="M 230,275 H 300" fill="none" stroke="#0d9488" stroke-width="1.5" marker-end="url(#arr-teal)"/>
+      <rect x="242" y="265" width="48" height="16" rx="3" fill="#ffffff" stroke="#cbd5e1" stroke-width="0.8"/>
+      <text x="266" y="276" fill="#0d9488" font-size="8" font-family="'Geist Mono', monospace" font-weight="600" text-anchor="middle">OFFLINE</text>
+
+      <!-- PWA Tablet -> Local IMCI & ONNX -->
+      <path d="M 140,320 V 430 H 300" fill="none" stroke="#0d9488" stroke-width="1.5" marker-end="url(#arr-teal)"/>
+      <rect x="190" y="420" width="80" height="16" rx="3" fill="#ffffff" stroke="#cbd5e1" stroke-width="0.8"/>
+      <text x="230" y="431" fill="#0d9488" font-size="8" font-family="'Geist Mono', monospace" font-weight="600" text-anchor="middle">ON-DEVICE STT</text>
+
+      <!-- Outbox -> Triage Sync Flush -->
+      <path d="M 480,275 H 550" fill="none" stroke="#64748b" stroke-width="1.5" stroke-dasharray="4,3" marker-end="url(#arr-gray)"/>
+      <rect x="492" y="265" width="50" height="16" rx="3" fill="#ffffff" stroke="#cbd5e1" stroke-width="0.8"/>
+      <text x="517" y="276" fill="#64748b" font-size="8" font-family="'Geist Mono', monospace" font-weight="600" text-anchor="middle">SYNC FLUSH</text>
+
+      <!-- Gateway -> WHO IMCI Engine -->
+      <path d="M 720,135 H 820" fill="none" stroke="#ea580c" stroke-width="1.5" marker-end="url(#arr-coral)"/>
+      <rect x="745" y="125" width="55" height="18" rx="4" fill="#ffffff" stroke="#cbd5e1" stroke-width="0.8"/>
+      <text x="772" y="137" fill="#ea580c" font-size="8.5" font-family="'Geist Mono', monospace" font-weight="600" text-anchor="middle">TRIAGE</text>
+
+      <!-- Gateway -> Sarvam AI Pipeline -->
+      <path d="M 635,180 V 390 H 820" fill="none" stroke="#2563eb" stroke-width="1.5" marker-end="url(#arr-blue)"/>
+      <rect x="700" y="380" width="80" height="18" rx="4" fill="#ffffff" stroke="#cbd5e1" stroke-width="0.8"/>
+      <text x="740" y="392" fill="#2563eb" font-size="8.5" font-family="'Geist Mono', monospace" font-weight="600" text-anchor="middle">ASR/TTS PIPE</text>
+
+      <!-- WHO IMCI -> 4-Pillar Emergency Dispatch -->
+      <path d="M 920,180 V 230" fill="none" stroke="#e11d48" stroke-width="1.5" marker-end="url(#arr-red)"/>
+      <rect x="880" y="195" width="80" height="16" rx="3" fill="#ffffff" stroke="#cbd5e1" stroke-width="0.8"/>
+      <text x="920" y="206" fill="#e11d48" font-size="8" font-family="'Geist Mono', monospace" font-weight="600" text-anchor="middle">SCORE 3 RED</text>
+
+      <!-- WHO IMCI -> SQLite/Postgres DB -->
+      <path d="M 1020,135 H 1090" fill="none" stroke="#64748b" stroke-width="1.5" marker-end="url(#arr-gray)"/>
+      <rect x="1030" y="125" width="52" height="18" rx="4" fill="#ffffff" stroke="#cbd5e1" stroke-width="0.8"/>
+      <text x="1056" y="137" fill="#64748b" font-size="8.5" font-family="'Geist Mono', monospace" font-weight="600" text-anchor="middle">PERSIST</text>
+
+      <!-- 4-Pillar Dispatch -> 108 CAD Network -->
+      <path d="M 1020,275 H 1090" fill="none" stroke="#e11d48" stroke-width="1.5" marker-end="url(#arr-red)"/>
+      <rect x="1030" y="265" width="50" height="18" rx="4" fill="#ffffff" stroke="#cbd5e1" stroke-width="0.8"/>
+      <text x="1055" y="277" fill="#e11d48" font-size="8.5" font-family="'Geist Mono', monospace" font-weight="600" text-anchor="middle">108 CAD</text>
+
+      <!-- Sarvam AI Pipeline -> api.sarvam.ai Cloud -->
+      <path d="M 1020,415 H 1090" fill="none" stroke="#2563eb" stroke-width="1.5" marker-end="url(#arr-blue)"/>
+      <rect x="1030" y="405" width="52" height="18" rx="4" fill="#ffffff" stroke="#cbd5e1" stroke-width="0.8"/>
+      <text x="1056" y="417" fill="#2563eb" font-size="8.5" font-family="'Geist Mono', monospace" font-weight="600" text-anchor="middle">CLOUD AI</text>
+
+
+      <!-- ==================== NODE BOXES ==================== -->
+
+      <!-- [Node 1] Omnichannel Patients (Telegram / WhatsApp) -->
       <g>
-        <rect x="56" y="112" width="160" height="72" rx="6" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
-        <rect x="64" y="118" width="32" height="12" rx="2" fill="transparent" stroke="rgba(45,49,66,0.40)" stroke-width="0.8"/>
-        <text x="80" y="127" fill="#2d3142" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">USER</text>
-        <text x="136" y="148" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">WhatsApp Patients</text>
-        <text x="136" y="166" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">Voice / Text / USSD</text>
+        <rect x="50" y="95" width="180" height="80" rx="8" fill="#ffffff" stroke="#0f172a" stroke-width="1.2"/>
+        <rect x="60" y="103" width="55" height="14" rx="3" fill="#eff6ff" stroke="#93c5fd" stroke-width="0.8"/>
+        <text x="87" y="113" fill="#1d4ed8" font-size="7.5" font-family="'Geist Mono', monospace" font-weight="600" text-anchor="middle">BOT &amp; CHAT</text>
+        <text x="140" y="136" fill="#0f172a" font-size="12" font-weight="700" font-family="'Geist', sans-serif" text-anchor="middle">Telegram &amp; WhatsApp</text>
+        <text x="140" y="152" fill="#475569" font-size="9.5" font-family="'Geist', sans-serif" text-anchor="middle">@swarasetubot · Meta Cloud API</text>
+        <text x="140" y="166" fill="#64748b" font-size="8.5" font-family="'Geist Mono', monospace" text-anchor="middle">Voice Notes (.ogg) &amp; Text</text>
       </g>
 
-      <!-- Node 2: CHW Tablets (Offline PWA) -->
+      <!-- [Node 2] Frontline CHW Tablet (PWA) -->
       <g>
-        <rect x="56" y="224" width="160" height="88" rx="6" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
-        <rect x="64" y="230" width="36" height="12" rx="2" fill="transparent" stroke="rgba(45,49,66,0.40)" stroke-width="0.8"/>
-        <text x="82" y="239" fill="#2d3142" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">CLIENT</text>
-        <text x="136" y="260" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">CHW Field Worker</text>
-        <text x="136" y="278" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">React 18 PWA Tablet</text>
-        <text x="136" y="294" fill="#7a8399" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">Touch-to-Hear UI</text>
+        <rect x="50" y="235" width="180" height="80" rx="8" fill="#ffffff" stroke="#0f172a" stroke-width="1.2"/>
+        <rect x="60" y="243" width="50" height="14" rx="3" fill="#f0fdfa" stroke="#99f6e4" stroke-width="0.8"/>
+        <text x="85" y="253" fill="#0f766e" font-size="7.5" font-family="'Geist Mono', monospace" font-weight="600" text-anchor="middle">EDGE APP</text>
+        <text x="140" y="276" fill="#0f172a" font-size="12" font-weight="700" font-family="'Geist', sans-serif" text-anchor="middle">ASHA Field Worker</text>
+        <text x="140" y="292" fill="#475569" font-size="9.5" font-family="'Geist', sans-serif" text-anchor="middle">React 18 PWA Tablet View</text>
+        <text x="140" y="306" fill="#64748b" font-size="8.5" font-family="'Geist Mono', monospace" text-anchor="middle">Touch-to-Hear · Offline Mode</text>
       </g>
 
-      <!-- Node 3: District Supervisors -->
+      <!-- [Node 3] Supervisor Analytics Portal -->
       <g>
-        <rect x="56" y="352" width="160" height="72" rx="6" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
-        <rect x="64" y="358" width="32" height="12" rx="2" fill="transparent" stroke="rgba(45,49,66,0.40)" stroke-width="0.8"/>
-        <text x="80" y="367" fill="#2d3142" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">DASH</text>
-        <text x="136" y="388" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">District Supervisor</text>
-        <text x="136" y="406" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">Recharts / Leaflet</text>
+        <rect x="50" y="475" width="180" height="80" rx="8" fill="#ffffff" stroke="#0f172a" stroke-width="1.2"/>
+        <rect x="60" y="483" width="52" height="14" rx="3" fill="#f8fafc" stroke="#cbd5e1" stroke-width="0.8"/>
+        <text x="86" y="493" fill="#475569" font-size="7.5" font-family="'Geist Mono', monospace" font-weight="600" text-anchor="middle">PORTAL</text>
+        <text x="140" y="516" fill="#0f172a" font-size="12" font-weight="700" font-family="'Geist', sans-serif" text-anchor="middle">Supervisor Dashboard</text>
+        <text x="140" y="532" fill="#475569" font-size="9.5" font-family="'Geist', sans-serif" text-anchor="middle">Real-time Outbreak Surveillance</text>
+        <text x="140" y="546" fill="#64748b" font-size="8.5" font-family="'Geist Mono', monospace" text-anchor="middle">Spatial PHC Heatmap &amp; Metrics</text>
       </g>
 
-      <!-- Node 4: IndexedDB Outbox -->
+      <!-- [Node 4] IndexedDB Outbox Queue -->
       <g>
-        <rect x="288" y="224" width="160" height="72" rx="6" fill="rgba(45,49,66,0.05)" stroke="#4f5d75" stroke-width="1"/>
-        <rect x="296" y="230" width="36" height="12" rx="2" fill="transparent" stroke="rgba(79,93,117,0.40)" stroke-width="0.8"/>
-        <text x="314" y="239" fill="#4f5d75" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">STORE</text>
-        <text x="368" y="260" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">IndexedDB Outbox</text>
-        <text x="368" y="278" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">swarasetu-outbox DB</text>
+        <rect x="300" y="235" width="180" height="80" rx="8" fill="#f0fdfa" stroke="#0d9488" stroke-width="1.2"/>
+        <rect x="310" y="243" width="55" height="14" rx="3" fill="#ffffff" stroke="#99f6e4" stroke-width="0.8"/>
+        <text x="337" y="253" fill="#0f766e" font-size="7.5" font-family="'Geist Mono', monospace" font-weight="600" text-anchor="middle">STORAGE</text>
+        <text x="390" y="276" fill="#0f172a" font-size="12" font-weight="700" font-family="'Geist', sans-serif" text-anchor="middle">IndexedDB Outbox</text>
+        <text x="390" y="292" fill="#0f766e" font-size="9.5" font-family="'Geist', sans-serif" text-anchor="middle">Local SQLite / Dexie.js</text>
+        <text x="390" y="306" fill="#64748b" font-size="8.5" font-family="'Geist Mono', monospace" text-anchor="middle">swarasetu-outbox Queue</text>
       </g>
 
-      <!-- Node 5: Edge AI & Local IMCI Engine -->
+      <!-- [Node 5] Local ONNX Runtime & IMCI Mirror -->
       <g>
-        <rect x="288" y="336" width="160" height="88" rx="6" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
-        <rect x="296" y="342" width="28" height="12" rx="2" fill="transparent" stroke="rgba(45,49,66,0.40)" stroke-width="0.8"/>
-        <text x="310" y="351" fill="#2d3142" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">EDGE</text>
-        <text x="368" y="372" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">Edge ONNX &amp; IMCI</text>
-        <text x="368" y="390" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">sttRunner.ts (WASM)</text>
-        <text x="368" y="406" fill="#7a8399" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">triageLocal.ts (1:1 JS)</text>
+        <rect x="300" y="390" width="180" height="80" rx="8" fill="#ffffff" stroke="#0f172a" stroke-width="1.2"/>
+        <rect x="310" y="398" width="55" height="14" rx="3" fill="#f8fafc" stroke="#cbd5e1" stroke-width="0.8"/>
+        <text x="337" y="408" fill="#475569" font-size="7.5" font-family="'Geist Mono', monospace" font-weight="600" text-anchor="middle">RUNTIME</text>
+        <text x="390" y="431" fill="#0f172a" font-size="12" font-weight="700" font-family="'Geist', sans-serif" text-anchor="middle">On-Device Edge Engine</text>
+        <text x="390" y="447" fill="#475569" font-size="9.5" font-family="'Geist', sans-serif" text-anchor="middle">triageLocal.ts (1:1 JS Mirror)</text>
+        <text x="390" y="461" fill="#64748b" font-size="8.5" font-family="'Geist Mono', monospace" text-anchor="middle">sttRunner.ts (WASM fallback)</text>
       </g>
 
-      <!-- Node 6: FastAPI Core Router -->
+      <!-- [Node 6] FastAPI Core Router & Auth Guard -->
       <g>
-        <rect x="520" y="112" width="176" height="88" rx="6" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
-        <rect x="528" y="118" width="28" height="12" rx="2" fill="transparent" stroke="rgba(45,49,66,0.40)" stroke-width="0.8"/>
-        <text x="542" y="127" fill="#2d3142" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">HTTP</text>
-        <text x="608" y="148" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">FastAPI Core Gateway</text>
-        <text x="608" y="166" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">Python 3.11 / Uvicorn</text>
-        <text x="608" y="182" fill="#7a8399" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">/triage, /channels, /sync</text>
+        <rect x="550" y="95" width="200" height="85" rx="8" fill="#eff6ff" stroke="#2563eb" stroke-width="1.2"/>
+        <rect x="560" y="103" width="70" height="14" rx="3" fill="#ffffff" stroke="#93c5fd" stroke-width="0.8"/>
+        <text x="595" y="113" fill="#1d4ed8" font-size="7.5" font-family="'Geist Mono', monospace" font-weight="600" text-anchor="middle">API &amp; AUTH</text>
+        <text x="650" y="136" fill="#0f172a" font-size="12.5" font-weight="700" font-family="'Geist', sans-serif" text-anchor="middle">FastAPI Gateway</text>
+        <text x="650" y="152" fill="#1d4ed8" font-size="9.5" font-family="'Geist Mono', monospace" font-weight="600" text-anchor="middle">HMAC &amp; Secret Token Guard</text>
+        <text x="650" y="167" fill="#64748b" font-size="8.5" font-family="'Geist Mono', monospace" text-anchor="middle">Telegram/Meta/Twilio Verified</text>
       </g>
 
-      <!-- Node 7: Twilio HMAC Security -->
+      <!-- [Node 7] Idempotent Case Sync Service -->
       <g>
-        <rect x="520" y="236" width="176" height="72" rx="6" fill="rgba(235,108,54,0.05)" stroke="rgba(235,108,54,0.50)" stroke-width="1" stroke-dasharray="4,4"/>
-        <rect x="528" y="242" width="28" height="12" rx="2" fill="transparent" stroke="rgba(235,108,54,0.60)" stroke-width="0.8"/>
-        <text x="542" y="251" fill="#eb6c36" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">AUTH</text>
-        <text x="608" y="272" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">Security &amp; Webhook Guard</text>
-        <text x="608" y="290" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">HMAC-SHA1 Signature</text>
+        <rect x="550" y="235" width="200" height="80" rx="8" fill="#ffffff" stroke="#0f172a" stroke-width="1.2"/>
+        <rect x="560" y="243" width="50" height="14" rx="3" fill="#f8fafc" stroke="#cbd5e1" stroke-width="0.8"/>
+        <text x="585" y="253" fill="#475569" font-size="7.5" font-family="'Geist Mono', monospace" font-weight="600" text-anchor="middle">SERVICES</text>
+        <text x="650" y="276" fill="#0f172a" font-size="12" font-weight="700" font-family="'Geist', sans-serif" text-anchor="middle">Triage &amp; Sync Engine</text>
+        <text x="650" y="292" fill="#475569" font-size="9.5" font-family="'Geist', sans-serif" text-anchor="middle">Idempotent UUID Ingestion</text>
+        <text x="650" y="306" fill="#64748b" font-size="8.5" font-family="'Geist Mono', monospace" text-anchor="middle">/api/v1/sync/cases Batch</text>
       </g>
 
-      <!-- Node 8: Triage & Sync Services -->
+      <!-- [Node 8] Deterministic WHO IMCI Triage Engine (Focal Core 1) -->
       <g>
-        <rect x="520" y="344" width="176" height="80" rx="6" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
-        <rect x="528" y="350" width="32" height="12" rx="2" fill="transparent" stroke="rgba(45,49,66,0.40)" stroke-width="0.8"/>
-        <text x="544" y="359" fill="#2d3142" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">LOGIC</text>
-        <text x="608" y="380" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">Triage &amp; Sync Services</text>
-        <text x="608" y="398" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">Idempotent UUID Sync</text>
+        <rect x="820" y="95" width="200" height="85" rx="8" fill="#fff7ed" stroke="#ea580c" stroke-width="1.5"/>
+        <rect x="830" y="103" width="55" height="14" rx="3" fill="#ffffff" stroke="#fdba74" stroke-width="0.8"/>
+        <text x="857" y="113" fill="#ea580c" font-size="7.5" font-family="'Geist Mono', monospace" font-weight="600" text-anchor="middle">CORE 100%</text>
+        <text x="920" y="136" fill="#0f172a" font-size="12.5" font-weight="700" font-family="'Geist', sans-serif" text-anchor="middle">WHO IMCI Rule Engine</text>
+        <text x="920" y="152" fill="#ea580c" font-size="9.5" font-family="'Geist Mono', monospace" font-weight="600" text-anchor="middle">Deterministic Decision Trees</text>
+        <text x="920" y="167" fill="#64748b" font-size="8.5" font-family="'Geist Mono', monospace" text-anchor="middle">5 Clusters · 0% LLM Vitals</text>
       </g>
 
-      <!-- Node 9: Deterministic WHO IMCI Engine (FOCAL ACCENT 1) -->
+      <!-- [Node 9] 4-Pillar Rural Emergency Response (Focal Core 2) -->
       <g>
-        <rect x="760" y="112" width="176" height="96" rx="6" fill="rgba(235,108,54,0.08)" stroke="#eb6c36" stroke-width="1.2"/>
-        <rect x="768" y="118" width="36" height="12" rx="2" fill="transparent" stroke="rgba(235,108,54,0.60)" stroke-width="0.8"/>
-        <text x="786" y="127" fill="#eb6c36" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">FOCAL</text>
-        <text x="848" y="148" fill="#2d3142" font-size="12" font-weight="700" font-family="'Geist', sans-serif" text-anchor="middle">WHO IMCI Triage Engine</text>
-        <text x="848" y="166" fill="#eb6c36" font-size="9" font-family="'Geist Mono', monospace" font-weight="600" text-anchor="middle">Deterministic Code Tree</text>
-        <text x="848" y="184" fill="#4f5d75" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">Scores 1-3 | 0% LLM Math</text>
+        <rect x="820" y="235" width="200" height="85" rx="8" fill="#fff1f2" stroke="#e11d48" stroke-width="1.5"/>
+        <rect x="830" y="243" width="75" height="14" rx="3" fill="#ffffff" stroke="#fda4af" stroke-width="0.8"/>
+        <text x="867" y="253" fill="#e11d48" font-size="7.5" font-family="'Geist Mono', monospace" font-weight="600" text-anchor="middle">EMERGENCY P1</text>
+        <text x="920" y="276" fill="#0f172a" font-size="12.5" font-weight="700" font-family="'Geist', sans-serif" text-anchor="middle">4-Pillar Emergency System</text>
+        <text x="920" y="292" fill="#e11d48" font-size="9.5" font-family="'Geist Mono', monospace" font-weight="600" text-anchor="middle">108 CAD · First-Aid · ASV</text>
+        <text x="920" y="307" fill="#64748b" font-size="8.5" font-family="'Geist Mono', monospace" text-anchor="middle">Snake Bites · Trauma · Eclampsia</text>
       </g>
 
-      <!-- Node 10: Sarvam AI Cloud Pipeline (FOCAL ACCENT 2) -->
+      <!-- [Node 10] Sarvam Indic AI Stack -->
       <g>
-        <rect x="760" y="240" width="176" height="88" rx="6" fill="rgba(235,108,54,0.08)" stroke="#eb6c36" stroke-width="1.2"/>
-        <rect x="768" y="246" width="32" height="12" rx="2" fill="transparent" stroke="rgba(235,108,54,0.60)" stroke-width="0.8"/>
-        <text x="784" y="255" fill="#eb6c36" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">AI/ML</text>
-        <text x="848" y="276" fill="#2d3142" font-size="12" font-weight="700" font-family="'Geist', sans-serif" text-anchor="middle">Sarvam Indic AI Stack</text>
-        <text x="848" y="294" fill="#eb6c36" font-size="9" font-family="'Geist Mono', monospace" font-weight="600" text-anchor="middle">ASR / TTS (Bulbul:v2)</text>
-        <text x="848" y="310" fill="#4f5d75" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">Rule NER Extractor</text>
+        <rect x="820" y="375" width="200" height="80" rx="8" fill="#eff6ff" stroke="#2563eb" stroke-width="1.2"/>
+        <rect x="830" y="383" width="55" height="14" rx="3" fill="#ffffff" stroke="#93c5fd" stroke-width="0.8"/>
+        <text x="857" y="393" fill="#1d4ed8" font-size="7.5" font-family="'Geist Mono', monospace" font-weight="600" text-anchor="middle">VOICE AI</text>
+        <text x="920" y="416" fill="#0f172a" font-size="12" font-weight="700" font-family="'Geist', sans-serif" text-anchor="middle">Sarvam Indic Pipeline</text>
+        <text x="920" y="432" fill="#1d4ed8" font-size="9.5" font-family="'Geist Mono', monospace" text-anchor="middle">ASR (Auto-Detect) · Bulbul TTS</text>
+        <text x="920" y="446" fill="#64748b" font-size="8.5" font-family="'Geist Mono', monospace" text-anchor="middle">Dynamic Dialect Translation</text>
       </g>
 
-      <!-- Node 11: Spatial PHC Router -->
+      <!-- [Node 11] Spatial PHC Router -->
       <g>
-        <rect x="760" y="360" width="176" height="72" rx="6" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
-        <rect x="768" y="366" width="32" height="12" rx="2" fill="transparent" stroke="rgba(45,49,66,0.40)" stroke-width="0.8"/>
-        <text x="784" y="375" fill="#2d3142" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">ROUTE</text>
-        <text x="848" y="396" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">Spatial PHC Router</text>
-        <text x="848" y="414" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">Haversine Distance Math</text>
+        <rect x="820" y="495" width="200" height="80" rx="8" fill="#ffffff" stroke="#0f172a" stroke-width="1.2"/>
+        <rect x="830" y="503" width="50" height="14" rx="3" fill="#f8fafc" stroke="#cbd5e1" stroke-width="0.8"/>
+        <text x="855" y="513" fill="#475569" font-size="7.5" font-family="'Geist Mono', monospace" font-weight="600" text-anchor="middle">SPATIAL</text>
+        <text x="920" y="536" fill="#0f172a" font-size="12" font-weight="700" font-family="'Geist', sans-serif" text-anchor="middle">Spatial PHC Router</text>
+        <text x="920" y="552" fill="#475569" font-size="9.5" font-family="'Geist', sans-serif" text-anchor="middle">Haversine Distance Indexing</text>
+        <text x="920" y="566" fill="#64748b" font-size="8.5" font-family="'Geist Mono', monospace" text-anchor="middle">24/7 Doctor &amp; Map Coordinates</text>
       </g>
 
-      <!-- Node 12: PostgreSQL 15 & Redis -->
+      <!-- [Node 12] Relational Database (PostgreSQL / SQLite) -->
       <g>
-        <rect x="1000" y="112" width="144" height="88" rx="6" fill="rgba(45,49,66,0.05)" stroke="#4f5d75" stroke-width="1"/>
-        <rect x="1008" y="118" width="28" height="12" rx="2" fill="transparent" stroke="rgba(79,93,117,0.40)" stroke-width="0.8"/>
-        <text x="1022" y="127" fill="#4f5d75" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">DATA</text>
-        <text x="1072" y="148" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">PostgreSQL 15</text>
-        <text x="1072" y="166" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">cases / phcs tables</text>
-        <text x="1072" y="182" fill="#7a8399" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">Redis 7 State Cache</text>
+        <rect x="1090" y="95" width="200" height="80" rx="8" fill="#ffffff" stroke="#0f172a" stroke-width="1.2"/>
+        <rect x="1100" y="103" width="55" height="14" rx="3" fill="#f8fafc" stroke="#cbd5e1" stroke-width="0.8"/>
+        <text x="1127" y="113" fill="#475569" font-size="7.5" font-family="'Geist Mono', monospace" font-weight="600" text-anchor="middle">DATABASE</text>
+        <text x="1190" y="136" fill="#0f172a" font-size="12" font-weight="700" font-family="'Geist', sans-serif" text-anchor="middle">PostgreSQL 15 / SQLite</text>
+        <text x="1190" y="152" fill="#475569" font-size="9.5" font-family="'Geist', sans-serif" text-anchor="middle">cases · asha_assignments</text>
+        <text x="1190" y="166" fill="#64748b" font-size="8.5" font-family="'Geist Mono', monospace" text-anchor="middle">phcs Spatial Records</text>
       </g>
 
-      <!-- Node 13: Twilio SMS Gateway -->
+      <!-- [Node 13] 108 Emergency Dispatch & Hospital Alert Network -->
       <g>
-        <rect x="1000" y="240" width="144" height="80" rx="6" fill="rgba(45,49,66,0.03)" stroke="rgba(45,49,66,0.30)" stroke-width="1"/>
-        <rect x="1008" y="246" width="32" height="12" rx="2" fill="transparent" stroke="rgba(45,49,66,0.40)" stroke-width="0.8"/>
-        <text x="1024" y="255" fill="#2d3142" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">NOTIFY</text>
-        <text x="1072" y="276" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">Twilio SMS API</text>
-        <text x="1072" y="294" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">ASHA Worker Dispatch</text>
+        <rect x="1090" y="235" width="200" height="85" rx="8" fill="#fff1f2" stroke="#e11d48" stroke-width="1.2"/>
+        <rect x="1100" y="243" width="70" height="14" rx="3" fill="#ffffff" stroke="#fda4af" stroke-width="0.8"/>
+        <text x="1135" y="253" fill="#e11d48" font-size="7.5" font-family="'Geist Mono', monospace" font-weight="600" text-anchor="middle">DISPATCH CAD</text>
+        <text x="1190" y="276" fill="#0f172a" font-size="12" font-weight="700" font-family="'Geist', sans-serif" text-anchor="middle">108 CAD &amp; PHC Alerts</text>
+        <text x="1190" y="292" fill="#e11d48" font-size="9.5" font-family="'Geist Mono', monospace" font-weight="600" text-anchor="middle">Ambulance Incident Ticket</text>
+        <text x="1190" y="307" fill="#64748b" font-size="8.5" font-family="'Geist Mono', monospace" text-anchor="middle">ASV Vials · ECG Bay Pre-Alert</text>
       </g>
 
-      <!-- Node 14: Sarvam Cloud API & OSM -->
+      <!-- [Node 14] Sarvam Cloud AI Endpoints -->
       <g>
-        <rect x="1000" y="360" width="144" height="80" rx="6" fill="rgba(45,49,66,0.03)" stroke="rgba(45,49,66,0.30)" stroke-width="1"/>
-        <rect x="1008" y="366" width="28" height="12" rx="2" fill="transparent" stroke="rgba(45,49,66,0.40)" stroke-width="0.8"/>
-        <text x="1022" y="375" fill="#2d3142" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">EXT</text>
-        <text x="1072" y="396" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">Sarvam AI / OSM</text>
-        <text x="1072" y="414" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">api.sarvam.ai REST</text>
+        <rect x="1090" y="375" width="200" height="80" rx="8" fill="#ffffff" stroke="#0f172a" stroke-width="1.2"/>
+        <rect x="1100" y="383" width="55" height="14" rx="3" fill="#f8fafc" stroke="#cbd5e1" stroke-width="0.8"/>
+        <text x="1127" y="393" fill="#475569" font-size="7.5" font-family="'Geist Mono', monospace" font-weight="600" text-anchor="middle">EXTERNAL</text>
+        <text x="1190" y="416" fill="#0f172a" font-size="12" font-weight="700" font-family="'Geist', sans-serif" text-anchor="middle">Sarvam AI Cloud</text>
+        <text x="1190" y="432" fill="#475569" font-size="9.5" font-family="'Geist', sans-serif" text-anchor="middle">api.sarvam.ai REST API</text>
+        <text x="1190" y="446" fill="#64748b" font-size="8.5" font-family="'Geist Mono', monospace" text-anchor="middle">10+ Indic Languages Supported</text>
       </g>
 
       <!-- ==================== LEGEND STRIP ==================== -->
-      <line x1="40" y1="520" x2="1160" y2="520" stroke="rgba(45,49,66,0.12)" stroke-width="0.8"/>
-      <text x="40" y="540" fill="#4f5d75" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.14em">LEGEND &amp; NODE TYPES</text>
+      <line x1="30" y1="650" x2="1310" y2="650" stroke="#e2e8f0" stroke-width="1"/>
+      <text x="30" y="675" fill="#64748b" font-size="9" font-family="'Geist Mono', monospace" font-weight="600" letter-spacing="0.1em">TOPOLOGY LEGEND:</text>
 
-      <!-- Legend Items -->
-      <rect x="40" y="556" width="16" height="12" rx="2" fill="rgba(235,108,54,0.08)" stroke="#eb6c36" stroke-width="1.2"/>
-      <text x="64" y="566" fill="#2d3142" font-size="9" font-family="'Geist', sans-serif">Core Focal Engine (IMCI / Sarvam)</text>
+      <rect x="160" y="663" width="16" height="14" rx="3" fill="#fff7ed" stroke="#ea580c" stroke-width="1.2"/>
+      <text x="185" y="674" fill="#0f172a" font-size="10" font-family="'Geist', sans-serif">Deterministic Triage Core</text>
 
-      <rect x="260" y="556" width="16" height="12" rx="2" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
-      <text x="284" y="566" fill="#2d3142" font-size="9" font-family="'Geist', sans-serif">Backend / Edge / Client Component</text>
+      <rect x="360" y="663" width="16" height="14" rx="3" fill="#fff1f2" stroke="#e11d48" stroke-width="1.2"/>
+      <text x="385" y="674" fill="#0f172a" font-size="10" font-family="'Geist', sans-serif">4-Pillar Emergency CAD System</text>
 
-      <rect x="480" y="556" width="16" height="12" rx="2" fill="rgba(45,49,66,0.05)" stroke="#4f5d75" stroke-width="1"/>
-      <text x="504" y="566" fill="#2d3142" font-size="9" font-family="'Geist', sans-serif">Database / Outbox Storage</text>
+      <rect x="610" y="663" width="16" height="14" rx="3" fill="#eff6ff" stroke="#2563eb" stroke-width="1.2"/>
+      <text x="635" y="674" fill="#0f172a" font-size="10" font-family="'Geist', sans-serif">Gateway &amp; Indic Speech AI</text>
 
-      <rect x="680" y="556" width="16" height="12" rx="2" fill="rgba(45,49,66,0.03)" stroke="rgba(45,49,66,0.30)" stroke-width="1"/>
-      <text x="704" y="566" fill="#2d3142" font-size="9" font-family="'Geist', sans-serif">External Third-Party Service</text>
+      <rect x="830" y="663" width="16" height="14" rx="3" fill="#f0fdfa" stroke="#0d9488" stroke-width="1.2"/>
+      <text x="855" y="674" fill="#0f172a" font-size="10" font-family="'Geist', sans-serif">Offline Edge Queue &amp; Mirror</text>
 
-      <line x1="880" y1="562" x2="904" y2="562" stroke="#eb6c36" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
-      <text x="912" y="566" fill="#2d3142" font-size="9" font-family="'Geist', sans-serif">Primary Clinical / Voice Flow</text>
+      <line x1="1050" y1="670" x2="1080" y2="670" stroke="#2563eb" stroke-width="1.5" marker-end="url(#arr-blue)"/>
+      <text x="1090" y="674" fill="#0f172a" font-size="10" font-family="'Geist', sans-serif">Primary Clinical Ingestion</text>
 
-      <line x1="1040" y1="562" x2="1064" y2="562" stroke="#4f5d75" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
-      <text x="1072" y="566" fill="#2d3142" font-size="9" font-family="'Geist', sans-serif">Async Sync / Outbox Queue</text>
-
+      <line x1="1230" y1="670" x2="1260" y2="670" stroke="#64748b" stroke-width="1.5" stroke-dasharray="4,3" marker-end="url(#arr-gray)"/>
+      <text x="1270" y="674" fill="#0f172a" font-size="10" font-family="'Geist', sans-serif">Async Outbox Sync</text>
     </svg>
   </div>
 
@@ -457,46 +459,46 @@
     <div class="card">
       <div class="card-header">
         <span class="card-dot coral"></span>
-        <h3>1. Clinical Safety &amp; IMCI Engine</h3>
+        <h3>1. Deterministic WHO IMCI Clinical Safety</h3>
       </div>
-      <p>Zero LLMs in the clinical decision path. 100% deterministic Python WHO IMCI implementation.</p>
+      <p>100% auditable rule engine guaranteeing zero LLM hallucination in clinical calculations.</p>
       <ul>
-        <li><strong>Deterministic Rule Execution:</strong> Evaluates 5 symptom clusters (General Danger Signs, Fever, Respiratory, Diarrhoea, Maternal).</li>
-        <li><strong>Strict Auditability:</strong> Identical input payload produces identical risk output (1: Self-Care, 2: ASHA Dispatch, 3: Emergency PHC Referral).</li>
-        <li><strong>Zero Hallucination:</strong> NLP/NER parsing failures soft-degrade to clarification prompts without fabricating default numbers.</li>
+        <li><strong>Zero LLM Prescriptions:</strong> Clinical risk scores (1: Self-Care, 2: ASHA Dispatch, 3: Emergency) are computed purely via auditable decision trees.</li>
+        <li><strong>Zero Fabricated Vitals:</strong> Respiratory rates and stool counts remain unassigned unless verified by instrumentation or explicit user report.</li>
+        <li><strong>Acute Danger Signs:</strong> Deterministic immediate escalation for snake bites, envenomation, major burns, and obstetric emergencies.</li>
       </ul>
     </div>
 
     <div class="card">
       <div class="card-header">
         <span class="card-dot link"></span>
-        <h3>2. Dual-Tier Deployment Architecture</h3>
+        <h3>2. Omnichannel Bots &amp; Indic Speech AI</h3>
       </div>
-      <p>Seamless operation across cloud-connected WhatsApp and 100% media-dark offline rural villages.</p>
+      <p>Secure voice intake across Telegram, Meta WhatsApp, and low-connectivity edge devices.</p>
       <ul>
-        <li><strong>Tier 1 (WhatsApp/IVRS):</strong> Sarvam AI Cloud ASR &amp; Bulbul:v2 TTS over Twilio webhooks with HMAC-SHA1 validation.</li>
-        <li><strong>Tier 2 (CHW Tablet PWA):</strong> ONNX Runtime Web (WASM/WebGPU) executing quantized 4-bit Indic-Seamless speech model on-device.</li>
-        <li><strong>Tier 3 (Legacy 2GB Devices):</strong> Touch-to-Hear visual form UI fallback + local JS IMCI engine (<code>triageLocal.ts</code>).</li>
+        <li><strong>Telegram Bot (@swarasetubot):</strong> Native voice note downloads, Indic ASR transcription, localized speech replies, and secret token auth.</li>
+        <li><strong>Meta WhatsApp Cloud API:</strong> Webhook listener with HMAC-SHA256 request signing and dialect-aware advice translation.</li>
+        <li><strong>Sarvam AI Cloud Pipeline:</strong> BCP-47 auto-detection across 10 Indic languages with natural neural speech synthesis (Bulbul:v2).</li>
       </ul>
     </div>
 
     <div class="card">
       <div class="card-header">
-        <span class="card-dot"></span>
-        <h3>3. Data Persistence &amp; Outbox Sync</h3>
+        <span class="card-dot teal"></span>
+        <h3>3. 4-Pillar Emergency Response &amp; Edge Sync</h3>
       </div>
-      <p>Reliable offline queueing and spatial auto-routing for critical emergency presentations.</p>
+      <p>Instant life-saving interventions for acute rural emergencies and offline resilience.</p>
       <ul>
-        <li><strong>IndexedDB Outbox:</strong> Offline tablet cases stored in <code>swarasetu-outbox</code> with client-generated UUIDs.</li>
-        <li><strong>Idempotent Batch Flush:</strong> Auto-flushes to <code>POST /api/v1/sync/cases</code> upon network recovery; backend deduplicates UUIDs.</li>
-        <li><strong>Spatial PHC Routing:</strong> Haversine distance math routes Score 3 emergency cases to nearest open Primary Health Centre.</li>
+        <li><strong>108 CAD Auto-Ticketing:</strong> Instant Computer-Aided Dispatch incident tickets (<code>#108-EMRI-XXXX</code>) with emergency triage priority.</li>
+        <li><strong>Hospital Readiness Alerts:</strong> Pre-alerts duty doctors to prepare Anti-Snake Venom (ASV) vials, ECG bays, or Magnesium Sulfate.</li>
+        <li><strong>Offline Edge Mirror:</strong> On-device <code>triageLocal.ts</code> engine with IndexedDB outbox queue and automatic background batch sync upon reconnection.</li>
       </ul>
     </div>
   </div>
 
   <footer>
-    <div>SWARASETU ARCHITECTURE SPECIFICATION v1.0.0</div>
-    <div>BASED ON EXISTING CODEBASE IN /backend, /src, AND /ml</div>
+    <div>SWARASETU ARCHITECTURE SPECIFICATION v1.2.1</div>
+    <div>PRODUCTION-READY SYSTEM TOPOLOGY · ZERO-HALLUCINATION CLINICAL TRIAGE</div>
   </footer>
 </div>
 
