@@ -17,10 +17,12 @@ class TwilioClient:
     def __init__(
         self,
         account_sid: str | None = None,
+        api_key_sid: str | None = None,
         auth_token: str | None = None,
         from_number: str | None = None,
     ):
         self.account_sid = account_sid or settings.twilio_account_sid
+        self.api_key_sid = api_key_sid or settings.twilio_api_key_sid
         self.auth_token = auth_token or settings.twilio_auth_token
         self.from_number = from_number or settings.twilio_phone_number
 
@@ -31,9 +33,11 @@ class TwilioClient:
     def _auth_header(self) -> dict[str, str]:
         if not self.is_configured:
             return {}
-        credentials = f"{self.account_sid}:{self.auth_token}"
+        username = self.api_key_sid or self.account_sid
+        credentials = f"{username}:{self.auth_token}"
         encoded = base64.b64encode(credentials.encode("utf-8")).decode("utf-8")
         return {"Authorization": f"Basic {encoded}"}
+
 
     async def send_sms(self, to_number: str, body: str) -> dict[str, str]:
         """Dispatch a standard SMS notification (e.g. ASHA dispatch alert)."""
