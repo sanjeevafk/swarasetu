@@ -7,9 +7,9 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from backend.app.config import settings
-from backend.app.database import init_db
-from backend.app.routers import analytics, phcs, sync, triage
+from app.config import settings
+from app.database import init_db
+from app.routers import analytics, channels, phcs, sync, triage
 
 
 @asynccontextmanager
@@ -41,6 +41,7 @@ app.include_router(triage.router)
 app.include_router(phcs.router)
 app.include_router(analytics.router)
 app.include_router(sync.router)
+app.include_router(channels.router)
 
 
 @app.get("/health")
