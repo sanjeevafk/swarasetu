@@ -59,6 +59,20 @@ def test_voice_transcribe_endpoint():
     dummy_wav = io.BytesIO(b"RIFF....WAVEfmt ....data....")
     files = {"file": ("test.wav", dummy_wav, "audio/wav")}
     response = client.post("/channels/voice/transcribe?language=hi", files=files)
+
     assert response.status_code == 200
     res_data = response.json()
     assert "transcript" in res_data
+
+
+def test_whatsapp_webhook_empty_message_returns_retry_prompt():
+    """Verify empty/inaudible WhatsApp payload returns safe retry prompt instead of fake symptoms."""
+    data = {
+        "From": "whatsapp:+919876543210",
+        "Body": "",
+    }
+    response = client.post("/channels/whatsapp", data=data)
+    assert response.status_code == 200
+    assert "could not hear your voice note clearly" in response.text or "SwaraSetu Healthcare" in response.text
+    assert "Fever and cough" not in response.text
+

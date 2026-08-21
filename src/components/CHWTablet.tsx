@@ -13,6 +13,7 @@ export function CHWTablet({ onShowMap }: { onShowMap: () => void }) {
     toggleOfflineMode,
     currentScenario,
     activeEvaluation,
+    isSyncing,
     pendingSyncCount,
     refreshPendingSyncCount,
   } = useAppStore();
@@ -80,15 +81,16 @@ export function CHWTablet({ onShowMap }: { onShowMap: () => void }) {
                 </div>
               </div>
             )}
-            {!isOfflineMode && pendingSyncCount > 0 && (
+            {!isOfflineMode && isSyncing && (
               <div className="bg-blue-50 dark:bg-blue-900/40 text-blue-700 dark:text-blue-400 p-3 rounded-xl flex items-start gap-2 text-sm shadow-sm border border-blue-200 dark:border-blue-800">
                 <RefreshCw className="w-5 h-5 flex-shrink-0 mt-0.5 animate-spin" />
                 <div>
-                   <div className="font-bold mb-0.5">Syncing {pendingSyncCount} queued record(s)…</div>
+                   <div className="font-bold mb-0.5">Syncing {pendingSyncCount > 0 ? `${pendingSyncCount} ` : ''}queued record(s)…</div>
                 </div>
               </div>
             )}
         </div>
+
 
         {/* Main Content - Triage Frame */}
         <div className="flex-1 h-full pb-4">

@@ -72,11 +72,37 @@ export function emptyPayload(language: LanguageCode = 'en'): SymptomPayload {
     restless_irritable: false,
     severe_headache: false,
     blurred_vision: false,
+
     vaginal_bleeding: false,
     reduced_fetal_movement: false,
     language,
   };
 }
+
+export function sanitizePayload(raw: Partial<SymptomPayload>): SymptomPayload {
+
+  const base = emptyPayload(raw.language || 'en');
+  const sanitized: SymptomPayload = { ...base, ...raw };
+
+  if (sanitized.temperature_c !== null && sanitized.temperature_c !== undefined) {
+    sanitized.temperature_c = Math.min(45.0, Math.max(30.0, sanitized.temperature_c));
+  }
+  if (sanitized.breathing_rate_per_min !== null && sanitized.breathing_rate_per_min !== undefined) {
+    sanitized.breathing_rate_per_min = Math.min(120, Math.max(0, Math.round(sanitized.breathing_rate_per_min)));
+  }
+  if (sanitized.fever_days !== null && sanitized.fever_days !== undefined) {
+    sanitized.fever_days = Math.min(365, Math.max(0, Math.round(sanitized.fever_days)));
+  }
+  if (sanitized.cough_days !== null && sanitized.cough_days !== undefined) {
+    sanitized.cough_days = Math.min(365, Math.max(0, Math.round(sanitized.cough_days)));
+  }
+  if (sanitized.stool_frequency_per_day !== null && sanitized.stool_frequency_per_day !== undefined) {
+    sanitized.stool_frequency_per_day = Math.min(100, Math.max(0, Math.round(sanitized.stool_frequency_per_day)));
+  }
+
+  return sanitized;
+}
+
 
 export interface RedFlag {
   code: string;
