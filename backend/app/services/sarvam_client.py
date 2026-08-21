@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+import re
 from typing import Any
 import httpx
 
@@ -22,8 +23,24 @@ LANGUAGE_MAP: dict[str, str] = {
 }
 
 
+def _matches_word(pattern_list: list[str], text: str) -> bool:
+    """Check if any pattern in pattern_list matches text using word boundaries."""
+    for pat in pattern_list:
+        # Check if ASCII / English transliteration -> use \b
+        if re.search(r'^[a-zA-Z0-9\s-]+$', pat):
+            escaped = re.escape(pat)
+            if re.search(rf"\b{escaped}\b", text, re.IGNORECASE):
+                return True
+        else:
+            # Indic script: match whole word with whitespace/punctuation boundary
+            escaped = re.escape(pat)
+            if re.search(rf"(?:^|\s|[.,!?;:\u0964]){escaped}(?:$|\s|[.,!?;:\u0964])", text):
+                return True
+    return False
+
+
 class SarvamClient:
-    """Client for Sarvam AI cloud endpoints with graceful error handling and fallback mocks."""
+    """Client for Sarvam AI cloud endpoints with clinically safe zero-hallucination behavior."""
 
     def __init__(self, api_key: str | None = None):
         self.api_key = api_key or settings.sarvam_api_key
@@ -45,13 +62,16 @@ class SarvamClient:
         filename: str = "audio.wav",
         language_code: str | None = None,
     ) -> dict[str, Any]:
-        """Transcribe speech audio into text using Sarvam Indic ASR."""
+        """Transcribe speech audio into text using Sarvam Indic ASR.
+        Fails safely with empty transcript on error or unconfigured state.
+        """
         if not self.is_configured:
-            logger.warning("Sarvam API key not configured; returning mock transcription.")
+            logger.warning("Sarvam API key not configured; returning empty transcript.")
             return {
-                "transcript": "बच्चे को दो दिन से बुखार और सांस लेने में दिक्कत है",
-                "language_code": "hi",
-                "confidence": 0.95,
+                "transcript": "",
+                "language_code": language_code or "hi",
+                "confidence": 0.0,
+                "inaudible": True,
             }
 
         url = f"{SARVAM_BASE_URL}/speech-to-text"
@@ -68,17 +88,21 @@ class SarvamClient:
                 res = await client.post(url, headers=headers, files=files, data=data)
                 res.raise_for_status()
                 payload = res.json()
+                transcript = payload.get("transcript", "").strip()
                 return {
-                    "transcript": payload.get("transcript", ""),
-                    "language_code": payload.get("language_code", "hi"),
-                    "confidence": payload.get("confidence", 0.9),
+                    "transcript": transcript,
+                    "language_code": payload.get("language_code", language_code or "hi"),
+                    "confidence": payload.get("confidence", 0.9 if transcript else 0.0),
+                    "inaudible": len(transcript) == 0,
                 }
         except Exception as e:
-            logger.warning("Sarvam ASR error (using fallback): %s", e)
+            logger.warning("Sarvam ASR error: %s (failing safely without hallucination)", e)
             return {
-                "transcript": "बच्चे को दो दिन से बुखार और सांस लेने में दिक्कत है",
+                "transcript": "",
                 "language_code": language_code or "hi",
-                "confidence": 0.85,
+                "confidence": 0.0,
+                "inaudible": True,
+                "error": str(e),
             }
 
     async def translate_text(
@@ -88,7 +112,7 @@ class SarvamClient:
         target_language: str = "en",
     ) -> str:
         """Translate text between Indic languages or English using Sarvam Translate."""
-        if not self.is_configured:
+        if not self.is_configured or not text.strip():
             return text
 
         url = f"{SARVAM_BASE_URL}/translate"
@@ -117,7 +141,7 @@ class SarvamClient:
         speaker: str = "anushka",
     ) -> str | None:
         """Synthesize localized text to speech (returns base64 audio string)."""
-        if not self.is_configured:
+        if not self.is_configured or not text.strip():
             return None
 
         url = f"{SARVAM_BASE_URL}/text-to-speech"
@@ -134,7 +158,6 @@ class SarvamClient:
             "model": "bulbul:v2",
         }
 
-
         try:
             async with httpx.AsyncClient(timeout=20.0) as client:
                 res = await client.post(url, headers=headers, json=body)
@@ -146,43 +169,42 @@ class SarvamClient:
             return None
 
     def extract_symptoms_rule_fallback(self, transcript: str, language: str = "hi") -> SymptomPayload:
-        """Lightweight multilingual clinical entity extractor mapping Indic & English keywords into schema."""
+        """Clinically safe entity extractor with word-boundary matching and zero fabricated default numbers."""
         raw = transcript.strip()
-        lower = raw.lower()
+        if not raw:
+            return SymptomPayload(language=language)
+
         kwargs: dict[str, Any] = {"language": language}
 
         # Danger signs
-        if any(w in lower or w in raw for w in ["convulsion", "seizure", "daura", "jhatke", "valippu", "दौरा", "झटके", "வலிப்பு"]):
+        if _matches_word(["convulsion", "convulsions", "seizure", "seizures", "daura", "jhatke", "valippu", "दौरा", "झटके", "வலிப்பு"], raw):
             kwargs["convulsions"] = True
-        if any(w in lower or w in raw for w in ["unconscious", "behosh", "mayakkam", "ogyan", "बेहोश", "மயக்கம்", "অজ্ঞান"]):
+        if _matches_word(["unconscious", "behosh", "mayakkam", "ogyan", "बेहोश", "மயக்கம்", "অজ্ঞান"], raw):
             kwargs["unconscious"] = True
-        if any(w in lower or w in raw for w in ["chest pain", "seene me dard", "marbu vali", "buke betha", "सीने में दर्द", "छाती में दर्द", "বুকে ব্যথা"]):
+        if _matches_word(["chest pain", "seene me dard", "marbu vali", "buke betha", "सीने में दर्द", "छाती में दर्द", "বুকে ব্যথা"], raw):
             kwargs["chest_pain_severe"] = True
-        if any(w in lower or w in raw for w in ["vomit blood", "khoon ki ulti", "rakthavanthi", "rokto bomi", "खून की उल्टी", "রক্তবমি"]):
+        if _matches_word(["vomit blood", "vomiting blood", "khoon ki ulti", "rakthavanthi", "rokto bomi", "खून की उल्टी", "रक्तবমি"], raw):
             kwargs["vomiting_blood"] = True
 
         # Fever
-        if any(w in lower or w in raw for w in ["fever", "bukhar", "kaichal", "jwor", "gorom", "बुखार", "कாய்ச்சல்", "জ্বর"]):
+        if _matches_word(["fever", "bukhar", "kaichal", "jwor", "gorom", "बुखार", "காய்ச்சல்", "জ্বর"], raw):
             kwargs["has_fever"] = True
-            kwargs["fever_days"] = 2
-        if any(w in lower or w in raw for w in ["stiff neck", "gardan me akad", "kazhuthu vali", "गर्दन", "अकड़न", "கழுத்து"]):
+        if _matches_word(["stiff neck", "gardan me akad", "kazhuthu vali", "गर्दन में अकड़न", "अकड़न", "கழுத்து வலி"], raw):
             kwargs["neck_stiffness"] = True
 
         # Respiratory
-        if any(w in lower or w in raw for w in ["cough", "khansi", "irumal", "kashi", "खांसी", "இருமல்", "কাশি"]):
-            kwargs["cough_days"] = 2
-        if any(w in lower or w in raw for w in ["breath", "saans", "moochu", "shash", "सांस", "மூச்சு", "শ্বাস"]):
+        if _matches_word(["cough", "coughing", "khansi", "irumal", "kashi", "खांसी", "இருமல்", "কাশি"], raw):
+            kwargs["difficulty_breathing"] = False  # just cough unless distress noted
+        if _matches_word(["breath", "breathing difficulty", "shortness of breath", "saans", "moochu", "shash", "सांस", "மூச்சு", "শ্বাস"], raw):
             kwargs["difficulty_breathing"] = True
-        if any(w in lower or w in raw for w in ["chest in", "pasli", "ribs", "पसली", "পাঁজর"]):
+        if _matches_word(["chest in", "chest indrawing", "pasli", "ribs", "पसली", "পাঁজর"], raw):
             kwargs["chest_indrawing"] = True
 
         # Diarrhoea
-        if any(w in lower or w in raw for w in ["diarrhea", "dast", "loose motion", "pet kharab", "bedhi", "दस्त", "வயிற்றுப்போக்கு", "ডায়রিয়া"]):
+        if _matches_word(["diarrhea", "diarrhoea", "dast", "loose motion", "pet kharab", "bedhi", "दस्त", "வயிற்றுப்போக்கு", "ডায়রিয়া"], raw):
             kwargs["diarrhoea"] = True
-            kwargs["stool_frequency_per_day"] = 4
 
         return SymptomPayload(**kwargs)
-
 
 
 sarvam_client = SarvamClient()

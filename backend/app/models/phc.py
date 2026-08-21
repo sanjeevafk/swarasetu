@@ -5,7 +5,7 @@ from __future__ import annotations
 from sqlalchemy import Boolean, Float, ForeignKey, Integer, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from backend.app.database import Base
+from app.database import Base
 
 
 class PHC(Base):

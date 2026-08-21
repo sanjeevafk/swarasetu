@@ -7,6 +7,8 @@ import { CloudOff } from 'lucide-react';
 import type { AnalyticsSummary } from '@/types/api';
 import { useAppStore } from '@/store/useAppStore';
 
+import { api } from '@/lib/api';
+
 const CLUSTER_COLORS: Record<string, string> = {
   fever: '#10b981',
   respiratory: '#f97316',
@@ -24,9 +26,7 @@ export function SupervisorDashboard() {
     const load = async () => {
       if (isOfflineMode) return;
       try {
-        const res = await fetch('/api/v1/analytics/summary');
-        if (!res.ok) throw new Error(String(res.status));
-        const data = (await res.json()) as AnalyticsSummary;
+        const data = await api.analyticsSummary();
         if (!cancelled) {
           setSummary(data);
           setLoadFailed(false);
@@ -43,6 +43,7 @@ export function SupervisorDashboard() {
       clearInterval(t);
     };
   }, [isOfflineMode]);
+
 
   const districtData =
     summary && summary.districts.length > 0

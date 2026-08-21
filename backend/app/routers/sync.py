@@ -5,9 +5,9 @@ from __future__ import annotations
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
-from backend.app.database import get_db
-from backend.app.schemas.sync import SyncCaseItem, SyncResponse
-from backend.app.services.sync_service import sync_cases
+from app.database import get_db
+from app.schemas.sync import SyncCaseItem, SyncResponse
+from app.services.sync_service import sync_cases
 
 router = APIRouter(prefix="/api/v1/sync", tags=["sync"])
 

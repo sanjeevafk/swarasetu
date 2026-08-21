@@ -6,7 +6,7 @@ from typing import Literal, Optional
 
 from pydantic import BaseModel, Field
 
-from backend.app.triage.types import ALL_AGES
+from app.triage.types import ALL_AGES
 
 AgeGroup = Literal["neonate", "infant", "child", "adolescent", "adult"]
 LanguageCode = Literal["en", "hi", "ta", "bn"]

@@ -7,15 +7,15 @@ import json
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from backend.app.models import AshaAssignment, Case
-from backend.app.schemas.triage import (
+from app.models import AshaAssignment, Case
+from app.schemas.triage import (
     Directive,
     RedFlagOut,
     SymptomPayloadIn,
     TriageOutcomeOut,
 )
-from backend.app.triage import SymptomPayload as EnginePayload
-from backend.app.triage import evaluate
+from app.triage import SymptomPayload as EnginePayload
+from app.triage import evaluate
 
 
 def _to_engine_payload(p: SymptomPayloadIn) -> EnginePayload:

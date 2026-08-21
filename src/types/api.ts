@@ -142,8 +142,13 @@ export interface SyncCaseItem {
 export interface SyncResponse {
   accepted: number;
   duplicates: number;
+  rejected?: number;
   total: number;
+  accepted_uuids?: string[];
+  duplicate_uuids?: string[];
+  rejected_uuids?: string[];
 }
+
 
 export interface AnalyticsSummary {
   total_cases: number;

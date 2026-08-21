@@ -7,9 +7,9 @@ no LLM. This is what makes outcomes clinically auditable and unit-testable.
 
 from __future__ import annotations
 
-from backend.app.triage import clusters as C
-from backend.app.triage.messages import ACTIONS, RATIONALE, resolve
-from backend.app.triage.types import (
+from app.triage import clusters as C
+from app.triage.messages import ACTIONS, RATIONALE, resolve
+from app.triage.types import (
     ClusterFinding,
     RedFlag,
     RiskScore,
