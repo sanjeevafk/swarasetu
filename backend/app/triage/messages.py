@@ -123,6 +123,12 @@ RATIONALE: dict[str, dict[str, str]] = {
         "ta": "தாய் தொடர்பான ஆபத்து அறிகுறி — இது உடனடி மகப்பேறு அவசரநிலை, உடனே மருத்துவமனைக்கு அனுப்பவும்.",
         "bn": "মাতৃ বিপদচিহ্ন শনাক্ত — এটি প্রসূতি জরুরি অবস্থা, তাৎক্ষণিক রেফার প্রয়োজন।",
     },
+    "adhoc_supply_request": {
+        "en": "This looks like a supply, medicine or schedule question; an ASHA worker will follow up and help.",
+        "hi": "यह दवा या सूची/समय-सारणी से जुड़ा सवाल लगता है; आशा कर्मी फॉलो-अप करके मदद करेंगे।",
+        "ta": "இது மருந்து அல்லது நடைமுறை தொடர்பான கேள்வி போல் தோன்றுகிறது; ஆஷா பணியாளர் தொடர்பு கொண்டு உதவுவார்.",
+        "bn": "এটি ওষুধ বা সময়সূচি সংক্রান্ত প্রশ্ন মনে হচ্ছে; আশা কর্মী ফলোআপ করে সাহায্য করবেন।",
+    },
     "no_symptoms_matched": {
         "en": "No concerning symptoms matched the IMCI protocol; monitor at home and return if things worsen.",
         "hi": "IMCI प्रोटोकॉल में कोई चिंताजनक लक्षण नहीं मिला; घर पर निगरानी करें और बिगड़ने पर वापस आएं।",

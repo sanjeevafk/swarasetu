@@ -27,6 +27,7 @@ _PIPELINE = (
     ("respiratory", C.evaluate_respiratory),
     ("diarrhoea", C.evaluate_diarrhoea),
     ("maternal", C.evaluate_maternal),
+    ("adhoc", C.evaluate_adhoc_request),
 )
 
 # Deterministic action sets per risk tier (keys into messages.ACTIONS).
@@ -96,10 +97,17 @@ def evaluate(payload: SymptomPayload, language: str | None = None) -> TriageOutc
 
     max_risk = max(f.risk_score for _, f in findings)
     matched_findings = [(n, f) for n, f in findings if f.matched]
-    primary_cluster, primary_finding = next(
-        ((n, f) for n, f in findings if f.risk_score == max_risk and f.matched),
-        ("none", findings[0][1]),
-    )
+    specific_max = [
+        (n, f) for n, f in findings
+        if f.risk_score == max_risk and f.matched and n != "general"
+    ]
+    if specific_max:
+        primary_cluster, primary_finding = specific_max[0]
+    else:
+        primary_cluster, primary_finding = next(
+            ((n, f) for n, f in findings if f.risk_score == max_risk and f.matched),
+            ("none", findings[0][1]),
+        )
 
     # Rationale keys: emergency findings first, then lower tiers, in
     # fixed pipeline order within each tier (deterministic ordering).
