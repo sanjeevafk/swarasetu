@@ -71,6 +71,11 @@ class Settings:
     def meta_verify_token(self) -> str:
         return os.getenv("META_VERIFY_TOKEN", "swarasetu_meta_verify_2026")
 
+    @property
+    def telegram_bot_token(self) -> str | None:
+        return os.getenv("TELEGRAM_BOT_TOKEN") or None
+
+
 
 
 
