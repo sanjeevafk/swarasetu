@@ -12,7 +12,8 @@ from typing import Annotated
 from xml.sax.saxutils import escape as xml_escape
 
 import httpx
-from fastapi import APIRouter, Depends, File, Form, Header, HTTPException, Request, Response, UploadFile, status
+from fastapi import APIRouter, Depends, File, Form, Header, HTTPException, Query, Request, Response, UploadFile, status
+
 from fastapi.responses import JSONResponse, PlainTextResponse
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -35,19 +36,28 @@ router = APIRouter(prefix="/channels", tags=["Omnichannel & Voice"])
 
 def _validate_twilio_signature(url: str, params: dict[str, str], signature: str | None, auth_token: str | None) -> bool:
     """Validate Twilio HMAC-SHA1 request signature (X-Twilio-Signature).
-    Bypasses in test mode or when auth_token is unconfigured.
+    Bypasses in test mode, when auth_token is unconfigured, or when signature is empty.
     """
     if not auth_token or os.getenv("TESTING") == "1" or not signature:
         return True
 
-    # Twilio signature data: full URL + sorted concatenated key-value pairs
-    data = url
-    for key in sorted(params.keys()):
-        data += f"{key}{params[key]}"
+    # Try exact URL first
+    urls_to_try = [url]
+    # If behind HTTPS tunnel proxy (e.g. localhost.run / ngrok), try replacing scheme/host
+    if "http://" in url:
+        urls_to_try.append(url.replace("http://", "https://"))
 
-    computed = hmac.new(auth_token.encode("utf-8"), data.encode("utf-8"), hashlib.sha1).digest()
-    computed_b64 = base64.b64encode(computed).decode("utf-8")
-    return hmac.compare_digest(computed_b64, signature)
+    for target_url in urls_to_try:
+        data = target_url
+        for key in sorted(params.keys()):
+            data += f"{key}{params[key]}"
+
+        computed = hmac.new(auth_token.encode("utf-8"), data.encode("utf-8"), hashlib.sha1).digest()
+        computed_b64 = base64.b64encode(computed).decode("utf-8")
+        if hmac.compare_digest(computed_b64, signature):
+            return True
+
+    return False
 
 
 def _build_twiml_response(message: str) -> PlainTextResponse:
@@ -62,7 +72,7 @@ def _build_twiml_response(message: str) -> PlainTextResponse:
     return PlainTextResponse(content=xml_content, media_type="application/xml")
 
 
-@router.post("/whatsapp")
+@router.api_route("/whatsapp", methods=["GET", "POST"])
 async def handle_whatsapp_webhook(
     request: Request,
     db: Session = Depends(get_db),
@@ -71,26 +81,37 @@ async def handle_whatsapp_webhook(
     """Twilio Webhook endpoint receiving incoming patient WhatsApp messages/voice notes.
     Clinically safe & secure with signature validation and zero-hallucination fail-soft prompts.
     """
-    form_data = await request.form()
-    form_dict = {k: str(v) for k, v in form_data.items()}
+    if request.method == "POST":
+        form_data = await request.form()
+        form_dict = {k: str(v) for k, v in form_data.items()}
+    else:
+        form_dict = {k: str(v) for k, v in request.query_params.items()}
+
+    # Extract request URL matching Twilio forwarded headers if present
+    forwarded_proto = request.headers.get("x-forwarded-proto", "http")
+    forwarded_host = request.headers.get("x-forwarded-host") or request.headers.get("host")
+    full_url = f"{forwarded_proto}://{forwarded_host}{request.url.path}" if forwarded_host else str(request.url)
 
     # Verify Twilio Webhook Signature in production
-    if settings.twilio_auth_token and not _validate_twilio_signature(
-        url=str(request.url),
-        params=form_dict,
-        signature=x_twilio_signature,
-        auth_token=settings.twilio_auth_token,
-    ):
-        logger.warning("Rejected unauthenticated WhatsApp webhook request (invalid signature).")
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Invalid Twilio signature.")
+    if settings.twilio_auth_token and x_twilio_signature:
+        if not _validate_twilio_signature(
+            url=full_url,
+            params=form_dict,
+            signature=x_twilio_signature,
+            auth_token=settings.twilio_auth_token,
+        ):
+            logger.warning("Rejected unauthenticated WhatsApp webhook request (invalid signature for %s).", full_url)
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Invalid Twilio signature.")
 
-    sender = str(form_data.get("From", "whatsapp:+919876543210"))
-    incoming_text = str(form_data.get("Body", "")).strip()
-    media_url = form_data.get("MediaUrl0")
+
+    sender = str(form_dict.get("From", "whatsapp:+919876543210"))
+    incoming_text = str(form_dict.get("Body", "")).strip()
+    media_url = form_dict.get("MediaUrl0")
     
     # Safe float extraction for GPS coordinates
-    latitude_str = form_data.get("Latitude")
-    longitude_str = form_data.get("Longitude")
+    latitude_str = form_dict.get("Latitude")
+    longitude_str = form_dict.get("Longitude")
+
     latitude: float | None = None
     longitude: float | None = None
     try:
@@ -158,7 +179,8 @@ async def handle_whatsapp_webhook(
 
     # If Score 2 (ASHA Dispatch), look up local ASHA worker contact dynamically by district
     if outcome.risk_score == int(RiskScore.ASHA_DISPATCH):
-        district_query = str(form_data.get("District") or "Sitamarhi")
+        district_query = str(form_dict.get("District") or "Sitamarhi")
+
         asha_record = db.execute(
             select(AshaAssignment).where(AshaAssignment.district == district_query).limit(1)
         ).scalar_one_or_none()
@@ -276,3 +298,91 @@ async def end_to_end_voice_triage(
         "nearest_phc": nearest_phc.model_dump() if nearest_phc else None,
         "response_audio_base64": voice_audio_base64,
     }
+
+
+@router.get("/meta-whatsapp")
+async def verify_meta_whatsapp_webhook(
+    hub_mode: str = Query(None, alias="hub.mode"),
+    hub_challenge: str = Query(None, alias="hub.challenge"),
+    hub_verify_token: str = Query(None, alias="hub.verify_token"),
+) -> Response:
+    """Meta WhatsApp Cloud API Webhook Verification Endpoint."""
+    if hub_mode == "subscribe" and hub_verify_token == settings.meta_verify_token:
+        return PlainTextResponse(content=hub_challenge or "", status_code=200)
+    raise HTTPException(status_code=403, detail="Verification token mismatch.")
+
+
+@router.post("/meta-whatsapp")
+async def handle_meta_whatsapp_webhook(
+    request: Request,
+    db: Session = Depends(get_db),
+) -> dict:
+    """Meta WhatsApp Cloud API incoming message webhook listener."""
+    body = await request.json()
+    logger.info("Received Meta WhatsApp Webhook event: %s", body)
+
+    entries = body.get("entry", [])
+    for entry in entries:
+        changes = entry.get("changes", [])
+        for change in changes:
+            value = change.get("value", {})
+            messages = value.get("messages", [])
+            for msg in messages:
+                sender = msg.get("from", "")
+                msg_type = msg.get("type", "")
+                incoming_text = ""
+
+                if msg_type == "text":
+                    incoming_text = msg.get("text", {}).get("body", "")
+                elif msg_type == "audio":
+                    audio_id = msg.get("audio", {}).get("id")
+                    if audio_id and settings.meta_whatsapp_token:
+                        async with httpx.AsyncClient() as client:
+                            media_res = await client.get(
+                                f"https://graph.facebook.com/v18.0/{audio_id}",
+                                headers={"Authorization": f"Bearer {settings.meta_whatsapp_token}"},
+                            )
+                            if media_res.status_code == 200:
+                                media_url = media_res.json().get("url")
+                                if media_url:
+                                    audio_bytes_res = await client.get(
+                                        media_url,
+                                        headers={"Authorization": f"Bearer {settings.meta_whatsapp_token}"},
+                                    )
+                                    if audio_bytes_res.status_code == 200:
+                                        asr_res = await sarvam_client.transcribe_audio(
+                                            audio_bytes=audio_bytes_res.content,
+                                            filename="voice.ogg",
+                                            language_code="hi",
+                                        )
+                                        incoming_text = asr_res.get("transcript", "")
+
+                if incoming_text:
+                    payload = sarvam_client.extract_symptoms_rule_fallback(incoming_text, language="hi")
+                    triage_req = TriageEvaluateRequest(
+                        payload=SymptomPayloadIn(**asdict(payload)),
+                        client_uuid=f"meta-{uuid.uuid4().hex[:12]}",
+                    )
+                    res = evaluate_and_log(db=db, request=triage_req)
+                    directive = res["directive"]
+                    outcome = res["outcome"]
+
+                    reply_text = f"🩺 SwaraSetu Triage Result\n\n{directive.message_en}\n\nDecision: {outcome.rationale_en}"
+
+                    if settings.meta_whatsapp_token and settings.meta_phone_number_id:
+                        async with httpx.AsyncClient() as client:
+                            await client.post(
+                                f"https://graph.facebook.com/v18.0/{settings.meta_phone_number_id}/messages",
+                                headers={
+                                    "Authorization": f"Bearer {settings.meta_whatsapp_token}",
+                                    "Content-Type": "application/json",
+                                },
+                                json={
+                                    "messaging_product": "whatsapp",
+                                    "to": sender,
+                                    "type": "text",
+                                    "text": {"body": reply_text},
+                                },
+                            )
+
+    return {"status": "ok"}

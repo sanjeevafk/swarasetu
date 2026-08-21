@@ -35,4 +35,4 @@ ml/models/
 *.sln
 *.sw?
 e2e_reports/
-
+.venv
