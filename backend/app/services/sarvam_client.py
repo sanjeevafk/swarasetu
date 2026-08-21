@@ -114,7 +114,7 @@ class SarvamClient:
         self,
         text: str,
         target_language: str = "hi",
-        speaker: str = "meera",
+        speaker: str = "anushka",
     ) -> str | None:
         """Synthesize localized text to speech (returns base64 audio string)."""
         if not self.is_configured:
@@ -131,8 +131,9 @@ class SarvamClient:
             "loudness": 1.5,
             "speech_sample_rate": 8000,
             "enable_preprocessing": True,
-            "model": "bulbul:v1",
+            "model": "bulbul:v2",
         }
+
 
         try:
             async with httpx.AsyncClient(timeout=20.0) as client:
