@@ -386,3 +386,89 @@ async def handle_meta_whatsapp_webhook(
                             )
 
     return {"status": "ok"}
+
+
+@router.post("/telegram")
+async def handle_telegram_webhook(
+    request: Request,
+    db: Session = Depends(get_db),
+) -> dict:
+    """Telegram Bot incoming webhook listener for voice notes and text messages."""
+    body = await request.json()
+    logger.info("Received Telegram Webhook event: %s", body)
+
+    message = body.get("message", {})
+    if not message:
+        return {"status": "ignored"}
+
+    chat_id = message.get("chat", {}).get("id")
+    if not chat_id:
+        return {"status": "no_chat_id"}
+
+    token = settings.telegram_bot_token or "TELEGRAM_BOT_TOKEN_PLACEHOLDER"
+    incoming_text = message.get("text", "").strip()
+    voice = message.get("voice") or message.get("audio")
+
+    # Handle voice note / audio message
+    if voice and voice.get("file_id"):
+        file_id = voice.get("file_id")
+        async with httpx.AsyncClient() as client:
+            file_res = await client.get(f"https://api.telegram.org/bot{token}/getFile?file_id={file_id}")
+            if file_res.status_code == 200:
+                file_path = file_res.json().get("result", {}).get("file_path")
+                if file_path:
+                    download_res = await client.get(f"https://api.telegram.org/file/bot{token}/{file_path}")
+                    if download_res.status_code == 200:
+                        asr_res = await sarvam_client.transcribe_audio(
+                            audio_bytes=download_res.content,
+                            filename="voice.ogg",
+                            language_code="hi",
+                        )
+                        incoming_text = asr_res.get("transcript", "")
+
+    if not incoming_text:
+        reply_msg = "👋 Hello! I am SwaraSetu Gaon Doctor. Please send me a voice note or type symptoms (e.g., 'Child has fever for 2 days')."
+        async with httpx.AsyncClient() as client:
+            await client.post(
+                f"https://api.telegram.org/bot{token}/sendMessage",
+                json={"chat_id": chat_id, "text": reply_msg},
+            )
+        return {"status": "prompted"}
+
+    # Extract symptoms and run WHO IMCI triage
+    payload = sarvam_client.extract_symptoms_rule_fallback(incoming_text, language="hi")
+    triage_req = TriageEvaluateRequest(
+        payload=SymptomPayloadIn(**asdict(payload)),
+        client_uuid=f"tg-{uuid.uuid4().hex[:12]}",
+    )
+    res = evaluate_and_log(db=db, request=triage_req)
+    directive = res["directive"]
+    outcome = res["outcome"]
+
+    # Build triage reply
+    score_badge = "🔴 RED EMERGENCY" if outcome.risk_score == 3 else "🟡 ASHA DISPATCH" if outcome.risk_score == 2 else "🟢 SELF CARE"
+    reply_text = f"🩺 *SwaraSetu Clinical Triage ({score_badge})*\n\n{directive.message_en}\n\n*Clinical Rationale:* {outcome.rationale_en}"
+
+    if outcome.risk_score == 3 and res.get("nearest_phc"):
+        phc = res["nearest_phc"]
+        reply_text += f"\n\n📍 *Nearest PHC:* {phc['name']}\n📞 *Doctor Contact:* {phc['phone']}\n*Distance:* ~{phc['distance_km']:.1f} km (Open 24/7)"
+
+    async with httpx.AsyncClient() as client:
+        # Send text message
+        await client.post(
+            f"https://api.telegram.org/bot{token}/sendMessage",
+            json={"chat_id": chat_id, "text": reply_text, "parse_mode": "Markdown"},
+        )
+
+        # Synthesize Sarvam TTS audio voice reply
+        audio_b64 = await sarvam_client.synthesize_speech(text=directive.message_en, target_language="hi")
+        if audio_b64:
+            import base64 as b64_lib
+            audio_bytes = b64_lib.b64decode(audio_b64)
+            await client.post(
+                f"https://api.telegram.org/bot{token}/sendVoice",
+                data={"chat_id": chat_id},
+                files={"voice": ("response.wav", audio_bytes, "audio/wav")},
+            )
+
+    return {"status": "processed", "risk_score": outcome.risk_score}
