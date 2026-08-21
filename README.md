@@ -40,19 +40,26 @@ The application is built on scalable, decoupled microservices. It utilizes robus
 ![System Architecture](./architecture.svg)
 
 ### Technical Stack
-
-- **Frontend Layer**: React 18, Vite, TypeScript, Tailwind CSS v3.4+, shadcn/ui. Built as a PWA leveraging IndexedDB for localized offline symptom mapping and IMCI logic execution.
-- **Analytics & Observability**: Metabase-style internal supervisor dashboard driven by Recharts utilizing aggregated geospatial metadata.
-- **Backend Engine**: Python 3.11 with FastAPI for handling high-concurrency requests, PostgreSQL 15 for data persistence, Redis for session state management (5-minute multi-turn conversational TTLs), and Celery for asynchronous SMS dispatch.
-- **Channels & External APIs**: Twilio/Gupshup Sandbox for WhatsApp/SMS integration, the NHM Health Facility Registry API, and OpenStreetMap via Leaflet for nearest-PHC mapping.
-
-### Sarvam AI Engine Pipeline
-
-- **Indic ASR (Speech-to-Text)**: Deep-learning ASR model utilized to accurately transcribe incoming patient voice notes across 10+ prominent Indian dialects (Hindi, Tamil, Bengali).
-- **Language Detection & Translation**: Context-aware localization to dynamically render validation questions.
-- **Named Entity Recognition (NER)**: The core clinical engine isolating specific variables (symptom presentation, demographic risk vectors, red flags) out of massive, unstructured linguistic inputs.
-- **TTS (Text-to-Speech)**: Low-latency voice generation mapped over the explicit IMCI decision response.
-- **Fallback Classification**: Sarvam-2B / Bulbul intent classification safeguards against NER confidence thresholds below 0.6, routing ambiguous prompts to a human-in-the-loop review.
+ 
+ - **Frontend & Mobile Layer**: React 18, Vite, TypeScript, Tailwind CSS v3.4+, shadcn/ui. Built as a PWA / Native wrapper leveraging IndexedDB/SQLite for localized offline symptom mapping and IMCI logic execution.
+ - **Edge Voice Engine (Offline)**: 4-bit Quantized `ai4bharat/indic-seamless` (ONNX Runtime Mobile / ExecuTorch) for direct on-device Speech-to-Text-Translation across 14 Indic languages on 4GB+ RAM smartphones.
+ - **Analytics & Observability**: Metabase-style internal supervisor dashboard driven by Recharts utilizing aggregated geospatial metadata.
+ - **Backend Engine**: Python 3.11 with FastAPI for handling high-concurrency requests, PostgreSQL 15 for data persistence, Redis for session state management (5-minute multi-turn conversational TTLs), and Celery for asynchronous SMS dispatch.
+ - **Channels & External APIs**: Twilio/Gupshup Sandbox for WhatsApp/SMS integration, the NHM Health Facility Registry API, and OpenStreetMap via Leaflet for nearest-PHC mapping.
+ 
+ ### 3-Tier Deployment Architecture
+ 
+ 1. **Tier 1 (Online Patients):** Sarvam AI Cloud (ASR, NER, TTS) over WhatsApp/IVRS (zero app install, handles fast code-mixed Hinglish/slang).
+ 2. **Tier 2 (Offline Field Workers):** On-device quantized `indic-seamless` + local WHO IMCI logic on 4GB–8GB RAM Android devices with NPU/GPU acceleration.
+ 3. **Tier 3 (Legacy 2GB Device Fallback):** Touch-to-Hear visual form + pre-cached audio guidance + local IMCI logic for zero memory crashes on low-spec hardware.
+ 
+ ### Sarvam AI Cloud Pipeline (Online Mode)
+ 
+ - **Indic ASR (Speech-to-Text)**: Deep-learning ASR model utilized to accurately transcribe incoming patient voice notes across 10+ prominent Indian dialects (Hindi, Tamil, Bengali).
+ - **Language Detection & Translation**: Context-aware localization to dynamically render validation questions.
+ - **Named Entity Recognition (NER)**: The core clinical engine isolating specific variables (symptom presentation, demographic risk vectors, red flags) out of massive, unstructured linguistic inputs.
+ - **TTS (Text-to-Speech)**: Low-latency voice generation mapped over the explicit IMCI decision response.
+ - **Fallback Classification**: Sarvam-2B / Bulbul intent classification safeguards against NER confidence thresholds below 0.6, routing ambiguous prompts to a human-in-the-loop review.
 
 ---
 
