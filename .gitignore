@@ -17,6 +17,9 @@ dist-ssr
 __pycache__/
 *.pyc
 *.db
+.env
+.env.*
+!.env.example
 
 # Edge model weights (downloaded/exported at provisioning time)
 ml/models/
