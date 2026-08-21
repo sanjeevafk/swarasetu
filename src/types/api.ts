@@ -15,7 +15,10 @@ export interface SymptomPayload {
   unconscious: boolean;
   unable_to_drink_or_breastfeed: boolean;
   vomiting_everything: boolean;
+  acute_poisoning_or_bite: boolean;
+  severe_trauma: boolean;
   has_fever: boolean;
+
   temperature_c: number | null;
   fever_days: number | null;
   neck_stiffness: boolean;
@@ -50,7 +53,10 @@ export function emptyPayload(language: LanguageCode = 'en'): SymptomPayload {
     unconscious: false,
     unable_to_drink_or_breastfeed: false,
     vomiting_everything: false,
+    acute_poisoning_or_bite: false,
+    severe_trauma: false,
     has_fever: false,
+
     temperature_c: null,
     fever_days: null,
     neck_stiffness: false,
@@ -147,13 +153,27 @@ export interface TriageEvaluateRequest {
   longitude?: number | null;
 }
 
+export interface EmergencyDispatch {
+  is_emergency: boolean;
+  protocol_key?: string | null;
+  title?: string | null;
+  ticket_id?: string | null;
+  cad_priority?: string | null;
+  ambulance_type?: string | null;
+  phc_readiness?: string | null;
+  steps: string[];
+  map_url?: string | null;
+}
+
 export interface TriageEvaluateResponse {
   case_id: number | null;
   client_uuid: string;
   outcome: TriageOutcome;
   directive: Directive;
   nearest_phc: PHCNearby | null;
+  emergency_dispatch?: EmergencyDispatch | null;
 }
+
 
 export interface SyncCaseItem {
   client_uuid: string;

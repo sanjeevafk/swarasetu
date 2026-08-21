@@ -477,16 +477,34 @@ async def handle_telegram_webhook(
 
     # Build triage reply with detected text and native language advice
     score_badge = "🔴 RED EMERGENCY" if outcome.risk_score == 3 else "🟡 ASHA DISPATCH" if outcome.risk_score == 2 else "🟢 SELF CARE"
-    reply_text = (
-        f"🩺 *SwaraSetu Clinical Triage ({score_badge})*\n\n"
-        f"🗣️ *Detected ({detected_lang.upper()}):* \"{incoming_text}\"\n\n"
-        f"💬 *सलाह / Advice:* {native_advice}\n\n"
-        f"📋 *Clinical Rationale:* {outcome.rationale_en}"
-    )
+    
+    if outcome.risk_score == 3 and res.get("emergency_dispatch"):
+        dispatch = res["emergency_dispatch"]
+        first_aid_bullets = "\n".join([f"• {step}" for step in dispatch.steps])
+        reply_text = (
+            f"🚨 *SwaraSetu Emergency Response ({score_badge})*\n\n"
+            f"🗣️ *Detected ({detected_lang.upper()}):* \"{incoming_text}\"\n\n"
+            f"🚑 *108 CAD Dispatch:* {dispatch.ticket_id} ({dispatch.ambulance_type})\n"
+            f"👩‍⚕️ *Hospital Alert:* {dispatch.phc_readiness}\n\n"
+            f"🩹 *Life-Saving Action Directives:*\n{first_aid_bullets}\n\n"
+            f"📋 *Clinical Rationale:* {outcome.rationale_en}"
+        )
+    else:
+        reply_text = (
+            f"🩺 *SwaraSetu Clinical Triage ({score_badge})*\n\n"
+            f"🗣️ *Detected ({detected_lang.upper()}):* \"{incoming_text}\"\n\n"
+            f"💬 *सलाह / Advice:* {native_advice}\n\n"
+            f"📋 *Clinical Rationale:* {outcome.rationale_en}"
+        )
 
     if outcome.risk_score == 3 and res.get("nearest_phc"):
         phc = res["nearest_phc"]
-        reply_text += f"\n\n📍 *Nearest PHC:* {phc['name']}\n📞 *Doctor Contact:* {phc['phone']}\n*Distance:* ~{phc['distance_km']:.1f} km (Open 24/7)"
+        reply_text += (
+            f"\n\n📍 *Nearest PHC:* {phc['name']}\n"
+            f"📞 *Doctor 24/7:* {phc['phone']}\n"
+            f"🗺️ *Route:* ~{phc['distance_km']:.1f} km ([Open Navigation Map](https://www.google.com/maps/search/?api=1&query={phc['latitude']},{phc['longitude']}))"
+        )
+
 
     async with httpx.AsyncClient(timeout=30.0) as client:
         # Send text message
