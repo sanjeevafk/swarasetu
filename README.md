@@ -1,4 +1,4 @@
-# SwaraSetu (स्वर सेतु)
+# SwaraSetu
 
 > "Your voice, your village, your first doctor."
 
