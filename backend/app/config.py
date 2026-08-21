@@ -59,6 +59,19 @@ class Settings:
     def twilio_phone_number(self) -> str:
         return os.getenv("TWILIO_PHONE_NUMBER", "+14155238886")
 
+    @property
+    def meta_whatsapp_token(self) -> str | None:
+        return os.getenv("META_WHATSAPP_TOKEN") or None
+
+    @property
+    def meta_phone_number_id(self) -> str | None:
+        return os.getenv("META_PHONE_NUMBER_ID") or None
+
+    @property
+    def meta_verify_token(self) -> str:
+        return os.getenv("META_VERIFY_TOKEN", "swarasetu_meta_verify_2026")
+
+
 
 
 @lru_cache
