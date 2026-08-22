@@ -20,14 +20,18 @@ fi
 # Trap signals to cleanup background processes on Ctrl+C
 cleanup() {
     echo ""
-    echo "🛑 Shutting down Telegram Tunnel..."
+    echo "🛑 Shutting down Telegram Tunnel & Services..."
     if [ -n "$BE_PID" ]; then
-        kill $BE_PID 2>/dev/null || true
+        kill "$BE_PID" 2>/dev/null || true
     fi
-    kill $TUNNEL_PID 2>/dev/null || true
+    if [ -n "$TUNNEL_PID" ]; then
+        kill "$TUNNEL_PID" 2>/dev/null || true
+    fi
+    pkill -P $$ 2>/dev/null || true
+    rm -f "$LT_LOG" 2>/dev/null || true
     exit 0
 }
-trap cleanup SIGINT SIGTERM EXIT
+trap cleanup SIGINT SIGTERM
 
 # 3. Start LocalTunnel and capture assigned public URL
 echo "🌐 Starting LocalTunnel..."
@@ -80,4 +84,8 @@ else:
 "
 
 echo "🤖 Telegram Bot is LIVE! (Press Ctrl+C to stop)"
-wait $BE_PID $TUNNEL_PID
+
+# Keep alive continuously until Ctrl+C
+while true; do
+    sleep 1
+done
