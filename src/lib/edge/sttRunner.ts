@@ -64,10 +64,10 @@ const LEXICON: Record<string, string[]> = {
     'রক্তবমি', 'রক্ত বমি', 'roktobomi', 'rokto bomi',
   ],
   acute_poisoning_or_bite: [
-    'snake bite', 'snakebite', 'snake', 'poison', 'scorpion', 'insect bite',
-    'सांप', 'सांप काटना', 'सर्पदंश', 'जहर', 'बिच्छू', 'saap', 'saamp', 'saap katna', 'zehar',
-    'பாம்பு', 'பாம்பு கடி', 'விஷம்', 'தேள் கடி', 'paambu', 'paambu kadi', 'visham', 'nanju',
-    'সাপ', 'সাপে কামড়', 'বিষ', 'বিছে', 'shap', 'sape kamor', 'bish',
+    'snake bite', 'snakebite', 'snake', 'poison', 'scorpion', 'insect bite', 'dog bite', 'rabies', 'animal bite',
+    'सांप', 'सांप काटना', 'सर्पदंश', 'जहर', 'बिच्छू', 'कुत्ता काटना', 'कुत्ते ने काटा', 'रेबीज', 'saap', 'saamp', 'saap katna', 'zehar', 'kutta katna',
+    'பாம்பு', 'பாம்பு கடி', 'விஷம்', 'தேள் கடி', 'நாய் கடி', 'நாய் கடிச்சிருச்சு', 'கடிச்சிருச்சு', 'paambu', 'paambu kadi', 'naai kadi', 'naai kadichuruchu', 'visham', 'nanju',
+    'সাপ', 'সাপে কামড়', 'বিষ', 'বিছে', 'কুকুর কামড়', 'জলাতঙ্ক', 'shap', 'sape kamor', 'bish', 'kukur kamor',
   ],
   severe_trauma: [
     'trauma', 'burn', 'burns', 'accident', 'fracture', 'heavy bleeding', 'severe injury',
