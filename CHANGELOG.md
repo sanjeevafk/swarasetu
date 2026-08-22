@@ -1,4 +1,4 @@
-# SwaraSetu (स्वर सेतु) — Changelog
+# SwaraSetu (Voicebridge) — Changelog
 
 All notable changes, architectural enhancements, and protocol upgrades for SwaraSetu are documented here.
 

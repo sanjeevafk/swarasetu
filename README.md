@@ -1,8 +1,8 @@
-# SwaraSetu
+# SwaraSetu (Voicebridge)
 
 > "Your voice, your village, your first doctor."
 
-SwaraSetu is an offline-first, voice-native clinical triage and rural emergency response platform designed to bridge India's last-mile healthcare gap. It empowers patients and frontline Community Health Workers (ASHA / ANM) to report medical symptoms in native Indic languages—via voice notes or visual touch interfaces—and receive immediate, evidence-based clinical triage, emergency response pre-alerts, and localized care guidance.
+SwaraSetu (*"Voicebridge"* — derived from *Swara*, meaning voice/sound, and *Setu*, meaning bridge) is an offline-first, voice-native clinical triage and rural emergency response platform designed to bridge India's last-mile healthcare gap. It empowers patients and frontline Community Health Workers (ASHA / ANM) to report medical symptoms in native Indic languages—via voice notes or visual touch interfaces—and receive immediate, evidence-based clinical triage, emergency response pre-alerts, and localized care guidance.
 
 Powered by **Sarvam AI's Indic language stack** (supporting 22+ Indian languages) and a **100% deterministic WHO IMCI (Integrated Management of Childhood Illness) decision tree**, SwaraSetu operates across **Telegram (`@swarasetubot`)**, **Meta WhatsApp Cloud API**, **Twilio SMS/WhatsApp**, and as a fully offline **Progressive Web App (PWA)** on CHW tablets.
 

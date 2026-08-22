@@ -1,4 +1,4 @@
-# SwaraSetu (स्वर सेतु) — System Evaluation & Production Architecture
+# SwaraSetu (Voicebridge) — System Evaluation & Production Architecture
 
 ## Executive Summary
 **SwaraSetu is a fully functional, production-ready rural clinical triage and emergency response platform.** It bridges rural Indian patients and frontline healthcare workers (ASHA/CHW) to verified medical care through dialect-aware voice AI (Sarvam AI), deterministic WHO Integrated Management of Childhood Illness (IMCI) triage algorithms, and automated 108 Computer-Aided Dispatch (CAD) emergency response workflows.
