@@ -16,6 +16,7 @@ install:
 	npm install
 
 dev-backend:
+	@fuser -k 8000/tcp 2>/dev/null || true
 	uvicorn app.main:app --app-dir backend --reload --port 8000
 
 dev-frontend:
@@ -25,6 +26,7 @@ telegram:
 	./scripts/start_telegram.sh
 
 dev:
+	@fuser -k 8000/tcp 5173/tcp 2>/dev/null || true
 	npx -y concurrently -k -n "backend,frontend" -c "blue,green" \
 		"uvicorn app.main:app --app-dir backend --reload --port 8000" \
 		"npm run dev"
