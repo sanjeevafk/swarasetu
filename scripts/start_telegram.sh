@@ -9,7 +9,7 @@ if curl -s http://localhost:8000/health > /dev/null 2>&1; then
     echo "✅ Existing backend detected on http://localhost:8000 (reusing)"
 else
     echo "⏳ Starting FastAPI Backend on port 8000..."
-    PYTHONPATH=backend python3 -m uvicorn app.main:app --host 0.0.0.0 --port 8000 &
+    PYTHONPATH=backend python3 -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload &
     BE_PID=$!
     until curl -s http://localhost:8000/health > /dev/null 2>&1; do
         sleep 0.5
