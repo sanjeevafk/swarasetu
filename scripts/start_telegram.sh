@@ -3,27 +3,31 @@ set -e
 
 echo "🚀 Starting SwaraSetu Backend & Telegram Tunnel..."
 
-# 1. Clear any stale process on port 8000 & start FastAPI Backend in background
-fuser -k 8000/tcp 2>/dev/null || true
-PYTHONPATH=backend python3 -m uvicorn app.main:app --host 0.0.0.0 --port 8000 &
-BE_PID=$!
+# 1. Check if backend is already running on port 8000, or start it
+BE_PID=""
+if curl -s http://localhost:8000/health > /dev/null 2>&1; then
+    echo "✅ Existing backend detected on http://localhost:8000 (reusing)"
+else
+    echo "⏳ Starting FastAPI Backend on port 8000..."
+    PYTHONPATH=backend python3 -m uvicorn app.main:app --host 0.0.0.0 --port 8000 &
+    BE_PID=$!
+    until curl -s http://localhost:8000/health > /dev/null 2>&1; do
+        sleep 0.5
+    done
+    echo "✅ Backend running on http://localhost:8000"
+fi
 
 # Trap signals to cleanup background processes on Ctrl+C
 cleanup() {
     echo ""
-    echo "🛑 Shutting down SwaraSetu Backend & Tunnel..."
-    kill $BE_PID 2>/dev/null || true
+    echo "🛑 Shutting down Telegram Tunnel..."
+    if [ -n "$BE_PID" ]; then
+        kill $BE_PID 2>/dev/null || true
+    fi
     kill $TUNNEL_PID 2>/dev/null || true
     exit 0
 }
 trap cleanup SIGINT SIGTERM EXIT
-
-# 2. Wait for backend to be healthy
-echo "⏳ Waiting for backend to start..."
-until curl -s http://localhost:8000/health > /dev/null; do
-    sleep 0.5
-done
-echo "✅ Backend running on http://localhost:8000"
 
 # 3. Start LocalTunnel and capture assigned public URL
 echo "🌐 Starting LocalTunnel..."
