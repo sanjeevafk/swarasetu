@@ -11,10 +11,9 @@
 
 import { useState, useCallback } from 'react';
 import { Volume2, CheckCircle2, XCircle, ChevronRight, RotateCcw, AlertTriangle } from 'lucide-react';
-import { evaluateLocal } from '@/lib/triageLocal';
 import { emptyPayload } from '@/types/api';
 import { TriageResultCard } from './TriageResultCard';
-import type { AppLanguage } from '@/store/useAppStore';
+import { useAppStore, type AppLanguage } from '@/store/useAppStore';
 import type { SymptomPayload, AgeGroup, TriageOutcome } from '@/types/api';
 
 // -----------------------------------------------------------------
@@ -189,6 +188,8 @@ export function TouchToHearPanel({ language }: TouchToHearPanelProps) {
   const [speakingId, setSpeakingId] = useState<TileId | null>(null);
   const [result, setResult] = useState<TriageOutcome | null>(null);
   const [submitted, setSubmitted] = useState(false);
+  const evaluateCustomPayload = useAppStore((s) => s.evaluateCustomPayload);
+  const addMessage = useAppStore((s) => s.addMessage);
 
   const handleSpeak = useCallback(
     (tileId: TileId) => {
@@ -205,21 +206,30 @@ export function TouchToHearPanel({ language }: TouchToHearPanelProps) {
     setSubmitted(false);
   };
 
-  const handleEvaluate = () => {
+  const handleEvaluate = async () => {
     const payload: SymptomPayload = {
       ...emptyPayload(language === 'Hindi' ? 'hi' : language === 'Tamil' ? 'ta' : 'bn'),
       age_group: ageGroup,
     };
+    const activeTiles: string[] = [];
     for (const tile of TILES) {
       if (answers[tile.id] === true) {
         (payload as unknown as Record<string, unknown>)[tile.payloadKey] = true;
+        activeTiles.push(tile.label);
       }
     }
     if (answers['fever'] === true) {
       payload.fever_days = feverDays === 'long' ? 4 : 1;
     }
-    const outcome = evaluateLocal(payload);
-    setResult(outcome);
+
+    const summaryText = `Visual Check: ${activeTiles.length ? activeTiles.join(', ') : 'No danger signs'}`;
+    addMessage({
+      type: 'user_text',
+      text: `📱 [Touch-to-Hear Assessment] Age: ${ageGroup}, Findings: ${activeTiles.length ? activeTiles.join(', ') : 'None marked'}`,
+    });
+
+    const activeEval = await evaluateCustomPayload(payload, summaryText);
+    setResult(activeEval.outcome);
     setSubmitted(true);
   };
 

@@ -31,38 +31,62 @@ export interface EdgeSttResult {
   outcome?: TriageOutcome;
 }
 
-/** Multilingual keyword lexicon mirrored from ml/edge_runner.py LEXICON. */
-const LEXICON: Record<string, Record<LanguageCode, string[]>> = {
-  has_fever: {
-    en: ['fever', 'temperature'],
-    hi: ['बुखार', 'तापमान'],
-    ta: ['காய்ச்சல்'],
-    bn: ['জ্বর'],
-  },
-  cough_days_marker: {
-    en: ['cough'],
-    hi: ['खांसी', 'खाँसी'],
-    ta: ['இருமல்'],
-    bn: ['কাশি'],
-  },
-  difficulty_breathing: {
-    en: ['breathing difficulty', 'shortness of breath'],
-    hi: ['सांस लेने में दिक्कत', 'सांस की तकलीफ'],
-    ta: ['மூச்சு வாங்க', 'மூச்சுத் திணறல்'],
-    bn: ['শ্বাসকষ্ট', 'শ্বাস কষ্ট'],
-  },
-  chest_pain_severe: {
-    en: ['chest pain'],
-    hi: ['सीने में दर्द'],
-    ta: ['நெஞ்சு வலி'],
-    bn: ['বুকে ব্যথা'],
-  },
-  vomiting_blood: {
-    en: ['vomiting blood'],
-    hi: ['खून की उल्टी'],
-    ta: ['ரத்த வாந்தி'],
-    bn: ['রক্তবমি'],
-  },
+/** Multilingual keyword lexicon mirrored from ml/edge_runner.py LEXICON with transliterations. */
+const LEXICON: Record<string, string[]> = {
+  has_fever: [
+    'fever', 'temperature', 'high temp', 'feverish',
+    'बुखार', 'तापमान', 'हल्का बुखार', 'तेज बुखार', 'bukhar', 'bukhar hai', 'tapman',
+    'காய்ச்சல்', 'லேசான காய்ச்சல்', 'சூடு', 'kaichal', 'kaychal', 'kaichil', 'suram',
+    'জ্বর', 'হালকা জ্বর', 'গরম শরীর', 'jhor', 'jor', 'jar',
+  ],
+  cough_days_marker: [
+    'cough', 'coughing', 'cold', 'phlegm',
+    'खांसी', 'खाँसी', 'कफ', 'khasi', 'khaasi', 'khansi',
+    'இருமல்', 'சளி', 'irumal', 'irumbal', 'sali',
+    'কাশি', 'কফ', 'সর্দি', 'kashi', 'kasi', 'shordi',
+  ],
+  difficulty_breathing: [
+    'breathing difficulty', 'difficulty breathing', 'shortness of breath', 'breathless', 'fast breathing', 'gasping', 'wheezing',
+    'सांस लेने में दिक्कत', 'सांस की तकलीफ', 'सांस फूलना', 'दम फूलना', 'तेज सांस', 'saans lene me dikkat', 'saans ki takleef', 'dam phoolna', 'saas',
+    'மூச்சு வாங்க', 'மூச்சுத் திணறல்', 'மூச்சு விட சிரமம்', 'moochu thinare', 'moochu vanga', 'moochu vida sramam',
+    'শ্বাসকষ্ট', 'শ্বাস কষ্ট', 'দম বন্ধ', 'দ্রুত শ্বাস', 'shwaskosto', 'shwas kosto', 'dom bondho', 'sas kosto',
+  ],
+  chest_pain_severe: [
+    'chest pain', 'severe chest pain', 'heart attack', 'cardiac', 'chest tightness',
+    'सीने में दर्द', 'छाती में दर्द', 'तेज दर्द', 'दिल का दौरा', 'seene me dard', 'chhati me dard', 'seena dard',
+    'நெஞ்சு வலி', 'மார்பு வலி', 'கடுமையான நெஞ்சு வலி', 'nenju vali', 'marbu vali',
+    'বুকে ব্যথা', 'বুকের ব্যথা', 'তীব্র বুকে ব্যথা', 'buke betha', 'buker byatha', 'buk betha',
+  ],
+  vomiting_blood: [
+    'vomiting blood', 'blood in vomit', 'vomit blood', 'hematemesis',
+    'खून की उल्टी', 'रक्त वमन', 'khoon ki ulti', 'khoon ulti', 'rakta ulti',
+    'ரத்த வாந்தி', 'இரத்த வாந்தி', 'ratha vaanthi', 'ratha vanthi', 'raktha vanthi',
+    'রক্তবমি', 'রক্ত বমি', 'roktobomi', 'rokto bomi',
+  ],
+  acute_poisoning_or_bite: [
+    'snake bite', 'snakebite', 'snake', 'poison', 'scorpion', 'insect bite',
+    'सांप', 'सांप काटना', 'सर्पदंश', 'जहर', 'बिच्छू', 'saap', 'saamp', 'saap katna', 'zehar',
+    'பாம்பு', 'பாம்பு கடி', 'விஷம்', 'தேள் கடி', 'paambu', 'paambu kadi', 'visham', 'nanju',
+    'সাপ', 'সাপে কামড়', 'বিষ', 'বিছে', 'shap', 'sape kamor', 'bish',
+  ],
+  severe_trauma: [
+    'trauma', 'burn', 'burns', 'accident', 'fracture', 'heavy bleeding', 'severe injury',
+    'चोट', 'जल गया', 'जलना', 'दुर्घटना', 'फ्रैक्चर', 'गंभीर घाव', 'chot', 'jalna', 'accident',
+    'காயம்', 'தீக்காயம்', 'விபத்து', 'எலும்பு முறிவு', 'gayam', 'theekayam', 'vibathu',
+    'আঘাত', 'পোড়া', 'দুর্ঘটনা', 'হাড় ভাঙা', 'aghat', 'pora', 'durghotona',
+  ],
+  diarrhoea: [
+    'diarrhoea', 'diarrhea', 'loose motion', 'watery stool', 'dysentery',
+    'दस्त', 'पतला दस्त', 'पेट खराब', 'हैजा', 'dast', 'patla dast', 'loose motion',
+    'வயிற்றுப்போக்கு', 'பேதி', 'vayitrupokku', 'vayiru pokku', 'bedhi',
+    'পাতলা পায়খানা', 'ডায়রিয়া', 'পেট খারাপ', 'patla paykhana', 'diarrhoea',
+  ],
+  convulsions: [
+    'convulsion', 'convulsions', 'fits', 'seizure', 'unconscious',
+    'दौरा', 'दौरे', 'फिट्स', 'बेहोश', 'अकड़न', 'daura', 'daure', 'fits', 'behosh',
+    'வலிப்பு', 'மயக்கம்', 'உடல் விறைப்பு', 'valippu', 'mayakkam',
+    'খিঁচুনি', 'অজ্ঞান', 'বেহুঁশ', 'khichuni', 'ogyan', 'behush',
+  ],
 };
 
 function decodeWavToFloat32(buffer: ArrayBuffer): Float32Array {
@@ -124,7 +148,6 @@ export async function runEdgeTriage(
   const samples = decodeWavToFloat32(arrayBuffer);
   void samples;
 
-
   const session = options.modelUrl ? await loadSession(options.modelUrl) : null;
 
   // Fallback / mock degradation when ONNX weights or session is absent
@@ -147,29 +170,25 @@ export async function runEdgeTriage(
 
 /** Deterministic transcript -> canonical payload normalization (edge mirror). */
 export function normalizeTranscript(text: string, language: LanguageCode): SymptomPayload {
-  const lowered = text.toLowerCase();
+  const lowered = text.toLowerCase().trim();
   const payload: SymptomPayload = {
     ...emptyPayloadFor(language),
   };
 
   // Age group detection
-  if (/\b(?:adult|husband|wife|mother|father|man|woman)\b/.test(lowered) || /স্বামী|স্বামী|वयस्क/.test(text)) {
+  if (/\b(?:adult|husband|wife|mother|father|man|woman|husband|patni|pati)\b/i.test(lowered) || /স্বামী|স্ত্রী|वयस्क|पति|पत्नी|பெரியவர்/.test(text)) {
     payload.age_group = 'adult';
-  } else if (/\b(?:neonate|newborn)\b/.test(lowered) || /नवजात|புதிதாகப் பிறந்த/.test(text)) {
+  } else if (/\b(?:neonate|newborn|day)\b/i.test(lowered) || /नवजात|புதிதாகப் பிறந்த|নবজাতক/.test(text)) {
     payload.age_group = 'neonate';
-  } else if (/\b(?:infant)\b/.test(lowered) || /शिशु|குழந்தை/.test(text)) {
+  } else if (/\b(?:infant|baby|month)\b/i.test(lowered) || /शिशु|குழந்தை|শিশু/.test(text)) {
     payload.age_group = 'infant';
   } else {
     payload.age_group = 'child';
   }
 
   const matches = (group: string): boolean => {
-    const terms = LEXICON[group]?.[language] ?? LEXICON[group]?.en ?? [];
-    return terms.some((t) =>
-      t.includes(' ')
-        ? t.split(' ').every((w) => lowered.includes(w))
-        : lowered.includes(t),
-    );
+    const terms = LEXICON[group] ?? [];
+    return terms.some((t) => lowered.includes(t.toLowerCase()));
   };
 
   if (matches('has_fever')) {
@@ -179,14 +198,27 @@ export function normalizeTranscript(text: string, language: LanguageCode): Sympt
   if (matches('cough_days_marker')) {
     payload.cough_days = extractDays(lowered) ?? 1;
   }
-  if (matches('difficulty_breathing')) payload.difficulty_breathing = true;
-  if (matches('chest_pain_severe')) payload.chest_pain_severe = true;
-  if (matches('vomiting_blood')) payload.vomiting_blood = true;
-  if (matches('acute_poisoning_or_bite') || /snake|பாம்பு|सांप|সাপ|poison|விஷம்|bite|கடி/i.test(text)) {
+  if (matches('difficulty_breathing')) {
+    payload.difficulty_breathing = true;
+  }
+  if (matches('chest_pain_severe')) {
+    payload.chest_pain_severe = true;
+  }
+  if (matches('vomiting_blood')) {
+    payload.vomiting_blood = true;
+  }
+  if (matches('acute_poisoning_or_bite')) {
     payload.acute_poisoning_or_bite = true;
   }
-  if (matches('severe_trauma') || /burn|தீக்காயம்|जल|accident|fracture|चोट/i.test(text)) {
+  if (matches('severe_trauma')) {
     payload.severe_trauma = true;
+  }
+  if (matches('diarrhoea')) {
+    payload.diarrhoea = true;
+    payload.stool_frequency_per_day = 4;
+  }
+  if (matches('convulsions')) {
+    payload.convulsions = true;
   }
 
   return payload;
