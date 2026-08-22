@@ -229,15 +229,17 @@ def predict_tanglish_tier(text: str) -> int | None:
 
 
 def _matches_word(pattern_list: list[str], text: str) -> bool:
-    """Check if any pattern in pattern_list matches text using word boundaries."""
+    """Check if any pattern in pattern_list matches text."""
+    lower_text = text.lower()
     for pat in pattern_list:
+        pat_lower = pat.lower()
         if re.search(r"^[a-zA-Z0-9\s-]+$", pat):
-            escaped = re.escape(pat)
-            if re.search(rf"\b{escaped}\b", text, re.IGNORECASE):
+            escaped = re.escape(pat_lower)
+            if re.search(rf"\b{escaped}\b", lower_text):
                 return True
         else:
-            escaped = re.escape(pat)
-            if re.search(rf"(?:^|\s|[.,!?;:\u0964]){escaped}(?:$|\s|[.,!?;:\u0964])", text):
+            # For Indic unicode scripts (which are agglutinative with case markers), match substring directly
+            if pat in text or pat_lower in lower_text:
                 return True
     return False
 
@@ -430,15 +432,35 @@ class SarvamClient:
                 extracted_days = int(m.group(1))
                 break
 
-        # Age group detection
+        # Age group & maternal state detection
+        is_pregnant = False
         if _matches_word(["neonate", "newborn", "navjat", "navajat", "பிறந்த குழந்தை", "নবজাতক"], raw):
             kwargs["age_group"] = "neonate"
         elif _matches_word(["baby", "infant", "toddler", "chhota bacha", "kutty", "शिशु", "குழந்தை"], raw):
             kwargs["age_group"] = "infant"
         elif _matches_word(["child", "kid", "bacha", "baccha", "bachhe", "kuzhanthai", "बच्चा", "बच्चे", "বাচ্চা"], raw):
             kwargs["age_group"] = "child"
-        elif _matches_word(["pregnant", "pregnancy", "garbh", "garbhvati", "garbhwati", "gorbhoboti", "கர்ப்பிணி", "गर्भवती", "গর্ভবতী"], raw):
+        
+        if _matches_word([
+            "pregnant", "pregnancy", "garbh", "garbhvati", "garbhwati", "gorbhoboti", "expecting",
+            "கர்ப்பிணி", "கர்ப்பம்", "பிரெக்னண்ட்", "பிரக்னன்ட்", "வயிறு தள்ளி", "வயிறு பெருசா",
+            "गर्भवती", "गर्भ", "पेट से", "उम्मीद से",
+            "গর্ভবতী", "গর্ভ",
+            "గర్భవతి", "గర్భం",
+        ], raw) or any(w in lower for w in ["pregnant", "pregnancy", "garbh", "prasav", "prasavam", "delivery", "labour"]):
             kwargs["pregnant"] = True
+            is_pregnant = True
+
+        # Labor pains / delivery onset in pregnancy is an emergency (Score 3) or urgent ASHA dispatch
+        if is_pregnant or kwargs.get("pregnant"):
+            if _matches_word([
+                "pain", "vali", "dard", "betha", "novvu", "prasav dard", "prasava vali", "delivery vali",
+                "வலி", "பிரசவ வலி", "வலி வந்துருச்சு", "வலிக்குது", "இடுப்பு வலி", "பிரசவம்",
+                "प्रसव पीड़ा", "प्रसव दर्द", "दर्द शुरू", "दर्द हो रहा",
+                "প্রসব বেদনা", "ব্যথা শুরু",
+            ], raw) or any(w in lower for w in ["vali vandhuruchu", "vali vanthuruchu", "delivery pain", "labour pain", "prasav dard", "prasava vali"]):
+                kwargs["severe_headache"] = True
+                kwargs["blurred_vision"] = True  # Escalates to Score 3 Maternal Obstetric Emergency
 
         # ── 1. Deterministic Dangerous Entity Matchers (WHO IMCI Zero-Compromise Safety) ──
         if matches_any(KEYWORD_CONVULSIONS) or _matches_word(["convulsion", "convulsions", "seizure", "seizures", "fit", "fits", "daura", "jhatke", "valippu", "दौरा", "झटके", "வலிப்பு"], raw):

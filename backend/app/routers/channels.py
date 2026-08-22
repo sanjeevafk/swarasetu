@@ -549,10 +549,18 @@ async def _process_telegram_update(body: dict) -> None:
             f"📋 *Clinical Rationale:* {outcome.rationale_en}"
         )
     else:
+        advice_label = {
+            "ta": "ஆலோசனை / Advice",
+            "te": "సలహా / Advice",
+            "bn": "পরামর্শ / Advice",
+            "hi": "सलाह / Advice",
+            "mr": "सल्ला / Advice",
+        }.get(detected_lang, "Advice / मार्गदर्शन")
+
         reply_text = (
             f"🩺 *SwaraSetu Clinical Triage ({score_badge})*\n\n"
             f"🗣️ *Detected ({detected_lang.upper()}):* \"{incoming_text}\"\n\n"
-            f"💬 *सलाह / Advice:* {native_advice}\n\n"
+            f"💬 *{advice_label}:* {native_advice}\n\n"
             f"📋 *Clinical Rationale:* {outcome.rationale_en}"
         )
 

@@ -87,6 +87,12 @@ const LEXICON: Record<string, string[]> = {
     'வலிப்பு', 'மயக்கம்', 'உடல் விறைப்பு', 'valippu', 'mayakkam',
     'খিঁচুনি', 'অজ্ঞান', 'বেহুঁশ', 'khichuni', 'ogyan', 'behush',
   ],
+  maternal_emergency: [
+    'pregnant', 'pregnancy', 'labor', 'labour', 'delivery', 'water broke',
+    'கர்ப்பிணி', 'பிரெக்னண்ட்', 'பிரக்னன்ட்', 'பிரசவ வலி', 'வலி வந்துருச்சு', 'இடுப்பு வலி', 'vali vanthuruchu', 'prasavam',
+    'गर्भवती', 'प्रसव', 'प्रसव दर्द', 'दर्द शुरू', 'prasav',
+    'গর্ভবতী', 'প্রসব', 'প্রসব বেদনা', 'prosob',
+  ],
 };
 
 function decodeWavToFloat32(buffer: ArrayBuffer): Float32Array {
@@ -219,6 +225,11 @@ export function normalizeTranscript(text: string, language: LanguageCode): Sympt
   }
   if (matches('convulsions')) {
     payload.convulsions = true;
+  }
+  if (matches('maternal_emergency')) {
+    payload.pregnant = true;
+    payload.severe_headache = true;
+    payload.blurred_vision = true;
   }
 
   return payload;
