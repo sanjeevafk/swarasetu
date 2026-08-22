@@ -64,16 +64,31 @@ const LEXICON: Record<string, string[]> = {
     'রক্তবমি', 'রক্ত বমি', 'roktobomi', 'rokto bomi',
   ],
   acute_poisoning_or_bite: [
-    'snake bite', 'snakebite', 'snake', 'poison', 'scorpion', 'insect bite', 'dog bite', 'rabies', 'animal bite',
-    'सांप', 'सांप काटना', 'सर्पदंश', 'जहर', 'बिच्छू', 'कुत्ता काटना', 'कुत्ते ने काटा', 'रेबीज', 'saap', 'saamp', 'saap katna', 'zehar', 'kutta katna',
-    'பாம்பு', 'பாம்பு கடி', 'விஷம்', 'தேள் கடி', 'நாய் கடி', 'நாய் கடிச்சிருச்சு', 'கடிச்சிருச்சு', 'paambu', 'paambu kadi', 'naai kadi', 'naai kadichuruchu', 'visham', 'nanju',
-    'সাপ', 'সাপে কামড়', 'বিষ', 'বিছে', 'কুকুর কামড়', 'জলাতঙ্ক', 'shap', 'sape kamor', 'bish', 'kukur kamor',
+    'snake bite', 'snakebite', 'snake', 'poison', 'scorpion', 'insect bite', 'dog bite', 'cat bite', 'monkey bite', 'rabies', 'animal bite', 'pesticide', 'rat poison', 'acid',
+    'सांप', 'सांप काटना', 'सर्पदंश', 'जहर', 'विष', 'बिच्छू', 'कुत्ता काटना', 'कुत्ते ने काटा', 'रेबीज', 'कीटनाशक', 'चूहे की दवा', 'जहर पी लिया', 'जहर खा लिया', 'तेजाब', 'एसिड', 'saap', 'saamp', 'saap katna', 'zehar', 'kutta katna',
+    'பாம்பு', 'பாம்பு கடி', 'விஷம்', 'தேள் கடி', 'நாய் கடி', 'நாய் கடிச்சிருச்சு', 'கடிச்சிருச்சு', 'கடிச்சது', 'பூச்சி மருந்து', 'எலி மருந்து', 'ஆசிட்', 'குடிச்சுட்டாங்க', 'குடிச்சிட்டாங்க', 'பூனை கடி', 'குரங்கு கடி', 'paambu', 'paambu kadi', 'naai kadi', 'naai kadichuruchu', 'visham', 'nanju', 'poochi marundhu', 'eli marundhu',
+    'সাপ', 'সাপে কামড়', 'বিষ', 'বিছে', 'কুকুর কামড়', 'জলাতঙ্ক', 'কীটনাশক', 'ইঁদুরের বিষ', 'বিষ খেয়েছে', 'অ্যাসিড', 'shap', 'sape kamor', 'bish', 'kukur kamor',
+    'saap', 'saamp', 'saap katna', 'zehar', 'kutta katna', 'paambu', 'paambu kadi', 'naai kadi', 'naai kadichuruchu', 'visham', 'nanju', 'poochi marundhu', 'eli marundhu',
   ],
   severe_trauma: [
-    'trauma', 'burn', 'burns', 'accident', 'fracture', 'heavy bleeding', 'severe injury',
-    'चोट', 'जल गया', 'जलना', 'दुर्घटना', 'फ्रैक्चर', 'गंभीर घाव', 'chot', 'jalna', 'accident',
-    'காயம்', 'தீக்காயம்', 'விபத்து', 'எலும்பு முறிவு', 'gayam', 'theekayam', 'vibathu',
-    'আঘাত', 'পোড়া', 'দুর্ঘটনা', 'হাড় ভাঙা', 'aghat', 'pora', 'durghotona',
+    'trauma', 'burn', 'burns', 'burned', 'fracture', 'accident', 'head injury', 'deep cut', 'heavy bleeding', 'severe injury', 'electric shock', 'current shock', 'drowning', 'drowned', 'fell down', 'broken bone',
+    'चोट', 'गंभीर चोट', 'चोट लग गई', 'जल गया', 'जलना', 'आग लग गई', 'दुर्घटना', 'एक्सीडेंट', 'फ्रैक्चर', 'गंभीर घाव', 'कट गया', 'हड्डी टूट गई', 'हाथ टूट गया', 'पैर टूट गया', 'हड्डी बाहर', 'सिर में चोट', 'सिर फट गया', 'माथा फूट गया', 'खून बह रहा', 'रक्तस्राव', 'बिजली का झटका', 'करंट लगा', 'करंट', 'डूब गया', 'पानी में डूब', 'chot', 'jalna', 'accident',
+    'காயம்', 'ஆழமான காயம்', 'தீக்காயம்', 'தீப்பற்றி', 'சுட்டுருச்சு', 'விபத்து', 'அடிபட்டு', 'எலும்பு முறிவு', 'எலும்பு உடைஞ்சு', 'கை உடைஞ்சு', 'கால் உடைஞ்சு', 'உடைஞ்சுருச்சு', 'உடைந்தது', 'கீழே விழுந்து', 'கீழ விழுந்து', 'விழுந்து', 'விழுந்துட்டார்', 'தலையில் அடி', 'தலைல அடி', 'மண்டை உடைஞ்சு', 'ரத்தம் கொட்டுது', 'ரத்தப்போக்கு', 'ரத்தம் வருது', 'மின்சாரம்', 'கரண்ட் ஷாக்', 'ஷாக் அடிச்சு', 'தண்ணில மூழ்கி', 'வெட்டுக்காயம்', 'gayam', 'theekayam', 'vibathu',
+    'আঘাত', 'চোট লেগেছে', 'পোড়া', 'পুড়ে গেছে', 'আগুনে পোড়া', 'দুর্ঘটনা', 'অ্যাক্সিডেন্ট', 'হাড় ভাঙা', 'হাড় ভেঙে', 'হাত ভেঙে', 'পা ভেঙে গেছে', 'ভাঙা', 'মাথায় চোট', 'মাথা ফেটে', 'রক্ত পড়ছে', 'রক্তপাত', 'বিদ্যুৎস্পৃষ্ট', 'কারেন্ট লেগেছে', 'কারেন্ট', 'পানিতে ডুবে', 'ডুবে গেছে', 'কেটে গেছে', 'aghat', 'pora', 'durghotona',
+    'chot', 'jalna', 'accident', 'fracture', 'keezhe vizhundhu', 'sir phat gaya', 'haath toot gaya', 'haad bhenge geche', 'theekayam', 'current shock',
+  ],
+  stroke_paralysis: [
+    'stroke', 'paralysis', 'paralyzed', 'facial droop', 'slurred speech',
+    'लकवा', 'पक्षाघात', 'फालिज', 'मुंह टेढ़ा', 'हाथ पैर नहीं चल रहा', 'एक तरफ काम नहीं कर रहा', 'बोली बंद',
+    'பக்கவாதம்', 'வாய் கோணி', 'கை கால் வரல', 'கை வரல', 'கால் வரல', 'பேச முடியல', 'ஒரு பக்கம் வரல',
+    'প্যারালাইসিস', 'মুখ বেঁকে গেছে', 'হাত পা চলছে না', 'কথা জড়িয়ে যাচ্ছে', 'এক পাশ অবশ',
+    'lakwa', 'pakshavatham', 'paralysis',
+  ],
+  unable_to_drink_or_breastfeed: [
+    'cannot drink', 'unable to drink', 'not feeding', 'cannot suckle', 'milk not drinking',
+    'दूध नहीं पी रहा', 'पानी नहीं पी पा रहा', 'दूध नहीं पी रही', 'पी नहीं पा रहा',
+    'பால் குடிக்க மாட்டேங்குது', 'பால் குடிக்கல', 'குடிக்க முடியல',
+    'দুধ খাচ্ছে না', 'খেতে পারছে না', 'পান করতে পারছে না',
   ],
   diarrhoea: [
     'diarrhoea', 'diarrhea', 'loose motion', 'watery stool', 'dysentery',
@@ -230,6 +245,12 @@ export function normalizeTranscript(text: string, language: LanguageCode): Sympt
     payload.pregnant = true;
     payload.severe_headache = true;
     payload.blurred_vision = true;
+  }
+  if (matches('stroke_paralysis')) {
+    payload.unconscious = true;
+  }
+  if (matches('unable_to_drink_or_breastfeed')) {
+    payload.unable_to_drink_or_breastfeed = true;
   }
 
   return payload;

@@ -463,34 +463,94 @@ class SarvamClient:
                 kwargs["blurred_vision"] = True  # Escalates to Score 3 Maternal Obstetric Emergency
 
         # ── 1. Deterministic Dangerous Entity Matchers (WHO IMCI Zero-Compromise Safety) ──
-        if matches_any(KEYWORD_CONVULSIONS) or _matches_word(["convulsion", "convulsions", "seizure", "seizures", "fit", "fits", "daura", "jhatke", "valippu", "दौरा", "झटके", "வலிப்பு"], raw):
+        if (
+            matches_any(KEYWORD_CONVULSIONS)
+            or _matches_word([
+                "convulsion", "convulsions", "seizure", "seizures", "fit", "fits", "daura", "jhatke", "valippu", "khinchuni",
+                "दौरा", "झटके", "दौरे", "फिट्स", "வலிப்பு", "இழுக்குது", "খিঁচুনি"
+            ], raw)
+        ):
             kwargs["convulsions"] = True
-        if matches_any(KEYWORD_UNCONSCIOUS) or _matches_word(["unconscious", "behosh", "mayakkam", "ogyan", "बेहोश", "மயக்கம்", "অজ্ঞান"], raw):
+
+        if (
+            matches_any(KEYWORD_UNCONSCIOUS)
+            or _matches_word([
+                "unconscious", "behosh", "behosi", "achetan", "hosh me nahi", "unresponsive", "fainted", "collapsed",
+                "mayakkam", "mayangi", "mayangitaaru", "suyaninaivu", "asaiyave illa", "ogyan", "acheton", "gyan nei",
+                "बेहोश", "बेहोशी", "अचेत", "होश नहीं", "होश खो",
+                "மயக்கம்", "மயங்கி", "மயங்கிட்டாரு", "சுயநினைவு இல்லை", "அசைவு இல்லை",
+                "অজ্ঞান", "অচৈতন্য", "জ্ঞান নেই", "বেহুঁশ"
+            ], raw)
+        ):
             if "light" not in lower and "konjam" not in lower and "லேசான" not in raw and "கொஞ்சம்" not in raw:
                 kwargs["unconscious"] = True
-        if (matches_any(KEYWORD_CHEST_PAIN) or _matches_word(["chest pain", "seene me dard", "marbu vali", "buke betha", "सीने में दर्द", "छाती में दर्द", "বুকে ব্যথা"], raw)) and not is_negated("chest pain") and not is_negated("nenju"):
+
+        # Stroke / Paralysis / Sudden Facial Droop / Weakness
+        if _matches_word([
+            "stroke", "paralysis", "paralyzed", "facial droop", "slurred speech", "pakshavatham", "lakwa",
+            "பக்கவாதம்", "வாய் கோணி", "கை கால் வரல", "கை வரல", "கால் வரல", "பேச முடியல", "ஒரு பக்கம் வரல",
+            "लकवा", "पक्षाघात", "फालिज", "मुंह टेढ़ा", "हाथ पैर नहीं चल रहा", "एक तरफ काम नहीं कर रहा", "बोली बंद",
+            "প্যারালাইসিস", "মুখ বেঁকে গেছে", "হাত পা চলছে না", "কথা জড়িয়ে যাচ্ছে", "এক পাশ অবশ",
+        ], raw):
+            kwargs["unconscious"] = True  # Escalates to Critical Emergency / Life Support
+
+        if (
+            (matches_any(KEYWORD_CHEST_PAIN) or _matches_word([
+                "chest pain", "seene me dard", "marbu vali", "buke betha", "heart attack", "cardiac",
+                "सीने में दर्द", "छाती में दर्द", "दिल का दौरा", "हार्ट अटैक",
+                "நெஞ்சு வலி", "மார்பு வலி", "மாரடைப்பு", "நெஞ்சை அடைக்குது",
+                "বুকে ব্যথা", "বুকের ব্যথা", "হার্ট অ্যাটাক", "বুকে চাপ"
+            ], raw))
+            and not is_negated("chest pain")
+            and not is_negated("nenju")
+        ):
             kwargs["chest_pain_severe"] = True
-        if matches_any(KEYWORD_VOMITING_BLOOD) or _matches_word(["vomit blood", "vomiting blood", "khoon ki ulti", "rakthavanthi", "rokto bomi", "खून की उल्टी", "রক্তবমি"], raw):
+
+        if (
+            matches_any(KEYWORD_VOMITING_BLOOD)
+            or _matches_word([
+                "vomit blood", "vomiting blood", "khoon ki ulti", "rakthavanthi", "rokto bomi",
+                "खून की उल्टी", "রক্তবমি", "ரத்த வாந்தி", "இரத்த வாந்தி"
+            ], raw)
+        ):
             kwargs["vomiting_blood"] = True
         elif matches_any(KEYWORD_VOMITING_EVERYTHING):
             kwargs["vomiting_everything"] = True
 
-        # Acute poisoning / bites / severe trauma
+        # Inability to drink / suckle (Neonatal/Infant Danger Sign)
+        if _matches_word([
+            "cannot drink", "unable to drink", "not feeding", "cannot suckle", "milk not drinking",
+            "दूध नहीं पी रहा", "पानी नहीं पी पा रहा", "दूध नहीं पी रही", "पी नहीं पा रहा",
+            "பால் குடிக்க மாட்டேங்குது", "பால் குடிக்கல", "குடிக்க முடியல",
+            "দুধ খাচ্ছে না", "খেতে পারছে না", "পান করতে পারছে না"
+        ], raw):
+            kwargs["unable_to_drink_or_breastfeed"] = True
+
+        # Acute poisoning / bites / chemical / pesticide ingestion
         if _matches_word([
             "snake", "snake bite", "snakebite", "bitten by snake", "scorpion", "poison", "poisoning", "toxin",
-            "dog bite", "rabies", "insect bite",
-            "பாம்பு", "பாம்பு கடி", "பாம்பு கிடைச்சிருச்சு", "பாம்பு கடிச்சிருச்சு", "விஷம்", "விஷக்கடி", "தேள்", "தேள் கடி", "நாய் கடி",
-            "सांप", "साँप", "सांप काट", "सांप ने काटा", "जहर", "बिच्छू", "विष", "कुत्ते ने काटा", "कुत्ता काटा",
-            "সাপ", "সাপের কামড়", "সাপে কেটেছে", "বিষ", "বিছে", "কুকুর কামড়",
-            "పాము", "పాము కాటు", "విషం", "తేలు", "కుక్క కాటు",
+            "dog bite", "cat bite", "monkey bite", "rabies", "insect bite", "animal bite", "pesticide", "rat poison", "acid",
+            "பாம்பு", "பாம்பு கடி", "பாம்பு கிடைச்சிருச்சு", "பாம்பு கடிச்சிருச்சு", "விஷம்", "விஷக்கடி", "தேள்", "தேள் கடி",
+            "நாய் கடி", "நாய் கடிச்சிருச்சு", "பூனை கடி", "குரங்கு கடி", "பூச்சி மருந்து", "எலி மருந்து", "ஆசிட்", "குடிச்சுட்டாங்க", "குடிச்சிட்டாங்க", "கடிச்சிருச்சு", "கடிச்சது", "கடிச்சு", "கடிச்சி",
+            "सांप", "साँप", "सांप काट", "सांप ने काटा", "जहर", "विष", "बिच्छू", "कुत्ते ने काटा", "कुत्ता काटा", "बंदर काटा",
+            "कीटनाशक", "चूहे की दवा", "जहर पी लिया", "जहर खा लिया", "तेजाब", "एसिड", "काट लिया", "काटा है",
+            "সাপ", "সাপের কামড়", "সাপে কেটেছে", "বিষ", "বিছে", "কুকুর কামড়", "কীটনাশক", "ইঁদুরের বিষ", "বিষ খেয়েছে", "বিষ পান", "অ্যাসিড", "কামড়েছে",
+            "పాము", "పాము కాటు", "విషం", "తేలు", "కుక్క కాటు", "పురుగుల మందు",
         ], raw):
             kwargs["acute_poisoning_or_bite"] = True
+
+        # Severe trauma / accidents / fractures / falls / major burns / electric shock / drowning / head injury
         if _matches_word([
-            "burn", "burns", "burned", "fracture", "accident", "head injury", "deep cut", "electric shock",
-            "தீக்காயம்", "விபத்து", "அடிபட்டு", "எலும்பு முறிவு", "மின்சாரம்",
-            "जल गया", "जलना", "दुर्घटना", "एक्सीडेंट", "गंभीर चोट", "हड्डी टूटी", "करंट",
-            "পুড়ে গেছে", "দুর্ঘটনা", "ভাঙা", "কারেন্ট",
-            "కాలిపోయింది", "ప్రమాదం", "ఎముక విరిగింది",
+            "burn", "burns", "burned", "fracture", "accident", "head injury", "deep cut", "electric shock", "current shock", "drowning", "drowned",
+            "fell down", "fall from", "broken bone", "bone broken", "heavy bleeding", "blood flowing", "gushing blood",
+            "தீக்காயம்", "தீப்பற்றி", "சுட்டுருச்சு", "விபத்து", "அடிபட்டு", "காயம்", "கீழே விழுந்து", "கீழ விழுந்து", "விழுந்து", "விழுந்துட்டார்",
+            "மாடியிலிருந்து", "தலையில் அடி", "தலைல அடி", "மண்டை உடைஞ்சு", "ரத்தம் கொட்டுது", "ரத்தப்போக்கு", "ரத்தம் வருது", "ரத்தம் அதிகமா",
+            "எலும்பு முறிவு", "எலும்பு உடைஞ்சு", "கை உடைஞ்சு", "கால் உடைஞ்சு", "உடைஞ்சுருச்சு", "உடைந்தது", "மின்சாரம்", "கரண்ட் ஷாக்", "ஷாக் அடிச்சு", "ஷாக்", "தண்ணில மூழ்கி", "வெட்டுக்காயம்",
+            "जल गया", "जलना", "आग लग गई", "दुर्घटना", "एक्सीडेंट", "गंभीर चोट", "चोट लग गई", "गिर गया", "छत से गिर", "नीचे गिर गया", "सिर में चोट", "सिर फट गया", "माथा फूट गया",
+            "खून बह रहा", "खून निकल रहा", "खून का बहाव", "रक्तस्राव", "हड्डी टूट गई", "हाथ टूट गया", "पैर टूट गया", "हड्डी टूट", "फ्रैक्चर", "हड्डी बाहर", "बिजली का झटका", "करंट लगा", "करंट", "डूब गया", "पानी में डूब", "गंभीर घाव", "कट गया",
+            "পুড়ে গেছে", "আগুনে পোড়া", "দুর্ঘটনা", "অ্যাক্সিডেন্ট", "আঘাত", "চোট লেগেছে", "পড়ে গেছে", "ছাদ থেকে পড়ে", "মাথায় চোট", "মাথা ফেটে",
+            "রক্ত পড়ছে", "রক্তপাত", "হাড় ভেঙে", "হাত ভেঙে", "পা ভেঙে গেছে", "ভাঙা", "ভেঙে গেছে", "বিদ্যুৎস্পৃষ্ট", "কারেন্ট লেগেছে", "কারেন্ট", "পানিতে ডুবে", "ডুবে গেছে", "কেটে গেছে", "গভীর ক্ষত",
+            "కాలిపోయింది", "ప్రమాదం", "ఎముక విరిగింది", "రక్తం కారుతోంది", "కరెంట్ షాక్",
         ], raw):
             kwargs["severe_trauma"] = True
 
