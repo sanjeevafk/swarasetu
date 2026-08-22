@@ -16,7 +16,7 @@ install:
 	npm install
 
 dev-backend:
-	uvicorn backend.app.main:app --reload --port 8000
+	uvicorn app.main:app --app-dir backend --reload --port 8000
 
 dev-frontend:
 	npm run dev
@@ -26,7 +26,7 @@ telegram:
 
 dev:
 	npx -y concurrently -k -n "backend,frontend" -c "blue,green" \
-		"uvicorn backend.app.main:app --reload --port 8000" \
+		"uvicorn app.main:app --app-dir backend --reload --port 8000" \
 		"npm run dev"
 
 docker-up:
