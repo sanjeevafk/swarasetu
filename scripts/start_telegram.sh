@@ -3,7 +3,8 @@ set -e
 
 echo "🚀 Starting SwaraSetu Backend & Telegram Tunnel..."
 
-# 1. Start FastAPI Backend in background
+# 1. Clear any stale process on port 8000 & start FastAPI Backend in background
+fuser -k 8000/tcp 2>/dev/null || true
 PYTHONPATH=backend python3 -m uvicorn app.main:app --host 0.0.0.0 --port 8000 &
 BE_PID=$!
 
@@ -24,14 +25,29 @@ until curl -s http://localhost:8000/health > /dev/null; do
 done
 echo "✅ Backend running on http://localhost:8000"
 
-# 3. Start LocalTunnel with fixed subdomain
-echo "🌐 Starting LocalTunnel (swarasetu-live.loca.lt)..."
-npx -y localtunnel --port 8000 --subdomain swarasetu-live &
+# 3. Start LocalTunnel and capture assigned public URL
+echo "🌐 Starting LocalTunnel..."
+LT_LOG=$(mktemp)
+npx -y localtunnel --port 8000 --subdomain swarasetu-live > "$LT_LOG" 2>&1 &
 TUNNEL_PID=$!
 
-sleep 2
+# Wait for localtunnel URL
+TUNNEL_URL=""
+for i in {1..30}; do
+    if grep -q "your url is:" "$LT_LOG"; then
+        TUNNEL_URL=$(grep "your url is:" "$LT_LOG" | awk '{print $NF}' | tr -d '\r\n')
+        break
+    fi
+    sleep 0.5
+done
 
-# 4. Register Telegram Webhook
+if [ -z "$TUNNEL_URL" ]; then
+    TUNNEL_URL="https://swarasetu-live.loca.lt"
+fi
+
+echo "🌐 LocalTunnel URL: $TUNNEL_URL"
+
+# 4. Register Telegram Webhook with actual tunnel URL
 python3 -c "
 import os, urllib.request, json
 from dotenv import load_dotenv
@@ -40,7 +56,8 @@ load_dotenv('backend/.env')
 
 token = os.getenv('TELEGRAM_BOT_TOKEN')
 secret = os.getenv('TELEGRAM_WEBHOOK_SECRET')
-webhook_url = 'https://swarasetu-live.loca.lt/channels/telegram'
+base_url = '${TUNNEL_URL}'
+webhook_url = f'{base_url}/channels/telegram'
 
 if token:
     try:
