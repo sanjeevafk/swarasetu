@@ -1,62 +1,60 @@
 #!/usr/bin/env bash
 set -e
 
-echo "🚀 Starting SwaraSetu Backend & Telegram Tunnel..."
+MODE="${1:-poll}"
 
-# 1. Check if backend is already running on port 8000, or start it
-BE_PID=""
-if curl -s http://localhost:8000/health > /dev/null 2>&1; then
-    echo "✅ Existing backend detected on http://localhost:8000 (reusing)"
-else
-    echo "⏳ Starting FastAPI Backend on port 8000..."
-    PYTHONPATH=backend python3 -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload &
-    BE_PID=$!
-    until curl -s http://localhost:8000/health > /dev/null 2>&1; do
+if [ "$MODE" == "--webhook" ] || [ "$MODE" == "webhook" ] || [ "$MODE" == "--tunnel" ]; then
+    echo "🚀 Starting SwaraSetu Backend & Telegram Webhook Tunnel..."
+
+    BE_PID=""
+    if curl -s http://localhost:8000/health > /dev/null 2>&1; then
+        echo "✅ Existing backend detected on http://localhost:8000 (reusing)"
+    else
+        echo "⏳ Starting FastAPI Backend on port 8000..."
+        PYTHONPATH=backend python3 -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload &
+        BE_PID=$!
+        until curl -s http://localhost:8000/health > /dev/null 2>&1; do
+            sleep 0.5
+        done
+        echo "✅ Backend running on http://localhost:8000"
+    fi
+
+    cleanup() {
+        echo ""
+        echo "🛑 Shutting down Telegram Tunnel & Services..."
+        if [ -n "$BE_PID" ]; then
+            kill "$BE_PID" 2>/dev/null || true
+        fi
+        if [ -n "$TUNNEL_PID" ]; then
+            kill "$TUNNEL_PID" 2>/dev/null || true
+        fi
+        pkill -P $$ 2>/dev/null || true
+        rm -f "$LT_LOG" 2>/dev/null || true
+        exit 0
+    }
+    trap cleanup SIGINT SIGTERM
+
+    echo "🌐 Starting LocalTunnel..."
+    LT_LOG=$(mktemp)
+    npx -y localtunnel --port 8000 --subdomain swarasetu-live > "$LT_LOG" 2>&1 &
+    TUNNEL_PID=$!
+
+    TUNNEL_URL=""
+    for i in {1..30}; do
+        if grep -q "your url is:" "$LT_LOG"; then
+            TUNNEL_URL=$(grep "your url is:" "$LT_LOG" | awk '{print $NF}' | tr -d '\r\n')
+            break
+        fi
         sleep 0.5
     done
-    echo "✅ Backend running on http://localhost:8000"
-fi
 
-# Trap signals to cleanup background processes on Ctrl+C
-cleanup() {
-    echo ""
-    echo "🛑 Shutting down Telegram Tunnel & Services..."
-    if [ -n "$BE_PID" ]; then
-        kill "$BE_PID" 2>/dev/null || true
+    if [ -z "$TUNNEL_URL" ]; then
+        TUNNEL_URL="https://swarasetu-live.loca.lt"
     fi
-    if [ -n "$TUNNEL_PID" ]; then
-        kill "$TUNNEL_PID" 2>/dev/null || true
-    fi
-    pkill -P $$ 2>/dev/null || true
-    rm -f "$LT_LOG" 2>/dev/null || true
-    exit 0
-}
-trap cleanup SIGINT SIGTERM
 
-# 3. Start LocalTunnel and capture assigned public URL
-echo "🌐 Starting LocalTunnel..."
-LT_LOG=$(mktemp)
-npx -y localtunnel --port 8000 --subdomain swarasetu-live > "$LT_LOG" 2>&1 &
-TUNNEL_PID=$!
+    echo "🌐 LocalTunnel URL: $TUNNEL_URL"
 
-# Wait for localtunnel URL
-TUNNEL_URL=""
-for i in {1..30}; do
-    if grep -q "your url is:" "$LT_LOG"; then
-        TUNNEL_URL=$(grep "your url is:" "$LT_LOG" | awk '{print $NF}' | tr -d '\r\n')
-        break
-    fi
-    sleep 0.5
-done
-
-if [ -z "$TUNNEL_URL" ]; then
-    TUNNEL_URL="https://swarasetu-live.loca.lt"
-fi
-
-echo "🌐 LocalTunnel URL: $TUNNEL_URL"
-
-# 4. Register Telegram Webhook with actual tunnel URL
-python3 -c "
+    python3 -c "
 import os, urllib.request, json
 from dotenv import load_dotenv
 load_dotenv('.env')
@@ -83,9 +81,13 @@ else:
     print('⚠️ TELEGRAM_BOT_TOKEN not found in .env')
 "
 
-echo "🤖 Telegram Bot is LIVE! (Press Ctrl+C to stop)"
-
-# Keep alive continuously until Ctrl+C
-while true; do
-    sleep 1
-done
+    echo "🤖 Telegram Bot is LIVE (Webhook mode)! (Press Ctrl+C to stop)"
+    while true; do
+        sleep 1
+    done
+else
+    # Default: Robust Long-Polling Mode (No tunnels, zero timeouts, 100% uptime)
+    echo "🚀 Starting SwaraSetu Telegram Bot in Long-Polling Mode..."
+    export PYTHONPATH=backend
+    python3 backend/scripts/run_telegram_poller.py
+fi

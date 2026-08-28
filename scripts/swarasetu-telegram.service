@@ -1,0 +1,16 @@
+[Unit]
+Description=SwaraSetu Telegram Bot Service
+After=network.target
+
+[Service]
+Type=simple
+User=%I
+WorkingDirectory=/home/sanjeev/Downloads/swarasetu
+EnvironmentFile=/home/sanjeev/Downloads/swarasetu/.env
+Environment=PYTHONPATH=backend
+ExecStart=/usr/bin/python3 backend/scripts/run_telegram_poller.py
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

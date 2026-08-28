@@ -25,6 +25,9 @@ dev-frontend:
 telegram:
 	./scripts/start_telegram.sh
 
+telegram-bg:
+	./scripts/start_telegram_bg.sh
+
 dev:
 	@fuser -k 8000/tcp 5173/tcp 2>/dev/null || true
 	npx -y concurrently -k -n "backend,frontend" -c "blue,green" \
