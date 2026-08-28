@@ -251,6 +251,10 @@ const ACTION_TEXT: Record<string, string> = {
   act_ors_fluids: 'Start ORS solution and continue frequent small feeds/breastfeeding.',
   act_monitor_home: 'Monitor at home; no referral needed at this time.',
   act_zinc_supplement: 'Give zinc supplement for 14 days as advised by the health worker.',
+  act_cough_warm_fluids:
+    'Drink warm fluids (warm water, ginger/tulsi tea), take steam inhalation, and keep chest warm.',
+  act_hydration_rest:
+    'Maintain adequate rest, drink clean boiled water and electrolytes, and eat light nutritious food.',
 };
 
 const RATIONALE_TEXT: Record<string, string> = {
@@ -320,7 +324,9 @@ function actionsFor(risk: 1 | 2 | 3, primaryCluster: string): string[] {
         ? ['act_ors_fluids', 'act_zinc_supplement', 'act_monitor_home', 'act_return_if_worse']
         : primaryCluster === 'fever'
           ? ['act_paracetamol_home_care', 'act_monitor_home', 'act_return_if_worse']
-          : ['act_monitor_home', 'act_return_if_worse'];
+          : primaryCluster === 'respiratory'
+            ? ['act_cough_warm_fluids', 'act_monitor_home', 'act_return_if_worse']
+            : ['act_hydration_rest', 'act_monitor_home', 'act_return_if_worse'];
   } else if (risk === 2) {
     keys = ['act_notify_asha', 'act_return_if_worse'];
   } else {

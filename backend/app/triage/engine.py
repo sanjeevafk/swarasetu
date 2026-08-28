@@ -46,6 +46,10 @@ def _actions_for(risk: RiskScore, primary_cluster: str) -> tuple[str, ...]:
             base.insert(0, "act_paracetamol_home_care")
         elif primary_cluster == "diarrhoea":
             base = ["act_ors_fluids", "act_zinc_supplement"] + base
+        elif primary_cluster == "respiratory":
+            base.insert(0, "act_cough_warm_fluids")
+        else:
+            base.insert(0, "act_hydration_rest")
     return tuple(base)
 
 

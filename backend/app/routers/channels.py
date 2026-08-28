@@ -194,7 +194,9 @@ async def handle_whatsapp_webhook(
     outcome = res["outcome"]
     directive = res["directive"]
 
-    reply_text = f"🩺 SwaraSetu Triage Result\n\n{directive.message_en}\n\nDecision: {outcome.rationale_en}"
+    score_badge = "🔴 RED EMERGENCY" if outcome.risk_score == 3 else "🟡 ASHA DISPATCH" if outcome.risk_score == 2 else "🟢 SELF CARE"
+    action_bullets = "\n".join([f"• {act}" for act in outcome.actions]) if outcome.actions else f"• {directive.message_en}"
+    reply_text = f"🩺 SwaraSetu Triage Result ({score_badge})\n\n{directive.message_en}\n\n📋 Recommended Clinical Actions:\n{action_bullets}\n\nDecision: {outcome.rationale_en}"
 
     if outcome.risk_score == int(RiskScore.ASHA_DISPATCH):
         district_query = str(form_dict.get("District") or "Sitamarhi")
@@ -401,7 +403,9 @@ async def handle_meta_whatsapp_webhook(
                     directive = res["directive"]
                     outcome = res["outcome"]
 
-                    reply_text = f"🩺 SwaraSetu Triage Result\n\n{directive.message_en}\n\nDecision: {outcome.rationale_en}"
+                    score_badge = "🔴 RED EMERGENCY" if outcome.risk_score == 3 else "🟡 ASHA DISPATCH" if outcome.risk_score == 2 else "🟢 SELF CARE"
+                    action_bullets = "\n".join([f"• {act}" for act in outcome.actions]) if outcome.actions else f"• {directive.message_en}"
+                    reply_text = f"🩺 SwaraSetu Triage Result ({score_badge})\n\n{directive.message_en}\n\n📋 Recommended Clinical Actions:\n{action_bullets}\n\nDecision: {outcome.rationale_en}"
 
                     if settings.meta_whatsapp_token and settings.meta_phone_number_id:
                         async with httpx.AsyncClient(timeout=15.0) as client:
@@ -557,10 +561,12 @@ async def _process_telegram_update(body: dict) -> None:
             "mr": "सल्ला / Advice",
         }.get(detected_lang, "Advice / मार्गदर्शन")
 
+        action_bullets = "\n".join([f"• {act}" for act in outcome.actions]) if outcome.actions else f"• {native_advice}"
+
         reply_text = (
             f"🩺 *SwaraSetu Clinical Triage ({score_badge})*\n\n"
             f"🗣️ *Detected ({detected_lang.upper()}):* \"{incoming_text}\"\n\n"
-            f"💬 *{advice_label}:* {native_advice}\n\n"
+            f"💬 *{advice_label}:*\n{action_bullets}\n\n"
             f"📋 *Clinical Rationale:* {outcome.rationale_en}"
         )
 
@@ -587,7 +593,9 @@ async def _process_telegram_update(body: dict) -> None:
                 )
 
             # Synthesize Sarvam TTS audio voice reply in native dialect
-            audio_b64 = await sarvam_client.synthesize_speech(text=native_advice, target_language=speech_lang)
+            spoken_actions = " ".join(outcome.actions[:2]) if outcome.actions else native_advice
+            tts_text = f"{native_advice}. {spoken_actions}"
+            audio_b64 = await sarvam_client.synthesize_speech(text=tts_text, target_language=speech_lang)
             if audio_b64:
                 import base64 as b64_lib
                 audio_bytes = b64_lib.b64decode(audio_b64)
