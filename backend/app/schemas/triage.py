@@ -9,7 +9,7 @@ from pydantic import BaseModel, Field
 from app.triage.types import ALL_AGES
 
 AgeGroup = Literal["neonate", "infant", "child", "adolescent", "adult"]
-LanguageCode = Literal["en", "hi", "ta", "bn"]
+LanguageCode = str
 
 
 class SymptomPayloadIn(BaseModel):

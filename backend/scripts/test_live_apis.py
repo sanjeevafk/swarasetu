@@ -36,7 +36,7 @@ async def run_live_tests():
     print("\n[2/3] Testing Sarvam Text-to-Speech (Indic TTS)...")
     test_response = "आशा दीदी को बता दिया गया है, वो जल्द ही आपके घर आएंगी।"
     try:
-        audio_b64 = await sarvam_client.synthesize_speech(test_response, target_language="hi", speaker="anushka")
+        audio_b64 = await sarvam_client.synthesize_speech(test_response, target_language="hi", speaker="priya")
         if audio_b64:
 
             print(f"   Synthesized text: {test_response}")

@@ -369,7 +369,7 @@ class SarvamClient:
         self,
         text: str,
         target_language: str = "hi",
-        speaker: str = "anushka",
+        speaker: str = "priya",
     ) -> str | None:
         """Synthesize localized text to speech (returns base64 audio string)."""
         if not self.is_configured or not text.strip():
@@ -386,7 +386,7 @@ class SarvamClient:
             "loudness": 1.5,
             "speech_sample_rate": 8000,
             "enable_preprocessing": True,
-            "model": "bulbul:v2",
+            "model": "bulbul:v3",
         }
 
         try:
