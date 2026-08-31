@@ -4,10 +4,8 @@ import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { mockPHCs } from '@/data/mockPHCs';
 import { Badge } from '@/components/ui/badge';
-import { CloudOff } from 'lucide-react';
+import { CloudOff, MapPin, Phone, Clock } from 'lucide-react';
 import { api } from '@/lib/api';
-
-
 
 // Fix for default Leaflet marker icons in React
 import iconRetinaUrl from 'leaflet/dist/images/marker-icon-2x.png';
@@ -38,7 +36,6 @@ interface MapFacility {
   doctorAvailable: boolean;
 }
 
-/** Static fixtures rendered as fallback when the backend is unreachable. */
 const fallbackFacilities: MapFacility[] = mockPHCs.map((p) => ({
   id: p.id,
   name: p.name,
@@ -49,8 +46,7 @@ const fallbackFacilities: MapFacility[] = mockPHCs.map((p) => ({
 }));
 
 export function PHCMap() {
-
-  const defaultCenter: [number, number] = [26.5, 85.5]; // Central Rural Bihar coords
+  const defaultCenter: [number, number] = [26.5, 85.5]; // Sitamarhi District coords
   const [facilities, setFacilities] = useState<MapFacility[]>(fallbackFacilities);
   const [isLive, setIsLive] = useState(false);
 
@@ -70,7 +66,7 @@ export function PHCMap() {
               phone: p.phone,
               coordinates: [p.latitude, p.longitude],
               doctorAvailable: p.doctor_available,
-            })),
+            }))
           );
           setIsLive(true);
         }
@@ -85,16 +81,21 @@ export function PHCMap() {
   }, []);
 
   return (
-    <div className="w-full flex flex-col h-full bg-slate-50 dark:bg-slate-900 rounded-xl overflow-hidden border border-slate-200 dark:border-slate-800 shadow-sm relative z-0">
-      <div className="p-4 bg-white dark:bg-slate-950 border-b border-slate-100 dark:border-slate-800 z-10 flex justify-between items-center">
-        <h3 className="font-semibold text-slate-800 dark:text-slate-100">Nearest Primary Health Centers</h3>
+    <div className="w-full flex flex-col h-full bg-[#f8fafc] rounded-2xl overflow-hidden font-sans">
+      <div className="p-4 bg-white border-b border-slate-200 z-10 flex justify-between items-center">
+        <div className="flex items-center gap-2">
+          <MapPin className="w-4 h-4 text-rose-600" />
+          <h3 className="font-bold text-sm text-slate-900">
+            Sitamarhi District — Nearest Primary Health Centers
+          </h3>
+        </div>
         {isLive ? (
-          <Badge variant="secondary" className="bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-400 shadow-none">
-            {facilities.length} Available
+          <Badge variant="outline" className="bg-emerald-50 text-emerald-800 border-emerald-200 font-semibold text-xs">
+            {facilities.length} PHCs Online
           </Badge>
         ) : (
-          <Badge variant="outline" className="border-amber-300 text-amber-700 dark:text-amber-400 flex items-center gap-1">
-            <CloudOff className="w-3 h-3" /> Cached Pins
+          <Badge variant="outline" className="border-amber-300 bg-amber-50 text-amber-800 flex items-center gap-1 text-xs font-semibold">
+            <CloudOff className="w-3 h-3 text-amber-600" /> Cached PHCs (Offline)
           </Badge>
         )}
       </div>
@@ -107,28 +108,37 @@ export function PHCMap() {
           />
           <MapUpdater center={defaultCenter} />
 
-          {facilities.map(_phc => (
-            <Marker key={_phc.id} position={_phc.coordinates}>
+          {facilities.map((phc) => (
+            <Marker key={phc.id} position={phc.coordinates}>
               <Popup className="rounded-xl overflow-hidden shadow-lg border-0 p-0 m-0">
-                <div className="min-w-[200px] pb-1">
-                  <h4 className="font-bold text-slate-800 text-[15px] mb-1 leading-tight">{_phc.name}</h4>
-                  <div className="flex items-center gap-1.5 mb-2 mt-2">
-                    {_phc.distanceKm !== null && (
-                      <span className="text-[11px] font-bold bg-slate-100 text-slate-700 px-2 py-0.5 rounded-sm">{_phc.distanceKm} km</span>
+                <div className="min-w-[220px] p-2">
+                  <h4 className="font-bold text-slate-900 text-sm mb-1 leading-tight">{phc.name}</h4>
+                  <div className="flex items-center gap-1.5 my-2">
+                    {phc.distanceKm !== null && (
+                      <span className="text-[11px] font-bold bg-slate-100 text-slate-800 px-2 py-0.5 rounded-md">
+                        {phc.distanceKm} km
+                      </span>
                     )}
-                    <span className="text-[11px] font-bold bg-blue-50 text-blue-700 px-2 py-0.5 rounded-sm">{_phc.hours}</span>
+                    <span className="text-[11px] font-semibold bg-emerald-50 text-emerald-800 px-2 py-0.5 rounded-md flex items-center gap-1">
+                      <Clock className="w-3 h-3" /> {phc.hours}
+                    </span>
                   </div>
-                  {_phc.phone && (
-                    <a href={`tel:${_phc.phone}`} className="block text-[11px] font-semibold text-blue-600 hover:underline mb-2">
-                      {_phc.phone}
+                  {phc.phone && (
+                    <a
+                      href={`tel:${phc.phone}`}
+                      className="flex items-center gap-1 text-[11px] font-bold text-[#0f4c42] hover:underline mb-2"
+                    >
+                      <Phone className="w-3 h-3" /> {phc.phone}
                     </a>
                   )}
-                  <div className={`text-[11px] font-bold px-2 py-1.5 rounded w-full text-center uppercase tracking-wider ${
-                    _phc.doctorAvailable
-                      ? 'bg-emerald-100 text-emerald-800'
-                      : 'bg-amber-100 text-amber-800'
-                  }`}>
-                    {_phc.doctorAvailable ? 'Doctor Available' : 'Doctor Unavailable'}
+                  <div
+                    className={`text-[11px] font-bold px-2.5 py-1.5 rounded-md w-full text-center uppercase tracking-wider ${
+                      phc.doctorAvailable
+                        ? 'bg-emerald-100 text-emerald-800'
+                        : 'bg-amber-100 text-amber-800'
+                    }`}
+                  >
+                    {phc.doctorAvailable ? '✓ Doctor on Duty' : '⚠ Doctor Unavailable'}
                   </div>
                 </div>
               </Popup>

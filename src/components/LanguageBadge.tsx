@@ -12,8 +12,8 @@ export function LanguageBadge() {
   const setLanguage = useAppStore((state) => state.setLanguage);
 
   return (
-    <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800/80 p-1 rounded-full border border-slate-200 dark:border-slate-700 shadow-inner">
-      <div className="flex items-center gap-1 px-2 text-slate-500 dark:text-slate-400">
+    <div className="flex items-center gap-1 bg-white p-1 rounded-lg border border-slate-200 shadow-xs">
+      <div className="flex items-center gap-1 px-1.5 text-slate-400">
         <Globe className="w-3.5 h-3.5" />
       </div>
       {LANGUAGES.map((lang) => {
@@ -22,10 +22,10 @@ export function LanguageBadge() {
           <button
             key={lang.key}
             onClick={() => setLanguage(lang.key)}
-            className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold transition-all duration-200 ${
+            className={`flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-bold transition-all ${
               isActive
-                ? 'bg-emerald-600 text-white shadow-sm scale-105'
-                : 'text-slate-600 dark:text-slate-300 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-white/60 dark:hover:bg-slate-700/60'
+                ? 'bg-[#0f4c42] text-white shadow-xs'
+                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
             }`}
             title={`Switch to ${lang.label}`}
           >

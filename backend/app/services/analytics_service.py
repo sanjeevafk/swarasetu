@@ -16,10 +16,22 @@ from app.schemas.analytics import (
     SymptomBreakdown,
 )
 
+import time
+
 CLUSTERS = ("fever", "respiratory", "diarrhoea", "maternal")
 
+_CACHE_SUMMARY: AnalyticsSummary | None = None
+_CACHE_TIMESTAMP: float = 0.0
+_CACHE_TTL_SECONDS: float = 5.0
 
-def build_summary(db: Session, limit_recent: int = 8) -> AnalyticsSummary:
+
+def build_summary(db: Session, limit_recent: int = 8, bypass_cache: bool = False) -> AnalyticsSummary:
+    global _CACHE_SUMMARY, _CACHE_TIMESTAMP
+
+    now = time.time()
+    if not bypass_cache and _CACHE_SUMMARY is not None and (now - _CACHE_TIMESTAMP) < _CACHE_TTL_SECONDS:
+        return _CACHE_SUMMARY
+
     cases: list[Case] = list(db.execute(select(Case)).scalars())
 
     risk_counter = Counter(c.risk_score for c in cases)
@@ -55,7 +67,7 @@ def build_summary(db: Session, limit_recent: int = 8) -> AnalyticsSummary:
         reverse=True,
     )[:limit_recent]
 
-    return AnalyticsSummary(
+    result = AnalyticsSummary(
         total_cases=len(cases),
         risk_distribution=RiskDistribution(
             green=risk_counter.get(1, 0),
@@ -82,3 +94,6 @@ def build_summary(db: Session, limit_recent: int = 8) -> AnalyticsSummary:
             for c in recent
         ],
     )
+    _CACHE_SUMMARY = result
+    _CACHE_TIMESTAMP = time.time()
+    return result

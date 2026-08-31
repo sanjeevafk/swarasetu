@@ -10,9 +10,27 @@ export default defineConfig({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  build: {
+    target: 'esnext',
+    cssCodeSplit: true,
+    rollupOptions: {
+      output: {
+        manualChunks(id: string) {
+          if (id.includes('recharts')) {
+            return 'vendor-charts';
+          }
+          if (id.includes('leaflet') || id.includes('react-leaflet')) {
+            return 'vendor-maps';
+          }
+          if (id.includes('framer-motion')) {
+            return 'vendor-motion';
+          }
+        },
+      },
+    },
+  },
   server: {
     proxy: {
-      // Forward API + health checks to the FastAPI backend during dev.
       "/api": {
         target: "http://localhost:8000",
         changeOrigin: true,

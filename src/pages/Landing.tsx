@@ -1,92 +1,108 @@
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Radio, Activity, Users, Globe2, ShieldCheck, HeartPulse, MapPin } from 'lucide-react';
+import { Activity, Globe2, ShieldCheck, HeartPulse, MapPin, ChevronRight, Stethoscope, Tablet, BarChart3 } from 'lucide-react';
 import { useAppStore, type UserRole } from '@/store/useAppStore';
 
 export function Landing() {
-  const startDemo = useAppStore(state => state.startDemo);
+  const startDemo = useAppStore((state) => state.startDemo);
 
   const roles: { role: UserRole; icon: React.ReactNode; label: string; desc: string }[] = [
-    { role: 'Patient', icon: <Activity className="w-5 h-5" />, label: 'As Patient', desc: 'Voice-first symptom reporting' },
-    { role: 'CHW', icon: <HeartPulse className="w-5 h-5" />, label: 'As ASHA Worker', desc: 'Offline triage tablet' },
-    { role: 'Supervisor', icon: <Users className="w-5 h-5" />, label: 'As Supervisor', desc: 'PHC Dashboard analytics' }
+    { role: 'CHW', icon: <Tablet className="w-5 h-5" />, label: 'ASHA Worker Portal', desc: 'Zero-literacy touch-to-hear triage tablet' },
+    { role: 'Patient', icon: <Stethoscope className="w-5 h-5" />, label: 'Patient Voice Intake', desc: 'Multilingual speech symptom reporting' },
+    { role: 'Supervisor', icon: <BarChart3 className="w-5 h-5" />, label: 'Supervisor Dashboard', desc: 'District PHC surveillance & caseload' },
   ];
 
   return (
-    <div className="min-h-screen bg-[#fffaf0] dark:bg-[#0f172a] flex flex-col items-center justify-center p-6 relative overflow-hidden">
-      {/* Decorative pulse background */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-emerald-500/5 dark:bg-emerald-500/10 rounded-full blur-[100px] -z-10" />
-      <div className="absolute top-1/3 left-1/3 w-[400px] h-[400px] bg-sky-500/5 dark:bg-sky-500/10 rounded-full blur-[80px] -z-10" />
+    <div className="min-h-screen bg-[#f8fafc] flex flex-col items-center justify-center p-4 sm:p-6 relative overflow-hidden font-sans text-slate-900">
+      {/* Background ambient accents */}
+      <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[700px] bg-emerald-500/5 rounded-full blur-[100px] -z-10" />
 
-      <motion.div 
-        initial={{ opacity: 0, y: 20 }}
+      <motion.div
+        initial={{ opacity: 0, y: 15 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6 }}
-        className="w-full max-w-md flex flex-col items-center text-center z-10"
+        transition={{ duration: 0.5 }}
+        className="w-full max-w-lg flex flex-col items-center text-center z-10"
       >
-        <div className="h-16 w-16 bg-emerald-100 dark:bg-emerald-900/50 rounded-2xl flex items-center justify-center mb-6 shadow-sm border border-emerald-200 dark:border-emerald-800">
-          <Radio className="w-8 h-8 text-emerald-600 dark:text-emerald-400" />
+        {/* Pulse Logo Badge */}
+        <div className="h-16 w-16 bg-emerald-50 border border-emerald-200 rounded-2xl flex items-center justify-center mb-4 shadow-sm text-emerald-700">
+          <Activity className="w-8 h-8 stroke-[2.4]" />
         </div>
-        
-        <h1 className="text-4xl md:text-5xl font-extrabold text-slate-900 dark:text-white mb-4 tracking-tight">
-          Swara<span className="text-emerald-600 dark:text-emerald-400">Setu</span>
-          <span className="block text-2xl font-serif text-amber-600 dark:text-amber-500 mt-2">स्वर सेतु</span>
+
+        <h1 className="text-3xl md:text-4xl font-extrabold text-slate-900 mb-2 tracking-tight">
+          Swara<span className="text-emerald-700">Setu</span>
+          <span className="block text-xl font-medium text-amber-700 mt-1 font-serif">
+            स्वर सेतु · Sitamarhi Frontline Healthcare
+          </span>
         </h1>
-        
-        <p className="text-xl text-slate-600 dark:text-slate-300 font-medium mb-8">
-          Your voice, your village, your first doctor.
+
+        <p className="text-sm md:text-base text-slate-600 font-medium mb-6 max-w-md">
+          Offline-first multilingual clinical triage for rural communities and ASHA frontline workers.
         </p>
 
-        <Card className="w-full bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-slate-200 dark:border-slate-800 shadow-xl mb-10 overflow-hidden">
+        {/* Feature Highlights Grid Card */}
+        <Card className="w-full bg-white border border-slate-200 shadow-sm mb-6 rounded-2xl overflow-hidden">
           <CardContent className="p-0">
-            <div className="grid grid-cols-2 divide-x divide-y divide-slate-100 dark:divide-slate-800/60 border-b border-slate-100 dark:border-slate-800/60">
-              <div className="p-4 flex flex-col items-center text-center">
-                <Globe2 className="w-5 h-5 text-amber-500 mb-2" />
-                <span className="text-sm font-semibold text-slate-800 dark:text-slate-200">Offline-First</span>
-                <span className="text-xs text-slate-500">No internet required</span>
+            <div className="grid grid-cols-2 divide-x divide-y divide-slate-100 border-b border-slate-100">
+              <div className="p-3.5 flex flex-col items-center text-center">
+                <Globe2 className="w-5 h-5 text-amber-600 mb-1.5" />
+                <span className="text-xs font-bold text-slate-900">100% Offline Edge</span>
+                <span className="text-[11px] text-slate-500">Auto-syncs on reconnect</span>
               </div>
-              <div className="p-4 flex flex-col items-center text-center">
-                <Activity className="w-5 h-5 text-emerald-500 mb-2" />
-                <span className="text-sm font-semibold text-slate-800 dark:text-slate-200">Voice AI</span>
-                <span className="text-xs text-slate-500">Language agnostic</span>
+              <div className="p-3.5 flex flex-col items-center text-center">
+                <HeartPulse className="w-5 h-5 text-emerald-600 mb-1.5" />
+                <span className="text-xs font-bold text-slate-900">Touch-to-Hear</span>
+                <span className="text-[11px] text-slate-500">Zero-literacy visual cards</span>
               </div>
-              <div className="p-4 flex flex-col items-center text-center">
-                <ShieldCheck className="w-5 h-5 text-blue-500 mb-2" />
-                <span className="text-sm font-semibold text-slate-800 dark:text-slate-200">IMCI Protocol</span>
-                <span className="text-xs text-slate-500">WHO standards</span>
+              <div className="p-3.5 flex flex-col items-center text-center">
+                <ShieldCheck className="w-5 h-5 text-blue-600 mb-1.5" />
+                <span className="text-xs font-bold text-slate-900">WHO IMCI Protocols</span>
+                <span className="text-[11px] text-slate-500">Clinical grade risk triage</span>
               </div>
-              <div className="p-4 flex flex-col items-center text-center">
-                <MapPin className="w-5 h-5 text-red-500 mb-2" />
-                <span className="text-sm font-semibold text-slate-800 dark:text-slate-200">Auto-Routing</span>
-                <span className="text-xs text-slate-500">Nearest PHC mapping</span>
+              <div className="p-3.5 flex flex-col items-center text-center">
+                <MapPin className="w-5 h-5 text-rose-600 mb-1.5" />
+                <span className="text-xs font-bold text-slate-900">PHC Geo-Routing</span>
+                <span className="text-[11px] text-slate-500">Nearest facility dispatch</span>
               </div>
             </div>
-            <div className="bg-slate-50 dark:bg-slate-950/50 p-4 text-sm text-slate-600 dark:text-slate-400 text-center">
-              <p className="font-semibold text-slate-800 dark:text-slate-200 mb-1">Impact Potential</p>
-              Bridging the gap for 800M rural Indians with only 0.7 doctors per 1,000 people.
+
+            <div className="bg-slate-50/80 p-3 text-xs text-slate-600 text-center font-medium">
+              Designed for 1M+ ASHA workers across rural primary healthcare sub-centers.
             </div>
           </CardContent>
         </Card>
 
-        <div className="w-full space-y-3">
-          <p className="text-sm font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-3">Try the 90-second Demo</p>
+        {/* Role Demo Triggers */}
+        <div className="w-full space-y-2.5">
+          <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1 text-left">
+            Launch Prototype View
+          </p>
+
           {roles.map(({ role, icon, label, desc }) => (
-            <motion.div key={role} whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-              <Button 
+            <motion.div key={role} whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.99 }}>
+              <Button
                 onClick={() => startDemo(role)}
-                className="w-full h-auto py-4 px-5 justify-start text-left bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 text-slate-800 dark:text-slate-100 shadow-sm transition-all rounded-xl"
+                className="w-full h-auto py-3.5 px-4 justify-between text-left bg-white hover:bg-slate-50 border border-slate-200 hover:border-slate-300 text-slate-900 shadow-sm transition-all rounded-xl"
                 variant="outline"
               >
-                <div className="flex items-center gap-4">
-                  <div className={`p-2.5 rounded-lg ${role === 'Patient' ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-900/50 dark:text-emerald-400' : role === 'CHW' ? 'bg-amber-100 text-amber-600 dark:bg-amber-900/50 dark:text-amber-400' : 'bg-blue-100 text-blue-600 dark:bg-blue-900/50 dark:text-blue-400'}`}>
+                <div className="flex items-center gap-3">
+                  <div
+                    className={`p-2.5 rounded-lg ${
+                      role === 'CHW'
+                        ? 'bg-emerald-50 text-emerald-800 border border-emerald-200'
+                        : role === 'Patient'
+                        ? 'bg-blue-50 text-blue-800 border border-blue-200'
+                        : 'bg-amber-50 text-amber-800 border border-amber-200'
+                    }`}
+                  >
                     {icon}
                   </div>
                   <div>
-                    <div className="font-bold text-base text-slate-900 dark:text-slate-100">{label}</div>
-                    <div className="font-medium text-[13px] text-slate-500 dark:text-slate-400 mt-0.5">{desc}</div>
+                    <div className="font-bold text-sm text-slate-900">{label}</div>
+                    <div className="font-medium text-xs text-slate-500 mt-0.5">{desc}</div>
                   </div>
                 </div>
+                <ChevronRight className="w-4 h-4 text-slate-400" />
               </Button>
             </motion.div>
           ))}

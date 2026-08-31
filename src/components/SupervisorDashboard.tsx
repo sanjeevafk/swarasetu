@@ -3,17 +3,16 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line } from 'recharts';
 import { triageVolumeByDistrict as fallbackDistricts, escalationTrend as fallbackTrend } from '@/data/mockDashboardData';
 import { Badge } from '@/components/ui/badge';
-import { CloudOff } from 'lucide-react';
+import { CloudOff, Activity, Users, CheckCircle2 } from 'lucide-react';
 import type { AnalyticsSummary } from '@/types/api';
 import { useAppStore } from '@/store/useAppStore';
-
 import { api } from '@/lib/api';
 
 const CLUSTER_COLORS: Record<string, string> = {
-  fever: '#10b981',
+  fever: '#059669',
   respiratory: '#f97316',
-  diarrhoea: '#3b82f6',
-  maternal: '#a855f7',
+  diarrhoea: '#0284c7',
+  maternal: '#7c3aed',
 };
 
 export function SupervisorDashboard() {
@@ -24,7 +23,7 @@ export function SupervisorDashboard() {
   useEffect(() => {
     let cancelled = false;
     const load = async () => {
-      if (isOfflineMode) return;
+      if (isOfflineMode || document.visibilityState !== 'visible') return;
       try {
         const data = await api.analyticsSummary();
         if (!cancelled) {
@@ -35,15 +34,29 @@ export function SupervisorDashboard() {
         if (!cancelled) setLoadFailed(true);
       }
     };
+
     void load();
-    // Poll every 15 s so new cases appear live.
-    const t = setInterval(load, 15000);
+
+    // Poll every 15s only while component is mounted and tab is visible
+    const t = setInterval(() => {
+      if (document.visibilityState === 'visible') {
+        void load();
+      }
+    }, 15000);
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        void load();
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
     return () => {
       cancelled = true;
       clearInterval(t);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
   }, [isOfflineMode]);
-
 
   const districtData =
     summary && summary.districts.length > 0
@@ -58,9 +71,9 @@ export function SupervisorDashboard() {
           fill: CLUSTER_COLORS[s.cluster] ?? '#64748b',
         }))
       : [
-          { name: 'Fever', value: 45, fill: '#10b981' },
+          { name: 'Fever', value: 45, fill: '#059669' },
           { name: 'Respiratory', value: 30, fill: '#f97316' },
-          { name: 'Diarrhoea', value: 15, fill: '#3b82f6' },
+          { name: 'Diarrhoea', value: 15, fill: '#0284c7' },
           { name: 'Other', value: 10, fill: '#64748b' },
         ];
 
@@ -70,94 +83,140 @@ export function SupervisorDashboard() {
       : fallbackTrend;
 
   return (
-    <div className="p-4 bg-slate-50 dark:bg-slate-900 min-h-full space-y-4">
-      <div className="flex items-center justify-between">
-        <h2 className="text-xl font-bold text-slate-800 dark:text-slate-100">Regional Overview</h2>
-        <div className="flex items-center gap-2">
+    <div className="p-4 md:p-6 bg-[#f8fafc] min-h-full space-y-4 font-sans text-slate-900">
+      {/* Top Title Bar */}
+      <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-slate-200">
+        <div>
+          <h2 className="text-xl md:text-2xl font-bold text-slate-900 tracking-tight flex items-center gap-2">
+            <Activity className="w-5 h-5 text-emerald-700" />
+            Regional Overview – Sitamarhi District
+          </h2>
+          <p className="text-xs text-slate-500 mt-0.5">
+            Real-time IMCI triage surveillance and ASHA frontline dispatch monitoring
+          </p>
+        </div>
+
+        <div className="flex items-center gap-2 flex-wrap">
           {summary && (
-            <Badge className="bg-slate-900 text-white dark:bg-white dark:text-slate-900 border-0">
+            <Badge className="bg-[#0f4c42] text-white border-0 font-semibold px-3 py-1 text-xs">
               {summary.total_cases} live case{summary.total_cases === 1 ? '' : 's'} ·{' '}
-              {summary.risk_distribution.red} red
+              {summary.risk_distribution.red} red emergency
             </Badge>
           )}
           {(isOfflineMode || loadFailed) && (
-            <Badge variant="outline" className="border-amber-300 text-amber-700 dark:text-amber-400 flex items-center gap-1">
-              <CloudOff className="w-3 h-3" /> {isOfflineMode ? 'Offline (cached)' : 'Backend unreachable'}
+            <Badge variant="outline" className="border-amber-300 bg-amber-50 text-amber-800 flex items-center gap-1 text-xs font-semibold">
+              <CloudOff className="w-3.5 h-3.5 text-amber-600" /> {isOfflineMode ? 'Offline (Edge Synced)' : 'Backend unreachable'}
             </Badge>
           )}
           {!isOfflineMode && !loadFailed && (
-            <Badge variant="outline" className="border-blue-200 text-blue-700 dark:text-blue-400">Last 7 Days</Badge>
+            <Badge variant="outline" className="border-emerald-200 bg-emerald-50 text-emerald-800 text-xs font-semibold">
+              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 mr-1" /> Live Sync Connected
+            </Badge>
           )}
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
-        <Card className="shadow-sm border-slate-200 dark:border-slate-800">
+      {/* Analytics Cards Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* District Triage Volume */}
+        <Card className="shadow-sm border-slate-200 bg-white rounded-xl">
           <CardHeader className="pb-2">
-            <CardTitle className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Triage Volume</CardTitle>
+            <CardTitle className="text-xs font-bold text-slate-700 uppercase tracking-wider">
+              Triage Volume by Sub-District
+            </CardTitle>
           </CardHeader>
-          <CardContent className="h-40">
+          <CardContent className="h-44">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={districtData} margin={{ top: 0, right: 0, left: -25, bottom: 0 }}>
-                <XAxis dataKey="name" tick={{fontSize: 10}} interval={0} angle={-30} textAnchor="end" />
-                <YAxis tick={{fontSize: 10}} />
-                <Tooltip />
-                <Bar dataKey="volume" fill="#10b981" radius={[2,2,0,0]} />
+              <BarChart data={districtData} margin={{ top: 5, right: 10, left: -20, bottom: 15 }}>
+                <XAxis dataKey="name" tick={{ fontSize: 11, fill: '#64748b' }} interval={0} angle={-25} textAnchor="end" />
+                <YAxis tick={{ fontSize: 11, fill: '#64748b' }} />
+                <Tooltip
+                  contentStyle={{ backgroundColor: '#ffffff', borderColor: '#e2e8f0', borderRadius: '0.5rem', fontSize: '12px' }}
+                />
+                <Bar dataKey="volume" fill="#0f4c42" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </CardContent>
         </Card>
 
-        <Card className="shadow-sm border-slate-200 dark:border-slate-800">
+        {/* Key Symptoms Cluster Pie Chart */}
+        <Card className="shadow-sm border-slate-200 bg-white rounded-xl">
           <CardHeader className="pb-2">
-            <CardTitle className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Key Symptoms</CardTitle>
+            <CardTitle className="text-xs font-bold text-slate-700 uppercase tracking-wider">
+              Syndromic Cluster Breakdown
+            </CardTitle>
           </CardHeader>
-          <CardContent className="h-40">
+          <CardContent className="h-44 flex items-center justify-center">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
-                <Pie data={symptomData} dataKey="value" nameKey="name" cx="50%" cy="50%" innerRadius={20} outerRadius={45}>
+                <Pie data={symptomData} dataKey="value" nameKey="name" cx="50%" cy="50%" innerRadius={30} outerRadius={55} paddingAngle={2}>
                   {symptomData.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={entry.fill} />
                   ))}
                 </Pie>
-                <Tooltip />
+                <Tooltip
+                  contentStyle={{ backgroundColor: '#ffffff', borderColor: '#e2e8f0', borderRadius: '0.5rem', fontSize: '12px' }}
+                />
               </PieChart>
             </ResponsiveContainer>
           </CardContent>
         </Card>
 
-        <Card className="col-span-2 shadow-sm border-slate-200 dark:border-slate-800">
+        {/* Escalation Rate Trend */}
+        <Card className="col-span-1 md:col-span-2 shadow-sm border-slate-200 bg-white rounded-xl">
           <CardHeader className="pb-2">
-            <CardTitle className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Escalation Trends (%)</CardTitle>
+            <CardTitle className="text-xs font-bold text-slate-700 uppercase tracking-wider">
+              High Risk Escalation Trend (%)
+            </CardTitle>
           </CardHeader>
-          <CardContent className="h-32">
+          <CardContent className="h-36">
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={trendData} margin={{ top: 5, right: 5, left: -25, bottom: 0 }}>
-                <XAxis dataKey="day" tick={{fontSize: 10}} />
-                <YAxis tick={{fontSize: 10}} />
-                <Tooltip />
-                <Line type="monotone" dataKey="rate" stroke="#ef4444" strokeWidth={2} dot={{r: 3}} />
+              <LineChart data={trendData} margin={{ top: 5, right: 15, left: -20, bottom: 0 }}>
+                <XAxis dataKey="day" tick={{ fontSize: 11, fill: '#64748b' }} />
+                <YAxis tick={{ fontSize: 11, fill: '#64748b' }} />
+                <Tooltip
+                  contentStyle={{ backgroundColor: '#ffffff', borderColor: '#e2e8f0', borderRadius: '0.5rem', fontSize: '12px' }}
+                />
+                <Line type="monotone" dataKey="rate" stroke="#ef4444" strokeWidth={2.5} dot={{ r: 4, fill: '#ef4444' }} />
               </LineChart>
             </ResponsiveContainer>
           </CardContent>
         </Card>
       </div>
 
-      <Card className="shadow-sm border-slate-200 dark:border-slate-800">
-        <CardHeader className="pb-2">
-          <CardTitle className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Recent Cases</CardTitle>
+      {/* Recent Cases Table */}
+      <Card className="shadow-sm border-slate-200 bg-white rounded-xl overflow-hidden">
+        <CardHeader className="p-3.5 pb-2.5 border-b border-slate-100 flex flex-row items-center justify-between">
+          <CardTitle className="text-xs font-bold text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
+            <Users className="w-4 h-4 text-emerald-700" /> Recent Frontline Intakes
+          </CardTitle>
+          <span className="text-xs text-slate-500 font-medium">Sitamarhi Block</span>
         </CardHeader>
         <CardContent className="p-0">
-          <div className="divide-y divide-slate-100 dark:divide-slate-800">
+          <div className="divide-y divide-slate-100">
             {recentRows(summary).map((c, i) => (
-              <div key={`${c.id}-${i}`} className="flex items-center justify-between p-3 px-4 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+              <div
+                key={`${c.id}-${i}`}
+                className="flex items-center justify-between p-3.5 hover:bg-slate-50 transition-colors"
+              >
                 <div>
-                  <div className="text-sm font-bold text-slate-800 dark:text-slate-200">{c.id}</div>
-                  <div className="text-xs font-medium text-slate-500">{c.district} • {c.script}</div>
+                  <div className="text-xs font-bold text-slate-900">{c.id}</div>
+                  <div className="text-xs text-slate-500 mt-0.5">
+                    {c.district} • <span className="font-semibold text-slate-700">{c.script}</span>
+                  </div>
                 </div>
                 <div className="flex flex-col items-end">
-                  <Badge className={`font-bold uppercase tracking-wide text-[10px] ${c.risk === 3 ? 'bg-red-100 text-red-700' : c.risk===2 ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700'}`} variant="outline">
-                    Score {c.risk}
+                  <Badge
+                    className={`font-bold uppercase tracking-wider text-[10px] px-2 py-0.5 rounded border ${
+                      c.risk === 3
+                        ? 'bg-red-50 text-red-700 border-red-200'
+                        : c.risk === 2
+                        ? 'bg-amber-50 text-amber-700 border-amber-200'
+                        : 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                    }`}
+                    variant="outline"
+                  >
+                    SCORE {c.risk}
                   </Badge>
                   <span className="text-[10px] font-medium text-slate-400 mt-1">{c.time}</span>
                 </div>
@@ -170,7 +229,6 @@ export function SupervisorDashboard() {
   );
 }
 
-/** Rolling % of red cases per calendar day derived from live case timestamps sorted chronologically. */
 function buildRollingRedRate(summary: AnalyticsSummary): { day: string; rate: number }[] {
   const buckets = new Map<string, { total: number; red: number; timestamp: number }>();
   for (const c of summary.recent_cases) {
@@ -194,17 +252,16 @@ function buildRollingRedRate(summary: AnalyticsSummary): { day: string; rate: nu
     }));
 }
 
-
 function recentRows(
-  summary: AnalyticsSummary | null,
+  summary: AnalyticsSummary | null
 ): { id: string; district: string; script: string; risk: number; time: string }[] {
   if (!summary || summary.recent_cases.length === 0) {
     return [
-      { id: 'C-8921', district: 'Sitamarhi', script: 'Hindi', risk: 3, time: '10 min ago' },
-      { id: 'C-8920', district: 'Sheohar', script: 'Bengali', risk: 1, time: '25 min ago' },
-      { id: 'C-8919', district: 'Muzaffarpur', script: 'Hindi', risk: 2, time: '1 hr ago' },
-      { id: 'C-8918', district: 'Sitamarhi', script: 'Tamil', risk: 1, time: '2 hrs ago' },
-      { id: 'C-8917', district: 'Darbhanga', script: 'Hindi', risk: 3, time: '2.5 hrs ago' },
+      { id: 'C-8921', district: 'Sitamarhi', script: 'HINDI', risk: 3, time: '10 min ago' },
+      { id: 'C-8920', district: 'Sheohar', script: 'BENGALI', risk: 1, time: '25 min ago' },
+      { id: 'C-8919', district: 'Muzaffarpur', script: 'HINDI', risk: 2, time: '1 hr ago' },
+      { id: 'C-8918', district: 'Sitamarhi', script: 'TAMIL', risk: 1, time: '2 hrs ago' },
+      { id: 'C-8917', district: 'Darbhanga', script: 'HINDI', risk: 3, time: '2.5 hrs ago' },
     ];
   }
   return summary.recent_cases.map((c) => {
@@ -214,11 +271,11 @@ function recentRows(
       mins === null
         ? ''
         : mins < 60
-          ? `${mins} min ago`
-          : `${Math.round(mins / 60)} hr${Math.round(mins / 60) === 1 ? '' : 's'} ago`;
+        ? `${mins} min ago`
+        : `${Math.round(mins / 60)} hr${Math.round(mins / 60) === 1 ? '' : 's'} ago`;
     return {
       id: `C-${String(c.id).padStart(4, '0')}`,
-      district: c.district ?? 'Unknown',
+      district: c.district ?? 'Sitamarhi',
       script: c.language.toUpperCase(),
       risk: c.risk_score,
       time,
