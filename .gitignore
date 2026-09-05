@@ -37,3 +37,4 @@ ml/models/
 e2e_reports/
 .venv
 Multilingual_medical_symptom_triage/
+local-docs/
